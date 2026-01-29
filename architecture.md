@@ -4,15 +4,10 @@
 
 lab2_Rapid_Prototyping/
 ├── src/
-
 │   ├── main.java
-
 │   ├── logic.java
-
 │   └── db.java
-
 ├── catalog.csv
-
 └── architecture.md
 
 ## 2. Tools & Languages
