@@ -1,43 +1,64 @@
-# -------------------------
+############################
+# OS Files
+############################
+.DS_Store
+Thumbs.db
+
+############################
 # Python
-# -------------------------
+############################
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# -------------------------
-# Node / Frontend
-# -------------------------
-node_modules/
-dist/
-build/
-*.log
-
-# -------------------------
-# Java / Maven
-# -------------------------
+############################
+# Java / Maven / Spring Boot
+############################
 target/
 *.class
 *.jar
 *.war
 *.ear
-
-# IntelliJ / VSCode
-.idea/
 *.iml
+.mvn/
+.mvnw.cmd:Zone.Identifier
+.mvnw:Zone.Identifier
+pom.xml:Zone.Identifier
+
+############################
+# Node / Frontend
+############################
+node_modules/
+dist/
+build/
+
+############################
+# IDEs
+############################
+# VS Code
 .vscode/
 
-# OS files
-.DS_Store
-Thumbs.db
+# IntelliJ / JetBrains
+.idea/
+*.iws
+*.ipr
+*.iml
 
-# -------------------------
+# Eclipse
+.project
+.classpath
+.settings/
+
+############################
 # Logs
-# -------------------------
+############################
 *.log
 
-# -------------------------
-# Environment / Secrets
-# -------------------------
-.env
-*.properties.local
+############################
+# Misc
+############################
+*.tmp
+*.swp
+*.swo
