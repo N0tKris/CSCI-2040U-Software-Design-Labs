@@ -1,1 +1,1 @@
-# lab2_Rapid_Prototyping
+# lab 2 Rapid Prototyping
