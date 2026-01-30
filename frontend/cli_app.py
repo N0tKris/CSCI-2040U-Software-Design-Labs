@@ -16,7 +16,6 @@ def print_menu():
     print("="*50)
 
 def view_all_items():
-    """Milestone 2: Display catalog items in a formatted table"""
     try:
         response = requests.get(BACKEND_URL)
         items = response.json()
@@ -35,7 +34,6 @@ def view_all_items():
         print(f"\nError fetching items: {e}")
 
 def view_item_details():
-    """Milestone 2: Allow users to select an item to view details"""
     item_id = input("\nEnter item ID: ").strip()
     try:
         response = requests.get(f"{BACKEND_URL}/{item_id}")
@@ -52,7 +50,6 @@ def view_item_details():
         print(f"\nError: {e}")
 
 def add_item():
-    """Milestone 3: Add new items with validation"""
     print("\n--- Add New Item ---")
     name = input("Enter name: ").strip()
     description = input("Enter description: ").strip()
@@ -75,7 +72,6 @@ def add_item():
         print(f"\nError: {e}")
 
 def edit_item():
-    """Milestone 3: Edit existing items with validation"""
     item_id = input("\nEnter item ID to edit: ").strip()
     
     # First, get the current item
@@ -111,7 +107,6 @@ def edit_item():
         print(f"\nError: {e}")
 
 def delete_item():
-    """Delete an item from the catalog"""
     item_id = input("\nEnter item ID to delete: ").strip()
     confirm = input(f"Are you sure you want to delete item {item_id}? (yes/no): ").strip().lower()
     
@@ -129,7 +124,6 @@ def delete_item():
         print(f"\nError: {e}")
 
 def main():
-    """Milestone 1 & 2: Read data from backend and display in CLI menu"""
     print("\nStarting Catalog Management System...")
     print("Checking backend connection...")
     
