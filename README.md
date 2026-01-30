@@ -18,7 +18,7 @@ interface, with all data persisted in a CSV file.
 ### Backend
 - Java 17+
 - Spring Boot (3.x compatible)
-- Maven (wrapper included)
+- Maven (wrapper included) (Intellij recommended because it comes pre-installed)
 
 ### Frontend
 - Python 3.8+
