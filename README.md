@@ -29,8 +29,6 @@ interface, with all data persisted in a CSV file.
 
 ---
 
-## Project Structure
-
 # Catalog Management System
 
 ## Overview
