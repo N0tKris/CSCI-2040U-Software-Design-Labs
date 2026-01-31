@@ -23,6 +23,14 @@ target/
 *.ear
 *.iml
 .mvn/
+.mvn/**/!wrapper/
+# Keep the Maven wrapper files for the backend so other clones can build without Maven installed
+!backend/.mvn/
+!backend/.mvn/wrapper/
+!backend/.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.properties
+!backend/mvnw
+!backend/mvnw.cmd
 .mvnw.cmd:Zone.Identifier
 .mvnw:Zone.Identifier
 pom.xml:Zone.Identifier
