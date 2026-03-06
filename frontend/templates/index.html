@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Restaurant Review Frontend</title>
+  <title>PlateRate</title>
   <style>
     /* Barebones layout: white background, basic buttons */
     * { box-sizing: border-box; }
@@ -26,8 +26,16 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Restaurant Review Frontend</h1>
+      <h1>PlateRate</h1>
       <p class="sub">Local frontend server is running. Backend target: <code>{{ backend_url }}</code></p>
+
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+        <input id="login-username" placeholder="username" style="width:160px;" />
+        <input id="login-password" placeholder="password" type="password" style="width:160px;" />
+        <button id="login">Log in</button>
+        <button id="logout" style="display:none;">Log out</button>
+        <div id="who" style="margin-left:12px; color:#444;"></div>
+      </div>
 
       <div class="row">
         <div class="field"><label for="name">Name</label><input id="name" /></div>
@@ -97,9 +105,12 @@
 
       setStatus('Adding restaurant…');
       try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = token;
         const res = await fetch('/api/restaurants', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -108,6 +119,11 @@
           return;
         }
         setStatus('Restaurant added. Updating list…');
+        // clear form fields after successful add
+        document.getElementById('name').value = '';
+        document.getElementById('cuisine').value = '';
+        document.getElementById('location').value = '';
+        document.getElementById('description').value = '';
         await refreshRestaurants();
       } catch (err) {
         setStatus(`Unable to send create request: ${err}`);
@@ -117,6 +133,78 @@
     document.getElementById('refresh').addEventListener('click', refreshRestaurants);
     document.getElementById('create').addEventListener('click', addRestaurant);
 
+    // Login/logout helpers
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
+    const whoEl = document.getElementById('who');
+
+    function setAuthToken(token) {
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        localStorage.removeItem('token');
+      }
+      updateAuthUI();
+    }
+
+    async function updateAuthUI() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        whoEl.textContent = '';
+        logoutBtn.style.display = 'none';
+        loginBtn.style.display = 'inline-block';
+        return;
+      }
+      // fetch /api/auth/me
+      try {
+        const res = await fetch('/api/auth/me', { headers: { 'Authorization': token } });
+        if (!res.ok) {
+          setAuthToken(null);
+          return;
+        }
+        const data = await res.json();
+        whoEl.textContent = `Logged in as ${data.username} (${data.role})`;
+        logoutBtn.style.display = 'inline-block';
+        loginBtn.style.display = 'none';
+      } catch (e) {
+        setAuthToken(null);
+      }
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      if (!username || !password) { setStatus('Please enter username and password.'); return; }
+      setStatus('Signing in...');
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const errMsg = data?.error || data?.message || 'Login failed.';
+          setStatus(errMsg);
+          return;
+        }
+        setAuthToken(data.token);
+        setStatus('Signed in.');
+      } catch (err) { setStatus(`Login error: ${err}`); }
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': token } }).catch(() => {});
+      }
+      setAuthToken(null);
+      setStatus('Signed out.');
+    });
+
+    // Initialize: require explicit login on each page load
+    localStorage.removeItem('token');
+    setStatus('Please sign in to perform admin actions.');
+    updateAuthUI();
     refreshRestaurants();
   </script>
 </body>

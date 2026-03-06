@@ -35,6 +35,10 @@ def _error_payload(message: str, details: str = "") -> dict[str, Any]:
     }
 
 
+def auth_url(path: str = "") -> str:
+    return f"{BACKEND_BASE_URL.rstrip('/')}/api/auth{path}"
+
+
 @app.get("/")
 def index() -> str:
     return render_template("index.html", backend_url=BACKEND_BASE_URL)
@@ -59,11 +63,61 @@ def get_restaurants() -> tuple[dict[str, Any], int]:
 def create_restaurant() -> tuple[dict[str, Any], int]:
     payload = request.get_json(silent=True) or {}
     try:
-        response = requests.post(restaurants_url(), json=payload, timeout=5)
+        # Forward Authorization header from the browser (if present)
+        headers = {}
+        token = request.headers.get('Authorization')
+        if token:
+            headers['Authorization'] = token
+        response = requests.post(restaurants_url(), json=payload, headers=headers, timeout=5)
         body = response.json() if response.content else {}
         return {"ok": response.ok, "data": body}, response.status_code
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend to create restaurant", str(exc)), 502
+
+
+@app.post("/api/auth/login")
+def proxy_login() -> tuple[dict[str, Any], int]:
+    payload = request.get_json(silent=True) or {}
+    try:
+        response = requests.post(auth_url('/login'), json=payload, timeout=5)
+        # Pass backend JSON (or raw text) through with status code
+        try:
+            body = response.json()
+        except ValueError:
+            body = {"error": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend for login", str(exc)), 502
+
+
+@app.post("/api/auth/logout")
+def proxy_logout() -> tuple[dict[str, Any], int]:
+    token = request.headers.get('Authorization')
+    headers = {"Authorization": token} if token else {}
+    try:
+        response = requests.post(auth_url('/logout'), headers=headers, timeout=5)
+        try:
+            body = response.json() if response.content else {}
+        except ValueError:
+            body = {"message": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend for logout", str(exc)), 502
+
+
+@app.get("/api/auth/me")
+def proxy_me() -> tuple[dict[str, Any], int]:
+    token = request.headers.get('Authorization')
+    headers = {"Authorization": token} if token else {}
+    try:
+        response = requests.get(auth_url('/me'), headers=headers, timeout=5)
+        try:
+            body = response.json() if response.content else {}
+        except ValueError:
+            body = {"error": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend for auth/me", str(exc)), 502
 
 
 if __name__ == "__main__":

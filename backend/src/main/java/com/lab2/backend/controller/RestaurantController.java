@@ -1,6 +1,7 @@
 package com.lab2.backend.controller;
 
 import com.lab2.backend.model.Restaurant;
+import com.lab2.backend.service.AuthService;
 import com.lab2.backend.service.RestaurantService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +17,11 @@ import java.util.Map;
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
+    private final AuthService authService;
 
-    public RestaurantController(RestaurantService restaurantService) {
+    public RestaurantController(RestaurantService restaurantService, AuthService authService) {
         this.restaurantService = restaurantService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -36,7 +39,15 @@ public class RestaurantController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody Restaurant restaurant) {
+    public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = false) String token,
+                                    @RequestBody Restaurant restaurant) {
+        // Only admin may create restaurants
+        if (!authService.isAdmin(token)) {
+            Map<String, String> err = new HashMap<>();
+            err.put("error", "Admin privileges required");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
+        }
+
         if (!restaurantService.validateRestaurant(restaurant)) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "name, cuisine and location are required");

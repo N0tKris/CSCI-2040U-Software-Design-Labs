@@ -1,7 +1,6 @@
 package com.lab2.backend.controller;
 
 import com.lab2.backend.dto.LoginRequest;
-import com.lab2.backend.dto.LoginResponse;
 import com.lab2.backend.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -50,5 +49,24 @@ public class AuthController {
             authService.logout(token);
         }
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    /**
+     * Return the authenticated user for a given session token.
+     * <p>
+     * GET /api/auth/me
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> me(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+        return authService.getUserByToken(token)
+                .<ResponseEntity<?>>map(u -> ResponseEntity.ok(Map.of(
+                        "id", u.getId(),
+                        "username", u.getUsername(),
+                        "role", u.getRole().name()
+                )))
+                .orElseGet(() -> ResponseEntity.status(401).body(Map.of("error", "Invalid token")));
     }
 }
