@@ -41,7 +41,7 @@ def auth_url(path: str = "") -> str:
 
 @app.get("/")
 def index() -> str:
-    return render_template("index.html", backend_url=BACKEND_BASE_URL)
+    return render_template("index2.html", backend_url=BACKEND_BASE_URL)
 
 
 @app.get("/health")
