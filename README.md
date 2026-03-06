@@ -13,7 +13,7 @@ client–server interaction, modularity, refactoring, and incremental developmen
 The system consists of:
 
 * a Java Spring Boot backend exposing a REST API
-* a Python frontend (CLI and GUI options)
+* a Python Flask frontend that runs as a local web server
 * a CSV file used as persistent storage
 
 ---
@@ -23,7 +23,7 @@ The system consists of:
 ```
 .
 ├── backend/        # Java Spring Boot backend (REST API)
-├── frontend/       # Python frontend (CLI + Tkinter GUI)
+├── frontend/       # Python Flask frontend (local web server)
 ├── catalog.csv     # Persistent datastore (CSV)
 └── README.md
 ```
@@ -41,8 +41,8 @@ The system consists of:
 ### Frontend
 
 * Python 3.8+
+* Flask
 * requests
-* Tkinter (for GUI)
 
 ### Data Storage
 
@@ -86,7 +86,6 @@ The backend handles:
 * **Java 17 (JDK 17)** installed and available on PATH
 * No separate Maven install required (Maven wrapper included)
 * **Python 3.8+**
-* On Linux: `python3-tk` may be required for the GUI
 * VS Code or IntelliJ recommended
 
 ---
@@ -124,24 +123,16 @@ pip install -r frontend/requirements.txt
 
 ---
 
-### 3) Run a frontend
-
-**CLI:**
+### 3) Run the frontend web app
 
 ```bash
-python3 frontend/cli_app.py
+python3 frontend/app.py
 ```
 
-**GUI:**
+Open the local URL shown in the terminal, typically:
 
-```bash
-python3 frontend/gui3.py
-```
-
-If the GUI fails on Linux:
-
-```bash
-sudo apt-get install python3-tk
+```text
+http://127.0.0.1:5000
 ```
 
 ---

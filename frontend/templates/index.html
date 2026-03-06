@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Review Frontend</title>
+  <style>
+    /* Barebones layout: white background, basic buttons */
+    * { box-sizing: border-box; }
+    body { margin: 24px; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #ffffff; color: #111; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    .sub { margin: 0 0 12px; color: #444; }
+    .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .field { display:flex; flex-direction: column; }
+    label { font-size: 13px; margin-bottom: 6px; }
+    input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
+    button { padding: 8px 12px; border: 1px solid #333; background: #fff; cursor: pointer; }
+    .toolbar { display:flex; gap:8px; margin-top:12px; }
+    table { width:100%; border-collapse: collapse; margin-top:12px; }
+    th, td { padding:6px 8px; border-bottom:1px solid #eee; font-size:14px; }
+    .status { margin-top:8px; color:#666; }
+    @media (max-width: 800px) { .row{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Restaurant Review Frontend</h1>
+      <p class="sub">Local frontend server is running. Backend target: <code>{{ backend_url }}</code></p>
+
+      <div class="row">
+        <div class="field"><label for="name">Name</label><input id="name" /></div>
+        <div class="field"><label for="cuisine">Cuisine</label><input id="cuisine" /></div>
+        <div class="field"><label for="location">Location</label><input id="location" /></div>
+        <div class="field"><label for="description">Description</label><input id="description" /></div>
+      </div>
+
+      <div class="toolbar">
+        <button id="refresh">Load restaurants</button>
+        <button id="create">Add restaurant</button>
+      </div>
+      <p class="status" id="status">Ready — you can load restaurants.</p>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Description</th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const rowsEl = document.getElementById("rows");
+
+    function setStatus(msg) { statusEl.textContent = msg; }
+
+    async function refreshRestaurants() {
+      setStatus("Loading restaurants…");
+      try {
+        const res = await fetch('/api/restaurants');
+        const data = await res.json();
+        if (!data.ok) {
+          setStatus(`Couldn't load restaurants: ${data.message || 'server error'}`);
+          return;
+        }
+
+        rowsEl.innerHTML = '';
+        for (const r of data.data) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${r.id ?? ''}</td><td>${r.name ?? ''}</td><td>${r.cuisine ?? ''}</td><td>${r.location ?? ''}</td><td>${r.description ?? ''}</td>`;
+          rowsEl.appendChild(tr);
+        }
+        setStatus(`Loaded ${data.data.length} restaurant(s).`);
+      } catch (err) {
+        setStatus(`Network error: ${err}`);
+      }
+    }
+
+    async function addRestaurant() {
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        cuisine: document.getElementById('cuisine').value.trim(),
+        location: document.getElementById('location').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        dietaryTags: ''
+      };
+
+      if (!payload.name || !payload.cuisine || !payload.location) {
+        setStatus('Please provide name, cuisine, and location.');
+        return;
+      }
+
+      setStatus('Adding restaurant…');
+      try {
+        const res = await fetch('/api/restaurants', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          setStatus(`Couldn't add restaurant (server responded ${res.status}).`);
+          return;
+        }
+        setStatus('Restaurant added. Updating list…');
+        await refreshRestaurants();
+      } catch (err) {
+        setStatus(`Unable to send create request: ${err}`);
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', refreshRestaurants);
+    document.getElementById('create').addEventListener('click', addRestaurant);
+
+    refreshRestaurants();
+  </script>
+</body>
+</html>
