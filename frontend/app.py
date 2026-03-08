@@ -1,15 +1,361 @@
 from __future__ import annotations
 
 import os
+import secrets
 import socket
 from typing import Any
 
 import requests
-from flask import Flask, jsonify, render_template, request
+from flask import (
+    Flask,
+    jsonify,
+    redirect,
+    render_template,
+    render_template_string,
+    request,
+    session,
+    url_for,
+)
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
 
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
+
+
+# ---------------------------------------------------------------------------
+# Admin login page template (inline)
+# ---------------------------------------------------------------------------
+ADMIN_LOGIN_TEMPLATE = """
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 40px 36px 36px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-card .brand {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #b85c38;
+            letter-spacing: 0.5px;
+        }
+        .login-card .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 28px;
+            letter-spacing: 0.3px;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #faf8f6;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #b85c38;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+        .btn-login:hover { background: #a04e2e; }
+        .error-msg {
+            background: #fdecea;
+            color: #b71c1c;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #888;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #b85c38; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="brand">PlateRate</div>
+        <div class="subtitle">Admin Control Panel Access</div>
+        {% if error %}
+        <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <div class="form-group">
+                <label for="username">Admin Username</label>
+                <input type="text" id="username" name="username" required
+                       autocomplete="username" placeholder="Enter admin username" />
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       autocomplete="current-password" placeholder="Enter password" />
+            </div>
+            <button type="submit" class="btn-login">Admin Login</button>
+        </form>
+        <a href="/" class="back-link">&larr; Back to PlateRate</a>
+    </div>
+</body>
+</html>
+"""
+
+
+# ---------------------------------------------------------------------------
+# Admin dashboard template (inline)
+# ---------------------------------------------------------------------------
+ADMIN_DASHBOARD_TEMPLATE = """
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f0eb;
+            color: #333;
+        }
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e0d8d0;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar .brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #b85c38;
+        }
+        .topbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: #555;
+        }
+        .topbar .user-info span { font-weight: 600; color: #333; }
+        .btn-logout {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
+        .dashboard {
+            max-width: 1100px;
+            margin: 28px auto;
+            padding: 0 20px;
+        }
+        .dashboard h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .section {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 14px 22px;
+            background: #faf8f6;
+            border-bottom: 1px solid #ece5de;
+            font-size: 16px;
+            font-weight: 600;
+            color: #b85c38;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 10px 22px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            font-weight: 600;
+            border-bottom: 1px solid #ece5de;
+        }
+        td {
+            padding: 12px 22px;
+            font-size: 14px;
+            border-bottom: 1px solid #f2eeea;
+            color: #444;
+        }
+        tr:last-child td { border-bottom: none; }
+        .empty-row td {
+            text-align: center;
+            color: #aaa;
+            padding: 24px;
+            font-style: italic;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-admin { background: #fce4ec; color: #c62828; }
+        .badge-user  { background: #e8f5e9; color: #2e7d32; }
+        .stars { color: #f5a623; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">PlateRate — Admin Dashboard</div>
+        <div class="user-info">
+            Logged in as <span>{{ admin_username }}</span>
+            <a href="{{ url_for('admin_logout') }}" class="btn-logout">Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <h2>Database Management</h2>
+
+        <!-- Users Table -->
+        <div class="section">
+            <div class="section-header">Users</div>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Username</th><th>Role</th></tr>
+                </thead>
+                <tbody>
+                {% if users %}
+                    {% for u in users %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>
+                            <span class="badge {{ 'badge-admin' if u.role == 'ADMIN' else 'badge-user' }}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row"><td colspan="3">No users found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Restaurants Table -->
+        <div class="section">
+            <div class="section-header">Restaurants</div>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Dietary Tags</th></tr>
+                </thead>
+                <tbody>
+                {% if restaurants %}
+                    {% for r in restaurants %}
+                    <tr>
+                        <td>{{ r.id }}</td>
+                        <td>{{ r.name }}</td>
+                        <td>{{ r.cuisine }}</td>
+                        <td>{{ r.location }}</td>
+                        <td>{{ r.dietaryTags or r.dietary_tags or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row"><td colspan="5">No restaurants found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Reviews Table -->
+        <div class="section">
+            <div class="section-header">Reviews</div>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>User</th><th>Restaurant</th><th>Rating</th><th>Comment</th></tr>
+                </thead>
+                <tbody>
+                {% if reviews %}
+                    {% for rv in reviews %}
+                    <tr>
+                        <td>{{ rv.id }}</td>
+                        <td>{{ rv.userId or rv.user_id or '—' }}</td>
+                        <td>{{ rv.restaurantId or rv.restaurant_id or '—' }}</td>
+                        <td class="stars">{{ '★' * rv.rating }}{{ '☆' * (5 - rv.rating) }}</td>
+                        <td>{{ rv.comment or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row"><td colspan="5">No reviews found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+"""
 
 
 def pick_port(start_port: int, max_tries: int = 20) -> int:
@@ -118,6 +464,148 @@ def proxy_me() -> tuple[dict[str, Any], int]:
         return body, response.status_code
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend for auth/me", str(exc)), 502
+
+
+# ---------------------------------------------------------------------------
+# Admin routes
+# ---------------------------------------------------------------------------
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    """Admin login page and handler."""
+    if request.method == "GET":
+        # If already logged in as admin, go straight to dashboard
+        if session.get("admin_token"):
+            return redirect(url_for("admin_dashboard"))
+        return render_template_string(ADMIN_LOGIN_TEMPLATE, error=None)
+
+    # POST – attempt login via backend
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+    if not username or not password:
+        return render_template_string(
+            ADMIN_LOGIN_TEMPLATE, error="Please enter both username and password."
+        )
+
+    try:
+        resp = requests.post(
+            auth_url("/login"),
+            json={"username": username, "password": password},
+            timeout=5,
+        )
+
+        if not resp.ok:
+            try:
+                msg = resp.json().get("message") or resp.json().get("error", "Invalid credentials.")
+            except ValueError:
+                msg = "Invalid credentials."
+            return render_template_string(ADMIN_LOGIN_TEMPLATE, error=msg)
+
+        body = resp.json()
+
+        # Check admin role – backend may return role in different fields
+        role = (
+            body.get("role")
+            or body.get("userRole")
+            or (body.get("user", {}) or {}).get("role")
+            or ""
+        )
+        if role.upper() != "ADMIN":
+            return render_template_string(
+                ADMIN_LOGIN_TEMPLATE, error="Access denied. Admin privileges required."
+            )
+
+        # Extract token from backend response
+        token = (
+            body.get("token")
+            or body.get("accessToken")
+            or body.get("jwt")
+            or ""
+        )
+
+        # Store admin session data
+        session["admin_token"] = token
+        session["admin_username"] = username
+        session["admin_role"] = "ADMIN"
+
+        return redirect(url_for("admin_dashboard"))
+
+    except requests.RequestException:
+        return render_template_string(
+            ADMIN_LOGIN_TEMPLATE, error="Could not reach authentication service. Please try again."
+        )
+
+
+@app.get("/admin/dashboard")
+def admin_dashboard():
+    """Admin dashboard showing database tables."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    token = session["admin_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Fetch data for dashboard tables – gracefully handle failures
+    users = []
+    restaurants = []
+    reviews = []
+
+    try:
+        resp = requests.get(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/users", headers=headers, timeout=5
+        )
+        if resp.ok:
+            data = resp.json()
+            users = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
+
+    try:
+        resp = requests.get(restaurants_url(), headers=headers, timeout=5)
+        if resp.ok:
+            data = resp.json()
+            restaurants = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
+
+    try:
+        resp = requests.get(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews", headers=headers, timeout=5
+        )
+        if resp.ok:
+            data = resp.json()
+            reviews = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
+
+    return render_template_string(
+        ADMIN_DASHBOARD_TEMPLATE,
+        admin_username=session.get("admin_username", "Admin"),
+        users=users,
+        restaurants=restaurants,
+        reviews=reviews,
+    )
+
+
+@app.get("/admin/logout")
+def admin_logout():
+    """Clear admin session and redirect to login page."""
+    token = session.get("admin_token")
+    if token:
+        try:
+            requests.post(
+                auth_url("/logout"),
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            )
+        except requests.RequestException:
+            pass
+
+    session.pop("admin_token", None)
+    session.pop("admin_username", None)
+    session.pop("admin_role", None)
+    return redirect(url_for("admin_login"))
 
 
 if __name__ == "__main__":
