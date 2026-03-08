@@ -305,7 +305,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
         <!-- Restaurants Table -->
         <div class="section">
-            <div class="section-header">Restaurants</div>
+            <div class="section-header">Restaurants
+                <button id="open-add-modal" style="float:right;padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">+ Add restaurant</button>
+            </div>
             <table>
                 <thead>
                     <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Dietary Tags</th></tr>
@@ -353,6 +355,87 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </table>
         </div>
     </div>
+    
+    {% if error %}
+    <div style="max-width:1100px;margin:12px auto 0;padding:0 20px;color:#b71c1c">{{ error }}</div>
+    {% endif %}
+
+    <!-- Add Restaurant modal (admin dashboard) -->
+    <div class="modal-backdrop" id="admin-add-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
+        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:20px;border-radius:8px;">
+            <h3 style="margin:0 0 8px 0;color:#b85c38;">Add Restaurant</h3>
+            <p style="margin:0 0 12px;color:#666">Enter the restaurant details below.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Name</label>
+                    <input id="admin_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Cuisine</label>
+                    <input id="admin_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Dietary Tags</label>
+                    <input id="admin_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Location</label>
+                    <input id="admin_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div style="grid-column:1/ -1;">
+                    <label style="font-weight:600;font-size:13px;">Description</label>
+                    <textarea id="admin_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;min-height:80px"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                <button id="admin_add_save" style="padding:8px 12px;background:#b85c38;color:#fff;border:none;border-radius:6px;">Save</button>
+                <button id="admin_add_cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const adminBackdrop = document.getElementById('admin-add-backdrop');
+        document.getElementById('open-add-modal').addEventListener('click', () => { adminBackdrop.style.display = 'flex'; });
+        document.getElementById('admin_add_cancel').addEventListener('click', () => { adminBackdrop.style.display = 'none'; });
+
+        document.getElementById('admin_add_save').addEventListener('click', async () => {
+            const payload = {
+                name: document.getElementById('admin_name').value.trim(),
+                cuisine: document.getElementById('admin_cuisine').value.trim(),
+                dietaryTags: document.getElementById('admin_dietary').value.trim(),
+                location: document.getElementById('admin_location').value.trim(),
+                description: document.getElementById('admin_description').value.trim()
+            };
+            if (!payload.name || !payload.cuisine || !payload.location) {
+                alert('Please provide name, cuisine and location');
+                return;
+            }
+
+            try {
+                const res = await fetch('/admin/restaurants', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    // Success — refresh dashboard to show new restaurant
+                    adminBackdrop.style.display = 'none';
+                    window.location.reload();
+                    return;
+                }
+
+                alert('Failed to add restaurant: ' + (data.error || data.message || JSON.stringify(data)));
+            } catch (e) {
+                alert('Request failed: ' + e);
+            }
+        });
+    </script>
 </body>
 </html>
 """
@@ -742,7 +825,8 @@ def admin_dashboard():
         return redirect(url_for("admin_login"))
 
     token = session["admin_token"]
-    headers = {"Authorization": f"Bearer {token}"}
+    # Backend expects the raw token string (not a 'Bearer ' prefix)
+    headers = {"Authorization": token}
 
     # Fetch data for dashboard tables – gracefully handle failures
     users = []
@@ -786,6 +870,79 @@ def admin_dashboard():
     )
 
 
+@app.post("/admin/restaurants")
+def admin_add_restaurant():
+    """Handle admin create-restaurant requests from the dashboard UI."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    payload = request.get_json(silent=True) or {}
+    token = session.get("admin_token")
+    headers = {"Authorization": token} if token else {}
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants",
+            json=payload,
+            headers=headers,
+            timeout=5,
+        )
+
+        # Forward backend response as JSON to the AJAX caller so the
+        # frontend can react without receiving full HTML pages.
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+
+        if resp.ok:
+            return jsonify(body), resp.status_code
+
+        # Non-OK from backend -> return error JSON with status code
+        msg = body.get("error") or body.get("message") or str(body)
+        return jsonify({"error": msg}), resp.status_code
+
+    except requests.RequestException:
+        msg = "Could not reach backend to create restaurant."
+
+    # On error, re-fetch dashboard data and render with an error message.
+    users = []
+    restaurants = []
+    reviews = []
+    try:
+        r = requests.get(f"{BACKEND_BASE_URL.rstrip('/')}/api/users", headers=headers, timeout=5)
+        if r.ok:
+            data = r.json()
+            users = data if isinstance(data, list) else data.get("data", [])
+    except Exception:
+        pass
+
+    try:
+        r = requests.get(restaurants_url(), headers=headers, timeout=5)
+        if r.ok:
+            data = r.json()
+            restaurants = data if isinstance(data, list) else data.get("data", [])
+    except Exception:
+        pass
+
+    try:
+        r = requests.get(f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews", headers=headers, timeout=5)
+        if r.ok:
+            data = r.json()
+            reviews = data if isinstance(data, list) else data.get("data", [])
+    except Exception:
+        pass
+
+    return render_template_string(
+        ADMIN_DASHBOARD_TEMPLATE,
+        admin_username=session.get("admin_username", "Admin"),
+        users=users,
+        restaurants=restaurants,
+        reviews=reviews,
+        error=msg,
+    )
+
+
 @app.get("/admin/logout")
 def admin_logout():
     """Clear admin session and redirect to login page."""
@@ -794,7 +951,7 @@ def admin_logout():
         try:
             requests.post(
                 auth_url("/logout"),
-                headers={"Authorization": f"Bearer {token}"},
+                headers={"Authorization": token},
                 timeout=5,
             )
         except requests.RequestException:

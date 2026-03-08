@@ -332,6 +332,11 @@
             </div>
 
             <div class="field">
+                <label for="dietaryTags">Dietary Tags</label>
+                <input id="dietaryTags" placeholder="comma-separated (e.g. vegan,gluten-free)" />
+            </div>
+
+            <div class="field">
                 <label for="location">Location</label>
                 <input id="location" />
             </div>
@@ -371,6 +376,7 @@
         editingRestaurantId = null;
         document.getElementById('name').value = '';
         document.getElementById('cuisine').value = '';
+        document.getElementById('dietaryTags').value = '';
         document.getElementById('location').value = '';
         document.getElementById('description').value = '';
         document.getElementById('create').textContent = 'Save restaurant';
@@ -398,9 +404,10 @@
                 <button class="edit-btn" data-id="${r.id ?? ''}">Edit</button>
 
                 <div class="meta">
-                  <span><strong>Cuisine:</strong> ${r.cuisine ?? ''}</span>
-                  <span><strong>Location:</strong> ${r.location ?? ''}</span>
-                  <span><strong>Rating:</strong> ${'★'.repeat(r.stars || 0) + '☆'.repeat(5 - (r.stars || 0))}</span>
+                                    <span><strong>Cuisine:</strong> ${r.cuisine ?? ''}</span>
+                                    <span><strong>Location:</strong> ${r.location ?? ''}</span>
+                                    <span><strong>Dietary:</strong> ${r.dietaryTags ?? r.dietary_tags ?? '—'}</span>
+                                    <span><strong>Rating:</strong> ${'★'.repeat(r.stars || 0) + '☆'.repeat(5 - (r.stars || 0))}</span>
                 </div>
 
                 <div class="description">${r.description ?? ''}</div>
@@ -437,6 +444,7 @@
 
         document.getElementById('name').value = restaurant.name ?? '';
         document.getElementById('cuisine').value = restaurant.cuisine ?? '';
+        document.getElementById('dietaryTags').value = restaurant.dietaryTags ?? restaurant.dietary_tags ?? '';
         document.getElementById('location').value = restaurant.location ?? '';
         document.getElementById('description').value = restaurant.description ?? '';
 
@@ -450,7 +458,7 @@
             cuisine: document.getElementById('cuisine').value.trim(),
             location: document.getElementById('location').value.trim(),
             description: document.getElementById('description').value.trim(),
-            dietaryTags: ''
+            dietaryTags: document.getElementById('dietaryTags').value.trim()
         };
 
         if (!payload.name || !payload.cuisine || !payload.location) {
