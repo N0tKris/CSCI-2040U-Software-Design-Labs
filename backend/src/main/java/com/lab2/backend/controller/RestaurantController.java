@@ -81,4 +81,17 @@ public class RestaurantController {
         response.put("message", "Restaurant deleted successfully");
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/all")
+    public ResponseEntity<?> deleteAll(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (!authService.isAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin privileges required"));
+        }
+        try {
+            restaurantService.deleteAll();
+            return ResponseEntity.ok(Map.of("message", "All restaurants deleted"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to delete restaurants"));
+        }
+    }
 }

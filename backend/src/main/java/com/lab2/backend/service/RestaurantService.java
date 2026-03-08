@@ -17,10 +17,10 @@ public class RestaurantService {
 
     @PostConstruct
     public void seedIfEmpty() {
-        if (repository.count() == 0) {
-            repository.save(new Restaurant("Demo Diner", "International", "vegan", "Demo diner for testing", "123 Demo St"));
-            repository.save(new Restaurant("Pasta Place", "Italian", "vegetarian", "Fresh pasta and sauces", "55 King St"));
-        }
+        // Clear all restaurants at startup so the admin dashboard shows an
+        // empty list. This intentionally removes any demo data that may
+        // have been present from previous runs.
+        repository.deleteAll();
     }
 
     public List<Restaurant> getAllRestaurants() {
@@ -49,6 +49,11 @@ public class RestaurantService {
             return true;
         }
         return false;
+    }
+
+    /** Delete all restaurants (admin action). */
+    public void deleteAll() {
+        repository.deleteAll();
     }
 
     public boolean validateRestaurant(Restaurant r) {

@@ -41,4 +41,11 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    /**
+     * Return all users. Admin controllers may call this to show user lists.
+     */
+    public java.util.List<User> listAllUsers() {
+        return userRepository.findAll();
+    }
 }
