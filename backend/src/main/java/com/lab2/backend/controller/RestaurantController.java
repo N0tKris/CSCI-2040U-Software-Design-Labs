@@ -72,7 +72,13 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@RequestHeader(value = "Authorization", required = false) String token,
+                                    @PathVariable Long id) {
+        // Only admin may delete restaurants
+        if (!authService.isAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin privileges required"));
+        }
+
         boolean deleted = restaurantService.deleteRestaurant(id);
         if (!deleted) {
             return ResponseEntity.notFound().build();

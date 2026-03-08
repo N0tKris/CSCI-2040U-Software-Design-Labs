@@ -310,7 +310,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </div>
             <table>
                 <thead>
-                    <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Dietary Tags</th></tr>
+                    <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Dietary Tags</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                 {% if restaurants %}
@@ -321,10 +321,13 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ r.cuisine }}</td>
                         <td>{{ r.location }}</td>
                         <td>{{ r.dietaryTags or r.dietary_tags or '—' }}</td>
+                        <td>
+                            <button class="admin-delete" data-id="{{ r.id }}" style="padding:6px 10px;border-radius:6px;border:1px solid #e2bdb0;background:#fff;color:#b85c38;cursor:pointer;">Delete</button>
+                        </td>
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <tr class="empty-row"><td colspan="5">No restaurants found</td></tr>
+                    <tr class="empty-row"><td colspan="6">No restaurants found</td></tr>
                 {% endif %}
                 </tbody>
             </table>
@@ -434,6 +437,26 @@ ADMIN_DASHBOARD_TEMPLATE = """
             } catch (e) {
                 alert('Request failed: ' + e);
             }
+        });
+
+        // Attach delete handlers to per-row delete buttons
+        document.querySelectorAll('.admin-delete').forEach(btn => {
+            btn.addEventListener('click', async (ev) => {
+                const id = btn.getAttribute('data-id');
+                if (!id) return;
+                if (!confirm('Delete restaurant #' + id + '? This action cannot be undone.')) return;
+                try {
+                    const resp = await fetch('/admin/restaurants/' + encodeURIComponent(id), { method: 'DELETE' });
+                    const body = await resp.json().catch(() => ({}));
+                    if (resp.ok) {
+                        window.location.reload();
+                        return;
+                    }
+                    alert('Failed to delete: ' + (body.error || body.message || JSON.stringify(body)));
+                } catch (e) {
+                    alert('Request failed: ' + e);
+                }
+            });
         });
     </script>
 </body>
@@ -941,6 +964,28 @@ def admin_add_restaurant():
         reviews=reviews,
         error=msg,
     )
+
+
+@app.delete("/admin/restaurants/<int:rid>")
+def admin_delete_restaurant(rid: int) -> tuple[dict[str, Any], int]:
+    """Proxy DELETE /admin/restaurants/<id> to backend, using stored admin session token."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+
+    token = session.get("admin_token")
+    headers = {"Authorization": token} if token else {}
+    try:
+        resp = requests.delete(f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{rid}", headers=headers, timeout=5)
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+
+        if resp.ok:
+            return body, resp.status_code
+        return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to delete restaurant", str(exc)), 502
 
 
 @app.get("/admin/logout")
