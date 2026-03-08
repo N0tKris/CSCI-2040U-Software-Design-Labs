@@ -387,7 +387,12 @@ def auth_url(path: str = "") -> str:
 
 @app.get("/")
 def index() -> str:
-    return render_template("index.html", backend_url=BACKEND_BASE_URL)
+    # Render the admin login UI at the root so visiting `/` shows the
+    # same output as `/admin/login`. If already authenticated as an
+    # admin, redirect to the dashboard.
+    if session.get("admin_token"):
+        return redirect(url_for("admin_dashboard"))
+    return render_template_string(ADMIN_LOGIN_TEMPLATE, error=None)
 
 
 @app.get("/health")
