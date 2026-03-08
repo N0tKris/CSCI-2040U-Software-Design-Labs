@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User View — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+            padding: 48px 44px 40px;
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+        }
+        .brand {
+            font-size: 24px;
+            font-weight: 800;
+            color: #b85c38;
+            margin-bottom: 4px;
+        }
+        .heading {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .subtext {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 34px;
+            line-height: 1.5;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-register {
+            background: #b85c38;
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(184,92,56,0.25);
+        }
+        .btn-register:hover {
+            background: #a04e2e;
+            box-shadow: 0 4px 16px rgba(184,92,56,0.35);
+        }
+        .btn-login {
+            background: #faf8f6;
+            color: #555;
+            border: 1.5px solid #e0d8d0;
+        }
+        .btn-login:hover {
+            background: #f0ebe5;
+            border-color: #c8b8a8;
+            color: #333;
+        }
+        .back-link {
+            display: inline-block;
+            font-size: 13px;
+            color: #aaa;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #b85c38; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">PlateRate</div>
+        <div class="heading">Welcome</div>
+        <div class="subtext">Create a new account or sign in to browse<br>restaurants and leave your reviews.</div>
+        <div class="btn-group">
+            <a href="{{ url_for('user_register') }}" class="btn btn-register">✏️ &nbsp;Create Account</a>
+            <a href="{{ url_for('user_login') }}" class="btn btn-login">🔑 &nbsp;Sign In</a>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-link">&larr; Back to home</a>
+    </div>
+</body>
+</html>

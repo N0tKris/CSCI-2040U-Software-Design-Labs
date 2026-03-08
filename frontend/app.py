@@ -387,12 +387,8 @@ def auth_url(path: str = "") -> str:
 
 @app.get("/")
 def index() -> str:
-    # Render the admin login UI at the root so visiting `/` shows the
-    # same output as `/admin/login`. If already authenticated as an
-    # admin, redirect to the dashboard.
-    if session.get("admin_token"):
-        return redirect(url_for("admin_dashboard"))
-    return render_template_string(ADMIN_LOGIN_TEMPLATE, error=None)
+    """Landing page — choose Admin or User view."""
+    return render_template("landing.html")
 
 
 @app.get("/health")
@@ -470,6 +466,203 @@ def proxy_me() -> tuple[dict[str, Any], int]:
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend for auth/me", str(exc)), 502
 
+
+def reviews_url() -> str:
+    return f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews"
+
+
+@app.post("/api/reviews")
+def create_review() -> tuple[dict[str, Any], int]:
+    payload = request.get_json(silent=True) or {}
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    # Prefer the server-side session token so the client never needs to
+    # handle the raw token value.
+    token = session.get("user_token") or request.headers.get("Authorization")
+    if token:
+        headers["Authorization"] = token
+    try:
+        response = requests.post(reviews_url(), json=payload, headers=headers, timeout=5)
+        body = response.json() if response.content else {}
+        return {"ok": response.ok, "data": body}, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to create review", str(exc)), 502
+
+
+# ---------------------------------------------------------------------------
+# User routes
+# ---------------------------------------------------------------------------
+
+@app.get("/user")
+def user_view():
+    """User view landing — choose Register or Login."""
+    return render_template("user_view.html")
+
+
+@app.route("/user/register", methods=["GET", "POST"])
+def user_register():
+    """User registration page and handler."""
+    if request.method == "GET":
+        return render_template("register.html", error=None, success=None)
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+    if not username or not password:
+        return render_template(
+            "register.html", error="Username and password are required.", success=None
+        )
+
+    try:
+        response = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/users/register",
+            json={"username": username, "password": password, "role": "USER"},
+            timeout=5,
+        )
+
+        if response.status_code == 201:
+            # Attempt automatic login after successful registration
+            try:
+                login_resp = requests.post(
+                    auth_url("/login"),
+                    json={"username": username, "password": password},
+                    timeout=5,
+                )
+                if login_resp.ok:
+                    body = login_resp.json()
+                    token = (
+                        body.get("token")
+                        or body.get("accessToken")
+                        or body.get("jwt")
+                        or ""
+                    )
+                    session["user_token"] = token
+                    session["user_username"] = username
+                    session["user_role"] = "USER"
+                    return redirect(url_for("user_dashboard"))
+            except requests.RequestException:
+                pass
+            # Auto-login failed; send user to login page
+            return render_template(
+                "register.html",
+                error=None,
+                success="Account created! Please sign in.",
+            )
+
+        elif response.status_code == 400:
+            try:
+                error_message = response.json().get("error", "Failed to create account.")
+            except ValueError:
+                error_message = "Failed to create account."
+            return render_template("register.html", error=error_message, success=None)
+
+        else:
+            return render_template(
+                "register.html",
+                error="Failed to create account. Please try again.",
+                success=None,
+            )
+
+    except requests.RequestException:
+        return render_template(
+            "register.html",
+            error="Could not connect to the server. Please try again.",
+            success=None,
+        )
+
+
+@app.route("/user/login", methods=["GET", "POST"])
+def user_login():
+    """User login page and handler."""
+    if request.method == "GET":
+        return render_template("user_login.html", error=None)
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+    if not username or not password:
+        return render_template(
+            "user_login.html", error="Please enter username and password."
+        )
+
+    try:
+        resp = requests.post(
+            auth_url("/login"),
+            json={"username": username, "password": password},
+            timeout=5,
+        )
+
+        if not resp.ok:
+            try:
+                msg = resp.json().get("message") or resp.json().get("error", "Invalid credentials.")
+            except ValueError:
+                msg = "Invalid credentials."
+            return render_template("user_login.html", error=msg)
+
+        body = resp.json()
+        token = (
+            body.get("token")
+            or body.get("accessToken")
+            or body.get("jwt")
+            or ""
+        )
+        session["user_token"] = token
+        session["user_username"] = username
+        session["user_role"] = (
+            body.get("role")
+            or body.get("userRole")
+            or (body.get("user", {}) or {}).get("role")
+            or "USER"
+        )
+        return redirect(url_for("user_dashboard"))
+
+    except requests.RequestException:
+        return render_template(
+            "user_login.html",
+            error="Could not reach authentication service. Please try again.",
+        )
+
+
+@app.get("/user/logout")
+def user_logout():
+    """Clear user session and redirect to user view."""
+    token = session.get("user_token")
+    if token:
+        try:
+            requests.post(
+                auth_url("/logout"),
+                headers={"Authorization": token},
+                timeout=5,
+            )
+        except requests.RequestException:
+            pass
+    session.pop("user_token", None)
+    session.pop("user_username", None)
+    session.pop("user_role", None)
+    return redirect(url_for("user_view"))
+
+
+@app.get("/user/dashboard")
+def user_dashboard():
+    """User dashboard — restaurant list + review submission."""
+    if not session.get("user_token"):
+        return redirect(url_for("user_login"))
+
+    token = session["user_token"]
+    restaurants: list[Any] = []
+    try:
+        resp = requests.get(restaurants_url(), timeout=5)
+        if resp.ok:
+            data = resp.json()
+            restaurants = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
+
+    return render_template(
+        "user_dashboard.html",
+        username=session.get("user_username", "User"),
+        restaurants=restaurants,
+        backend_url=BACKEND_BASE_URL,
+    )
 
 # ---------------------------------------------------------------------------
 # Admin routes

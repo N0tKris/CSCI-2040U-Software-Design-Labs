@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PlateRate — Restaurant Reviews</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .landing-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 32px rgba(0,0,0,0.10);
+            padding: 52px 48px 44px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+        }
+        .brand {
+            font-size: 36px;
+            font-weight: 800;
+            color: #b85c38;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .tagline {
+            font-size: 15px;
+            color: #888;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+        .divider {
+            width: 48px;
+            height: 3px;
+            background: #b85c38;
+            border-radius: 2px;
+            margin: 0 auto 36px;
+            opacity: 0.4;
+        }
+        .view-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-user {
+            background: #b85c38;
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(184,92,56,0.25);
+        }
+        .btn-user:hover {
+            background: #a04e2e;
+            box-shadow: 0 4px 16px rgba(184,92,56,0.35);
+        }
+        .btn-admin {
+            background: #faf8f6;
+            color: #555;
+            border: 1.5px solid #e0d8d0;
+        }
+        .btn-admin:hover {
+            background: #f0ebe5;
+            border-color: #c8b8a8;
+            color: #333;
+        }
+        .icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        .footer-note {
+            margin-top: 32px;
+            font-size: 12px;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-card">
+        <div class="brand">🍽 PlateRate</div>
+        <div class="tagline">Discover restaurants, share your experience,<br>and find your next favourite meal.</div>
+        <div class="divider"></div>
+        <div class="view-label">Choose your view</div>
+        <div class="btn-group">
+            <a href="{{ url_for('user_view') }}" class="btn btn-user">
+                <span class="icon">👤</span>User View
+            </a>
+            <a href="{{ url_for('admin_login') }}" class="btn btn-admin">
+                <span class="icon">🔒</span>Admin View
+            </a>
+        </div>
+        <div class="footer-note">PlateRate &mdash; Restaurant Review System</div>
+    </div>
+</body>
+</html>
