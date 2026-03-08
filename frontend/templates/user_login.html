@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Create Account — PlateRate</title>
+    <title>Sign In — PlateRate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -15,7 +15,7 @@
             justify-content: center;
             color: #333;
         }
-        .register-card {
+        .login-card {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
@@ -37,20 +37,14 @@
             color: #888;
             margin-bottom: 28px;
         }
-        .alert {
+        .alert-error {
+            background: #fdecea;
+            color: #b71c1c;
             font-size: 13px;
             padding: 10px 14px;
             border-radius: 8px;
             margin-bottom: 16px;
             text-align: center;
-        }
-        .alert-error {
-            background: #fdecea;
-            color: #b71c1c;
-        }
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
         }
         .form-group { margin-bottom: 18px; }
         .form-group label {
@@ -112,33 +106,30 @@
     </style>
 </head>
 <body>
-    <div class="register-card">
+    <div class="login-card">
         <div class="brand">PlateRate</div>
-        <div class="subtitle">Create your account</div>
+        <div class="subtitle">Sign in to your account</div>
 
         {% if error %}
-        <div class="alert alert-error">{{ error }}</div>
-        {% endif %}
-        {% if success %}
-        <div class="alert alert-success">{{ success }}</div>
+        <div class="alert-error">{{ error }}</div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('user_register') }}">
+        <form method="POST" action="{{ url_for('user_login') }}">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required
-                       autocomplete="username" placeholder="Choose a username" />
+                       autocomplete="username" placeholder="Enter your username" />
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required
-                       autocomplete="new-password" placeholder="Choose a password" />
+                       autocomplete="current-password" placeholder="Enter your password" />
             </div>
-            <button type="submit" class="btn-submit">Create Account</button>
+            <button type="submit" class="btn-submit">Sign In</button>
         </form>
 
         <div class="links">
-            Already have an account? <a href="{{ url_for('user_login') }}">Sign in</a>
+            Don't have an account? <a href="{{ url_for('user_register') }}">Create one</a>
         </div>
         <a href="{{ url_for('user_view') }}" class="back-link">&larr; Back</a>
     </div>

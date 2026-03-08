@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f5f0eb;
+            color: #333;
+            min-height: 100vh;
+        }
+        /* ── Top bar ── */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e0d8d0;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topbar .brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: #b85c38;
+        }
+        .topbar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: #555;
+        }
+        .topbar .user-info span { font-weight: 600; color: #333; }
+        .btn-logout {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
+        /* ── Page wrapper ── */
+        .page {
+            max-width: 1000px;
+            margin: 28px auto;
+            padding: 0 20px 40px;
+        }
+        .page-heading {
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .page-subheading {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 24px;
+        }
+        /* ── Action buttons ── */
+        .action-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .btn-action {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background: #b85c38;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(184,92,56,0.2);
+        }
+        .btn-primary:hover { background: #a04e2e; }
+        .btn-secondary {
+            background: #fff;
+            color: #555;
+            border: 1.5px solid #e0d8d0;
+        }
+        .btn-secondary:hover { background: #f5f0eb; border-color: #c8b8a8; color: #333; }
+        /* ── Section card ── */
+        .section {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .section-header {
+            padding: 14px 22px;
+            background: #faf8f6;
+            border-bottom: 1px solid #ece5de;
+            font-size: 16px;
+            font-weight: 600;
+            color: #b85c38;
+        }
+        /* ── Restaurant table ── */
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 10px 22px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            font-weight: 600;
+            border-bottom: 1px solid #ece5de;
+        }
+        td {
+            padding: 12px 22px;
+            font-size: 14px;
+            border-bottom: 1px solid #f2eeea;
+            color: #444;
+            vertical-align: middle;
+        }
+        tr:last-child td { border-bottom: none; }
+        .empty-row td {
+            text-align: center;
+            color: #aaa;
+            padding: 28px;
+            font-style: italic;
+        }
+        /* ── Star rating widget ── */
+        .star-rating {
+            display: inline-flex;
+            gap: 2px;
+            cursor: pointer;
+        }
+        .star-rating input { display: none; }
+        .star-rating label {
+            font-size: 22px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .star-rating label:hover,
+        .star-rating label:hover ~ label,
+        .star-rating input:checked ~ label { color: #f5a623; }
+        /* Override: highlight from selected back to first */
+        .star-rating { direction: rtl; }
+        .star-rating label:hover,
+        .star-rating label:hover ~ label { color: #f5a623; }
+        /* ── Review form inline in table ── */
+        .review-form { display: none; }
+        .review-form.open { display: table-row; }
+        .review-form td { background: #faf8f6; padding: 16px 22px; }
+        textarea.review-text {
+            width: 100%;
+            min-height: 72px;
+            padding: 8px 12px;
+            border: 1px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff;
+            resize: vertical;
+            margin-top: 10px;
+        }
+        textarea.review-text:focus {
+            outline: none;
+            border-color: #b85c38;
+        }
+        .btn-submit-review {
+            margin-top: 10px;
+            padding: 9px 20px;
+            background: #b85c38;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-submit-review:hover { background: #a04e2e; }
+        .btn-cancel-review {
+            margin-top: 10px;
+            margin-left: 8px;
+            padding: 9px 16px;
+            background: transparent;
+            color: #888;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .btn-cancel-review:hover { border-color: #b85c38; color: #b85c38; }
+        .review-msg {
+            font-size: 13px;
+            margin-top: 8px;
+            color: #2e7d32;
+        }
+        .review-msg.error { color: #b71c1c; }
+        /* ── Status bar ── */
+        #status-bar {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 16px;
+            min-height: 18px;
+        }
+        @media (max-width: 700px) {
+            .topbar { flex-wrap: wrap; gap: 10px; }
+            .action-strip { flex-direction: column; }
+            .btn-action { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand">🍽 PlateRate</div>
+    <div class="user-info">
+        Welcome, <span>{{ username }}</span>
+        <a href="{{ url_for('user_logout') }}" class="btn-logout">Sign out</a>
+    </div>
+</div>
+
+<div class="page">
+    <div class="page-heading">Restaurants</div>
+    <div class="page-subheading">Browse our listed restaurants and share your experience.</div>
+
+    <div class="action-strip">
+        <button class="btn-action btn-secondary" id="btn-refresh" onclick="loadRestaurants()">🔄 Browse Restaurants</button>
+    </div>
+
+    <div id="status-bar">Loading restaurants…</div>
+
+    <div class="section">
+        <div class="section-header">Restaurant Listings</div>
+        <table id="restaurant-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Cuisine</th>
+                    <th>Location</th>
+                    <th>Dietary Tags</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="restaurant-tbody">
+                <tr class="empty-row"><td colspan="6">Loading…</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="review-modal-backdrop" style="
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.28); align-items:center;
+    justify-content:center; padding:20px; z-index:100;">
+    <div style="
+        background:#fff; border-radius:12px;
+        box-shadow:0 4px 32px rgba(0,0,0,0.12);
+        padding:32px 30px 28px; width:100%; max-width:480px;">
+        <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:6px;" id="modal-restaurant-name">Leave a Review</div>
+        <div style="font-size:13px;color:#888;margin-bottom:22px;">Rate your experience and share your thoughts.</div>
+
+        <div style="margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:8px;">Star Rating</div>
+            <div class="star-rating" id="modal-star-rating">
+                <input type="radio" name="modal-rating" id="s5" value="5"/><label for="s5">★</label>
+                <input type="radio" name="modal-rating" id="s4" value="4"/><label for="s4">★</label>
+                <input type="radio" name="modal-rating" id="s3" value="3"/><label for="s3">★</label>
+                <input type="radio" name="modal-rating" id="s2" value="2"/><label for="s2">★</label>
+                <input type="radio" name="modal-rating" id="s1" value="1"/><label for="s1">★</label>
+            </div>
+        </div>
+
+        <div style="margin-bottom:18px;">
+            <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:6px;">Your Review</div>
+            <textarea id="modal-review-text" class="review-text" style="
+                width:100%; min-height:90px; padding:10px 14px;
+                border:1px solid #d5cfc9; border-radius:8px;
+                font-size:14px; font-family:inherit; background:#faf8f6;
+                resize:vertical;" placeholder="Tell us about your visit…"></textarea>
+        </div>
+
+        <div id="modal-msg" style="font-size:13px;min-height:18px;margin-bottom:10px;"></div>
+
+        <div style="display:flex;gap:10px;">
+            <button class="btn-submit-review" id="modal-submit-btn" onclick="submitModalReview()">⭐ Submit Rating &amp; Review</button>
+            <button class="btn-cancel-review" onclick="closeReviewModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeRestaurantId = null;
+
+    function setStatus(msg) {
+        document.getElementById('status-bar').textContent = msg;
+    }
+
+    async function loadRestaurants() {
+        setStatus('Loading restaurants…');
+        try {
+            const res = await fetch('/api/restaurants');
+            const data = await res.json();
+            if (!data.ok) {
+                setStatus('Could not load restaurants: ' + (data.message || 'server error'));
+                return;
+            }
+            renderTable(data.data || []);
+            setStatus('Showing ' + (data.data || []).length + ' restaurant(s). Click "Leave Review" to rate one!');
+        } catch (e) {
+            setStatus('Network error: ' + e);
+        }
+    }
+
+    function renderTable(restaurants) {
+        const tbody = document.getElementById('restaurant-tbody');
+        tbody.innerHTML = '';
+        if (!restaurants.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No restaurants found.</td></tr>';
+            return;
+        }
+        restaurants.forEach((r, i) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${i + 1}</td>
+                <td><strong>${escHtml(r.name || '')}</strong></td>
+                <td>${escHtml(r.cuisine || '')}</td>
+                <td>${escHtml(r.location || '')}</td>
+                <td>${escHtml(r.dietaryTags || r.dietary_tags || '—')}</td>
+                <td>
+                    <button class="btn-action btn-primary review-btn"
+                            style="padding:7px 14px;font-size:13px;"
+                            data-restaurant-id="${Number(r.id)}"
+                            data-restaurant-name="${escHtml(r.name || '')}">
+                        ⭐ Leave Review
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openReviewModal(restaurantId, restaurantName) {
+        activeRestaurantId = restaurantId;
+        document.getElementById('modal-restaurant-name').textContent = 'Leave a Review — ' + restaurantName;
+        document.getElementById('modal-review-text').value = '';
+        document.getElementById('modal-msg').textContent = '';
+        document.getElementById('modal-msg').className = '';
+        document.querySelectorAll('input[name="modal-rating"]').forEach(r => r.checked = false);
+        document.getElementById('review-modal-backdrop').style.display = 'flex';
+    }
+
+    function closeReviewModal() {
+        document.getElementById('review-modal-backdrop').style.display = 'none';
+        activeRestaurantId = null;
+    }
+
+    async function submitModalReview() {
+        const ratingEl = document.querySelector('input[name="modal-rating"]:checked');
+        const comment = document.getElementById('modal-review-text').value.trim();
+        const msgEl = document.getElementById('modal-msg');
+
+        if (!ratingEl) {
+            msgEl.textContent = 'Please select a star rating.';
+            msgEl.style.color = '#b71c1c';
+            return;
+        }
+
+        const payload = {
+            restaurantId: activeRestaurantId,
+            rating: parseInt(ratingEl.value, 10),
+            comment: comment
+        };
+
+        const btn = document.getElementById('modal-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+        msgEl.textContent = '';
+
+        try {
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            let data = {};
+            try { data = await res.json(); } catch (_) {}
+
+            if (res.ok) {
+                msgEl.textContent = '✓ Review submitted successfully!';
+                msgEl.style.color = '#2e7d32';
+                setTimeout(closeReviewModal, 1200);
+            } else {
+                const errMsg = data.error || data.message || ('Server responded ' + res.status);
+                msgEl.textContent = 'Error: ' + errMsg;
+                msgEl.style.color = '#b71c1c';
+            }
+        } catch (e) {
+            msgEl.textContent = 'Network error. Please try again.';
+            msgEl.style.color = '#b71c1c';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '⭐ Submit Rating & Review';
+        }
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('review-modal-backdrop').addEventListener('click', function(e) {
+        if (e.target === this) closeReviewModal();
+    });
+
+    // Delegate "Leave Review" button clicks so data-attributes drive the modal
+    document.getElementById('restaurant-tbody').addEventListener('click', function(e) {
+        const btn = e.target.closest('.review-btn');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.restaurantId, 10);
+        const name = btn.dataset.restaurantName;
+        openReviewModal(id, name);
+    });
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    loadRestaurants();
+</script>
+</body>
+</html>
