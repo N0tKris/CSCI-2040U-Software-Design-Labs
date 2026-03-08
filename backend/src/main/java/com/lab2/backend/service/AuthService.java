@@ -4,6 +4,7 @@ import com.lab2.backend.dto.LoginRequest;
 import com.lab2.backend.dto.LoginResponse;
 import com.lab2.backend.model.User;
 import com.lab2.backend.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -23,11 +24,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
 
+    private final PasswordEncoder passwordEncoder;
+
     /** Maps token → authenticated User. */
     private final Map<String, User> tokenStore = new ConcurrentHashMap<>();
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -44,9 +48,10 @@ public class AuthService {
 
         User user = userOpt.get();
 
-        // Plain-text comparison – adequate for a lab project.
-        // A production system should use BCrypt or similar hashing.
-        if (!user.getPassword().equals(request.getPassword())) {
+        // Verify password using the configured PasswordEncoder. Passwords
+        // are hashed on registration (see UserService), so we must compare
+        // the provided plain password against the stored hash.
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return Optional.empty();
         }
 
