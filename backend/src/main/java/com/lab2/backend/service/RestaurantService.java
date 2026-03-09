@@ -18,10 +18,8 @@ public class RestaurantService {
 
     @PostConstruct
     public void seedIfEmpty() {
-        // Clear all restaurants at startup so the admin dashboard shows an
-        // empty list. This intentionally removes any demo data that may
-        // have been present from previous runs.
-        repository.deleteAll();
+        // No-op: restaurant data is persisted in the database across restarts.
+        // Do not delete existing restaurants on startup.
     }
 
     @Transactional(readOnly = true)
