@@ -322,6 +322,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ r.location }}</td>
                         <td>{{ r.dietaryTags or r.dietary_tags or '—' }}</td>
                         <td>
+                            <button class="admin-edit" 
+                                data-id="{{ r.id }}" 
+                                data-name="{{ r.name|e }}" 
+                                data-cuisine="{{ r.cuisine|e }}" 
+                                data-location="{{ r.location|e }}" 
+                                data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
+                                data-description="{{ (r.description or '')|e }}"
+                                style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">Edit</button>
                             <button class="admin-delete" data-id="{{ r.id }}" style="padding:6px 10px;border-radius:6px;border:1px solid #e2bdb0;background:#fff;color:#b85c38;cursor:pointer;">Delete</button>
                         </td>
                     </tr>
@@ -399,6 +407,42 @@ ADMIN_DASHBOARD_TEMPLATE = """
         </div>
     </div>
 
+    <!-- Edit Restaurant modal (admin dashboard) -->
+    <div class="modal-backdrop" id="admin-edit-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
+        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:20px;border-radius:8px;">
+            <h3 style="margin:0 0 8px 0;color:#b85c38;">Edit Restaurant</h3>
+            <p style="margin:0 0 12px;color:#666">Update the restaurant details below.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Name</label>
+                    <input id="admin_edit_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Cuisine</label>
+                    <input id="admin_edit_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Dietary Tags</label>
+                    <input id="admin_edit_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;">Location</label>
+                    <input id="admin_edit_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                </div>
+                <div style="grid-column:1/ -1;">
+                    <label style="font-weight:600;font-size:13px;">Description</label>
+                    <textarea id="admin_edit_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;min-height:80px"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+                <button id="admin_edit_save" style="padding:8px 12px;background:#b85c38;color:#fff;border:none;border-radius:6px;">Save</button>
+                <button id="admin_edit_cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const adminBackdrop = document.getElementById('admin-add-backdrop');
         document.getElementById('open-add-modal').addEventListener('click', () => { adminBackdrop.style.display = 'flex'; });
@@ -457,6 +501,60 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     alert('Request failed: ' + e);
                 }
             });
+        });
+
+        // Edit button handlers — open modal and populate fields
+        document.querySelectorAll('.admin-edit').forEach(btn => {
+            btn.addEventListener('click', (ev) => {
+                const id = btn.getAttribute('data-id');
+                if (!id) return;
+                document.getElementById('admin_edit_name').value = btn.getAttribute('data-name') || '';
+                document.getElementById('admin_edit_cuisine').value = btn.getAttribute('data-cuisine') || '';
+                document.getElementById('admin_edit_location').value = btn.getAttribute('data-location') || '';
+                document.getElementById('admin_edit_dietary').value = btn.getAttribute('data-dietary') || '';
+                document.getElementById('admin_edit_description').value = btn.getAttribute('data-description') || '';
+                // store id on save button for later
+                document.getElementById('admin_edit_save').setAttribute('data-id', id);
+                document.getElementById('admin-edit-backdrop').style.display = 'flex';
+            });
+        });
+
+        document.getElementById('admin_edit_cancel').addEventListener('click', () => { document.getElementById('admin-edit-backdrop').style.display = 'none'; });
+
+        document.getElementById('admin_edit_save').addEventListener('click', async () => {
+            const id = document.getElementById('admin_edit_save').getAttribute('data-id');
+            if (!id) return alert('No restaurant selected');
+            const payload = {
+                name: document.getElementById('admin_edit_name').value.trim(),
+                cuisine: document.getElementById('admin_edit_cuisine').value.trim(),
+                dietaryTags: document.getElementById('admin_edit_dietary').value.trim(),
+                location: document.getElementById('admin_edit_location').value.trim(),
+                description: document.getElementById('admin_edit_description').value.trim()
+            };
+            if (!payload.name || !payload.cuisine || !payload.location) {
+                alert('Please provide name, cuisine and location');
+                return;
+            }
+
+            try {
+                const res = await fetch('/admin/restaurants/' + encodeURIComponent(id), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    document.getElementById('admin-edit-backdrop').style.display = 'none';
+                    window.location.reload();
+                    return;
+                }
+
+                alert('Failed to update restaurant: ' + (data.error || data.message || JSON.stringify(data)));
+            } catch (e) {
+                alert('Request failed: ' + e);
+            }
         });
     </script>
 </body>
@@ -986,6 +1084,29 @@ def admin_delete_restaurant(rid: int) -> tuple[dict[str, Any], int]:
         return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend to delete restaurant", str(exc)), 502
+
+
+@app.put("/admin/restaurants/<int:rid>")
+def admin_update_restaurant(rid: int) -> tuple[dict[str, Any], int]:
+    """Proxy PUT /admin/restaurants/<id> to backend, using stored admin session token."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+
+    payload = request.get_json(silent=True) or {}
+    token = session.get("admin_token")
+    headers = {"Authorization": token, "Content-Type": "application/json"} if token else {"Content-Type": "application/json"}
+    try:
+        resp = requests.put(f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{rid}", json=payload, headers=headers, timeout=5)
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+
+        if resp.ok:
+            return body, resp.status_code
+        return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to update restaurant", str(exc)), 502
 
 
 @app.get("/admin/logout")

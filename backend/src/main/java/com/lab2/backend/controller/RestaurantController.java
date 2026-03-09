@@ -58,7 +58,13 @@ public class RestaurantController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Restaurant restaurant) {
+    public ResponseEntity<?> update(@RequestHeader(value = "Authorization", required = false) String token,
+                                    @PathVariable Long id, @RequestBody Restaurant restaurant) {
+        // Only admin may update restaurants
+        if (!authService.isAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin privileges required"));
+        }
+
         if (!restaurantService.validateRestaurant(restaurant)) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "name, cuisine and location are required");
