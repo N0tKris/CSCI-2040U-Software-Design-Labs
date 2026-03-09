@@ -3,6 +3,7 @@ package com.lab2.backend.service;
 import com.lab2.backend.model.Restaurant;
 import com.lab2.backend.repository.RestaurantRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
@@ -23,12 +24,25 @@ public class RestaurantService {
         repository.deleteAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Restaurant> getAllRestaurants() {
-        return repository.findAll().stream().sorted((a, b) -> Long.compare(a.getId(), b.getId())).toList();
+        List<Restaurant> restaurants = repository.findAll();
+        // Force initialization of lazy collections so DTOs can be built outside the session
+        for (Restaurant r : restaurants) {
+            r.getMenuItems().size();
+            r.getReviews().size();
+        }
+        return restaurants.stream().sorted((a, b) -> Long.compare(a.getId(), b.getId())).toList();
     }
 
+    @Transactional(readOnly = true)
     public Restaurant getRestaurantById(Long id) {
-        return repository.findById(id).orElse(null);
+        Restaurant r = repository.findById(id).orElse(null);
+        if (r != null) {
+            r.getMenuItems().size();
+            r.getReviews().size();
+        }
+        return r;
     }
 
     public Restaurant addRestaurant(Restaurant restaurant) {
@@ -52,8 +66,14 @@ public class RestaurantService {
     }
 
     /** Return the restaurant owned by the given user, or null if none. */
+    @Transactional(readOnly = true)
     public Restaurant getRestaurantByOwner(Long ownerId) {
-        return repository.findByOwnerId(ownerId).orElse(null);
+        Restaurant r = repository.findByOwnerId(ownerId).orElse(null);
+        if (r != null) {
+            r.getMenuItems().size();
+            r.getReviews().size();
+        }
+        return r;
     }
 
     /** Return true if the given owner already has a restaurant. */
@@ -61,10 +81,18 @@ public class RestaurantService {
         return repository.existsByOwnerId(ownerId);
     }
 
+    @Transactional
     public Restaurant updateRestaurant(Long id, Restaurant updated) {
         return repository.findById(id).map(r -> {
-            updated.setId(id);
-            return repository.save(updated);
+            r.setName(updated.getName());
+            r.setCuisine(updated.getCuisine());
+            r.setLocation(updated.getLocation());
+            r.setDescription(updated.getDescription());
+            r.setDietaryTags(updated.getDietaryTags());
+            if (updated.getOwnerId() != null) {
+                r.setOwnerId(updated.getOwnerId());
+            }
+            return repository.save(r);
         }).orElse(null);
     }
 

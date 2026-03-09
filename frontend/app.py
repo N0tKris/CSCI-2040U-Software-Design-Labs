@@ -355,7 +355,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     {% for rv in reviews %}
                     <tr>
                         <td>{{ rv.id }}</td>
-                        <td>{{ rv.userId or rv.user_id or '—' }}</td>
+                        <td>{{ rv.username or rv.userId or rv.user_id or '—' }}</td>
                         <td>{{ rv.restaurantId or rv.restaurant_id or '—' }}</td>
                         <td class="stars">{{ '★' * rv.rating }}{{ '☆' * (5 - rv.rating) }}</td>
                         <td>{{ rv.comment or '—' }}</td>

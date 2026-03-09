@@ -7,6 +7,7 @@ import com.lab2.backend.repository.RestaurantRepository;
 import com.lab2.backend.repository.ReviewRepository;
 import com.lab2.backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -26,13 +27,25 @@ public class ReviewService {
     }
 
     /** Return all reviews. */
+    @Transactional(readOnly = true)
     public List<Review> getAllReviews() {
-        return reviewRepository.findAll();
+        List<Review> reviews = reviewRepository.findAll();
+        for (Review r : reviews) {
+            if (r.getUser() != null) r.getUser().getUsername();
+            if (r.getRestaurant() != null) r.getRestaurant().getId();
+        }
+        return reviews;
     }
 
     /** Return all reviews for a given restaurant. */
+    @Transactional(readOnly = true)
     public List<Review> getReviewsByRestaurant(Long restaurantId) {
-        return reviewRepository.findByRestaurantId(restaurantId);
+        List<Review> reviews = reviewRepository.findByRestaurantId(restaurantId);
+        for (Review r : reviews) {
+            if (r.getUser() != null) r.getUser().getUsername();
+            if (r.getRestaurant() != null) r.getRestaurant().getId();
+        }
+        return reviews;
     }
 
     /**

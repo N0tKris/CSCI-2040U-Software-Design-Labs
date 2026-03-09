@@ -1,6 +1,7 @@
 package com.lab2.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
 
@@ -19,6 +20,7 @@ public class MenuItem {
     /** The restaurant this menu item belongs to. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "restaurant_id", nullable = false)
+    @JsonBackReference
     private Restaurant restaurant;
 
     @Column(name = "item_name", nullable = false, length = 100)

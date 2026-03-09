@@ -1,6 +1,7 @@
 package com.lab2.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,10 +40,12 @@ public class Restaurant {
 
     /** Menu items belonging to this restaurant. Removed when restaurant is deleted. */
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<MenuItem> menuItems = new ArrayList<>();
 
     /** Reviews for this restaurant. Removed when restaurant is deleted. */
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
 
     public Restaurant() {}

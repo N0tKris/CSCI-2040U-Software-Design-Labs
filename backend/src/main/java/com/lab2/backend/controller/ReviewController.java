@@ -2,6 +2,8 @@ package com.lab2.backend.controller;
 
 import com.lab2.backend.model.Review;
 import com.lab2.backend.model.User;
+import com.lab2.backend.dto.ReviewDto;
+import java.util.stream.Collectors;
 import com.lab2.backend.service.AuthService;
 import com.lab2.backend.service.ReviewService;
 import org.springframework.http.HttpStatus;
@@ -40,7 +42,7 @@ public class ReviewController {
                     .body(Map.of("error", "Admin privileges required"));
         }
         List<Review> reviews = reviewService.getAllReviews();
-        List<Map<String, Object>> out = reviews.stream().map(this::toMap).toList();
+        List<ReviewDto> out = reviews.stream().map(ReviewDto::fromEntity).collect(Collectors.toList());
         return ResponseEntity.ok(out);
     }
 
@@ -59,7 +61,7 @@ public class ReviewController {
                     .body(Map.of("error", "Insufficient privileges"));
         }
         List<Review> reviews = reviewService.getReviewsByRestaurant(restaurantId);
-        List<Map<String, Object>> out = reviews.stream().map(this::toMap).toList();
+        List<ReviewDto> out = reviews.stream().map(ReviewDto::fromEntity).collect(Collectors.toList());
         return ResponseEntity.ok(out);
     }
 
@@ -107,7 +109,7 @@ public class ReviewController {
 
         try {
             Review review = reviewService.createReview(user.getId(), restaurantId, rating, comment);
-            return ResponseEntity.status(HttpStatus.CREATED).body(toMap(review));
+            return ResponseEntity.status(HttpStatus.CREATED).body(ReviewDto.fromEntity(review));
         } catch (IllegalArgumentException e) {
             Map<String, String> err = new HashMap<>();
             err.put("error", e.getMessage());
@@ -115,15 +117,4 @@ public class ReviewController {
         }
     }
 
-    private Map<String, Object> toMap(Review r) {
-        Map<String, Object> m = new HashMap<>();
-        m.put("id", r.getId());
-        m.put("userId", r.getUser() != null ? r.getUser().getId() : null);
-        m.put("username", r.getUser() != null ? r.getUser().getUsername() : null);
-        m.put("restaurantId", r.getRestaurant() != null ? r.getRestaurant().getId() : null);
-        m.put("rating", r.getRating());
-        m.put("comment", r.getComment());
-        m.put("timestamp", r.getTimestamp() != null ? r.getTimestamp().toString() : null);
-        return m;
-    }
 }

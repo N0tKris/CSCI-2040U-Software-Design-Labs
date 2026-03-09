@@ -1,6 +1,8 @@
 package com.lab2.backend.controller;
 
 import com.lab2.backend.model.Restaurant;
+import com.lab2.backend.dto.RestaurantDto;
+import java.util.stream.Collectors;
 import com.lab2.backend.service.AuthService;
 import com.lab2.backend.service.RestaurantService;
 import org.springframework.http.HttpStatus;
@@ -25,8 +27,10 @@ public class RestaurantController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Restaurant>> getAllRestaurants() {
-        return ResponseEntity.ok(restaurantService.getAllRestaurants());
+    public ResponseEntity<List<RestaurantDto>> getAllRestaurants() {
+        List<RestaurantDto> out = restaurantService.getAllRestaurants()
+                .stream().map(RestaurantDto::fromEntity).collect(Collectors.toList());
+        return ResponseEntity.ok(out);
     }
 
     @GetMapping("/my")
@@ -42,16 +46,16 @@ public class RestaurantController {
         if (restaurant == null) {
             return ResponseEntity.ok(Map.of("restaurant", (Object) null, "hasRestaurant", false));
         }
-        return ResponseEntity.ok(Map.of("restaurant", restaurant, "hasRestaurant", true));
+        return ResponseEntity.ok(Map.of("restaurant", RestaurantDto.fromEntity(restaurant), "hasRestaurant", true));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Restaurant> getById(@PathVariable Long id) {
+    public ResponseEntity<RestaurantDto> getById(@PathVariable Long id) {
         Restaurant restaurant = restaurantService.getRestaurantById(id);
         if (restaurant == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(restaurant);
+        return ResponseEntity.ok(RestaurantDto.fromEntity(restaurant));
     }
 
     @PostMapping
@@ -65,7 +69,7 @@ public class RestaurantController {
                 return ResponseEntity.badRequest().body(error);
             }
             Restaurant created = restaurantService.addRestaurant(restaurant);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            return ResponseEntity.status(HttpStatus.CREATED).body(RestaurantDto.fromEntity(created));
         }
 
         // Owner may create exactly one restaurant linked to their account
@@ -81,7 +85,7 @@ public class RestaurantController {
             }
             try {
                 Restaurant created = restaurantService.addRestaurantByOwner(ownerId, restaurant);
-                return ResponseEntity.status(HttpStatus.CREATED).body(created);
+                return ResponseEntity.status(HttpStatus.CREATED).body(RestaurantDto.fromEntity(created));
             } catch (IllegalStateException e) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
             }
@@ -109,7 +113,7 @@ public class RestaurantController {
         if (updated == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(RestaurantDto.fromEntity(updated));
     }
 
     @DeleteMapping("/{id}")

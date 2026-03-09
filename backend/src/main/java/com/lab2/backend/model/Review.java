@@ -1,6 +1,7 @@
 package com.lab2.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.LocalDateTime;
@@ -20,11 +21,13 @@ public class Review {
     /** The user who wrote this review. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"password"})
     private User user;
 
     /** The restaurant being reviewed. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "restaurant_id", nullable = false)
+    @JsonBackReference
     private Restaurant restaurant;
 
     @Min(value = 1, message = "Rating must be at least 1")
