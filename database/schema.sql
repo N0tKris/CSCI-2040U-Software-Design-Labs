@@ -11,22 +11,16 @@ DROP TABLE IF EXISTS restaurants CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
 -- ============================================================
--- ENUM TYPE for user roles
--- ============================================================
-DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('ADMIN', 'USER');
-EXCEPTION
-    WHEN duplicate_object THEN NULL;
-END $$;
-
--- ============================================================
 -- USERS TABLE
+-- role is stored as VARCHAR(10) so Hibernate's @Enumerated(EnumType.STRING)
+-- works correctly and new roles (OWNER, etc.) can be added without DDL changes.
 -- ============================================================
 CREATE TABLE users (
     id          SERIAL PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE,
     password    VARCHAR(255) NOT NULL,
-    role        user_role    NOT NULL DEFAULT 'USER'
+    role        VARCHAR(10)  NOT NULL DEFAULT 'USER'
+        CONSTRAINT chk_users_role CHECK (role IN ('ADMIN', 'USER', 'OWNER'))
 );
 
 -- Index for fast username lookups (e.g. login)

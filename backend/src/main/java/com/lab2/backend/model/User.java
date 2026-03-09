@@ -22,7 +22,7 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(nullable = false, columnDefinition = "VARCHAR(10)")
     private Role role = Role.USER;
 
     /** Allowed role values for a user. */
