@@ -36,6 +36,31 @@ public class RestaurantService {
         return repository.save(restaurant);
     }
 
+    /**
+     * Add a restaurant on behalf of an owner. Ensures the owner does not
+     * already have a restaurant before creating a new one.
+     *
+     * @throws IllegalStateException if the owner already has a restaurant
+     */
+    public Restaurant addRestaurantByOwner(Long ownerId, Restaurant restaurant) {
+        if (repository.existsByOwnerId(ownerId)) {
+            throw new IllegalStateException("Owner already has a restaurant");
+        }
+        restaurant.setId(null);
+        restaurant.setOwnerId(ownerId);
+        return repository.save(restaurant);
+    }
+
+    /** Return the restaurant owned by the given user, or null if none. */
+    public Restaurant getRestaurantByOwner(Long ownerId) {
+        return repository.findByOwnerId(ownerId).orElse(null);
+    }
+
+    /** Return true if the given owner already has a restaurant. */
+    public boolean ownerHasRestaurant(Long ownerId) {
+        return repository.existsByOwnerId(ownerId);
+    }
+
     public Restaurant updateRestaurant(Long id, Restaurant updated) {
         return repository.findById(id).map(r -> {
             updated.setId(id);

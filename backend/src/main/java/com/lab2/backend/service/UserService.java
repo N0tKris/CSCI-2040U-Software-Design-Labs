@@ -23,6 +23,16 @@ public class UserService {
      * @throws IllegalArgumentException if the username is already taken or input is invalid
      */
     public User register(String username, String password) {
+        return register(username, password, User.Role.USER);
+    }
+
+    /**
+     * Register a new user with the given username, password, and role.
+     * The password is hashed before storage.
+     *
+     * @throws IllegalArgumentException if the username is already taken or input is invalid
+     */
+    public User register(String username, String password, User.Role role) {
         if (username == null || username.trim().isEmpty()) {
             throw new IllegalArgumentException("Username cannot be empty");
         }
@@ -37,7 +47,7 @@ public class UserService {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(User.Role.USER);
+        user.setRole(role != null ? role : User.Role.USER);
 
         return userRepository.save(user);
     }

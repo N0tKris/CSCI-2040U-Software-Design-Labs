@@ -42,6 +42,7 @@ class Base(DeclarativeBase):
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
     USER = "USER"
+    OWNER = "OWNER"
 
 
 # ============================================================

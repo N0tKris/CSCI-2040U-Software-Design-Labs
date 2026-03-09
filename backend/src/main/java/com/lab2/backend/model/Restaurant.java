@@ -17,6 +17,10 @@ public class Restaurant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** The user ID of the owner who created this restaurant (null if created by admin). */
+    @Column(name = "owner_id")
+    private Long ownerId;
+
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -54,6 +58,9 @@ public class Restaurant {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
