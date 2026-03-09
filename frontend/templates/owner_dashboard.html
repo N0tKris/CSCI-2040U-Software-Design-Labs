@@ -12,178 +12,215 @@
             color: #333;
             min-height: 100vh;
         }
+
+        /* ── Top bar ── */
         .topbar {
             background: #fff;
             border-bottom: 1px solid #e0d8d0;
-            padding: 14px 28px;
+            padding: 0 32px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
         .topbar .brand {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             color: #b85c38;
+            letter-spacing: -0.3px;
         }
         .topbar .user-info {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
             font-size: 14px;
             color: #555;
         }
         .topbar .user-info span { font-weight: 600; color: #333; }
         .btn-logout {
-            padding: 6px 16px;
+            padding: 7px 18px;
             background: transparent;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1px solid #d5cfc9;
+            border-radius: 20px;
             font-size: 13px;
             color: #666;
             cursor: pointer;
             text-decoration: none;
-            transition: border-color 0.2s, color 0.2s;
+            transition: all 0.2s;
         }
         .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
+
+        /* ── Hero banner ── */
+        .owner-hero {
+            background: linear-gradient(135deg, #b85c38 0%, #d4845a 100%);
+            padding: 40px 32px 36px;
+            color: #fff;
+        }
+        .owner-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+        .owner-hero p { font-size: 14px; opacity: 0.88; }
+
+        /* ── Dashboard layout ── */
         .dashboard {
-            max-width: 960px;
-            margin: 28px auto;
-            padding: 0 20px 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 28px 24px 60px;
         }
-        .dashboard h2 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .section {
-            background: #fff;
+
+        /* ── Alerts ── */
+        .alert {
+            padding: 14px 18px;
             border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-            overflow: hidden;
+            font-size: 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .section-header {
-            padding: 14px 22px;
+        .alert-error { background: #fdecea; color: #b71c1c; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+
+        /* ── Restaurant hero card ── */
+        .restaurant-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .restaurant-card-banner {
+            height: 140px;
+            background: linear-gradient(135deg, #e8ddd4 0%, #d9cdc0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            color: #c4a882;
+            position: relative;
+        }
+        .restaurant-card-banner .cuisine-badge {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            background: rgba(255,255,255,0.92);
+            padding: 5px 14px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #b85c38;
+        }
+        .restaurant-card-body {
+            padding: 24px 28px 28px;
+        }
+        .restaurant-card-body h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 24px;
+            margin-bottom: 14px;
+        }
+        .info-item {
+            font-size: 14px;
+            color: #666;
+        }
+        .info-item .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: #b85c38;
+            margin-bottom: 3px;
+        }
+        .info-item .value {
+            font-weight: 500;
+            color: #444;
+        }
+        .restaurant-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            padding-top: 12px;
+            border-top: 1px solid #ece5de;
+            white-space: pre-wrap;
+        }
+        .diet-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .diet-tags .tag {
+            padding: 3px 10px;
+            background: #f5f0eb;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9a7b5a;
+        }
+
+        /* ── No restaurant state ── */
+        .no-restaurant-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+            padding: 48px 28px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .no-restaurant-card .empty-icon { font-size: 52px; margin-bottom: 14px; }
+        .no-restaurant-card h3 {
+            font-size: 20px; font-weight: 700; color: #333; margin-bottom: 6px;
+        }
+        .no-restaurant-card p { font-size: 14px; color: #888; margin-bottom: 24px; }
+
+        /* ── Create form ── */
+        .form-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .form-card-header {
+            padding: 16px 24px;
             background: #faf8f6;
             border-bottom: 1px solid #ece5de;
             font-size: 16px;
-            font-weight: 600;
-            color: #b85c38;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .restaurant-info {
-            padding: 20px 22px;
-        }
-        .restaurant-info .name {
-            font-size: 20px;
             font-weight: 700;
-            color: #333;
-            margin-bottom: 6px;
+            color: #b85c38;
         }
-        .restaurant-info .meta {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        .restaurant-info .meta span {
-            font-weight: 600;
-            color: #444;
-        }
-        .no-restaurant {
-            padding: 32px 22px;
-            text-align: center;
-            color: #888;
-            font-style: italic;
-        }
-        .btn-create {
-            display: inline-block;
-            padding: 10px 22px;
-            background: #b85c38;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.2s;
-            margin-top: 14px;
-        }
-        .btn-create:hover { background: #a04e2e; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            padding: 10px 22px;
-            font-size: 12px;
-            text-transform: uppercase;
-            color: #999;
-            font-weight: 600;
-            border-bottom: 1px solid #ece5de;
-        }
-        td {
-            padding: 12px 22px;
-            font-size: 14px;
-            border-bottom: 1px solid #f2eeea;
-            color: #444;
-        }
-        tr:last-child td { border-bottom: none; }
-        .empty-row td {
-            text-align: center;
-            color: #aaa;
-            padding: 24px;
-            font-style: italic;
-        }
-        .stars { color: #f5a623; letter-spacing: 1px; }
-        .alert-error {
-            background: #fdecea;
-            color: #b71c1c;
-            font-size: 13px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            font-size: 13px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        /* Create Restaurant Form */
-        .create-form {
-            padding: 20px 22px;
-        }
+        .form-card-body { padding: 24px 24px 28px; }
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 14px;
+            gap: 16px;
+            margin-bottom: 18px;
         }
         .form-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #888;
+            margin-bottom: 6px;
         }
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 9px 12px;
+            padding: 11px 14px;
             border: 1px solid #d5cfc9;
-            border-radius: 7px;
+            border-radius: 9px;
             font-size: 14px;
             background: #faf8f6;
             font-family: inherit;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background 0.2s;
         }
         .form-group input:focus,
         .form-group textarea:focus {
@@ -193,67 +230,198 @@
         }
         .form-group.full { grid-column: 1 / -1; }
         .btn-save {
-            padding: 10px 24px;
+            padding: 12px 28px;
             background: #b85c38;
             color: #fff;
             border: none;
-            border-radius: 8px;
+            border-radius: 9px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
         }
         .btn-save:hover { background: #a04e2e; }
-        @media (max-width: 600px) {
+
+        /* ── Reviews section ── */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title .count {
+            background: #f5f0eb;
+            color: #b85c38;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+        .review-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px 22px;
+            margin-bottom: 12px;
+            transition: box-shadow 0.2s;
+        }
+        .review-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
+        .review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .reviewer-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+        }
+        .review-date {
+            font-size: 12px;
+            color: #bbb;
+        }
+        .review-stars {
+            color: #f5a623;
+            font-size: 16px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .review-text {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.6;
+        }
+        .empty-reviews {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 40px 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+        .empty-reviews .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+        @media (max-width: 700px) {
+            .topbar { padding: 0 16px; }
+            .owner-hero { padding: 28px 16px; }
+            .owner-hero h1 { font-size: 22px; }
+            .dashboard { padding: 20px 14px 40px; }
             .form-grid { grid-template-columns: 1fr; }
-            .topbar { flex-wrap: wrap; gap: 10px; }
+            .info-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+
+<!-- Top bar -->
 <div class="topbar">
-    <div class="brand">🍽 PlateRate — Owner Dashboard</div>
+    <div class="brand">PlateRate</div>
     <div class="user-info">
-        Logged in as <span>{{ owner_username }}</span>
+        Owner: <span>{{ owner_username }}</span>
         <a href="{{ url_for('owner_logout') }}" class="btn-logout">Sign out</a>
     </div>
 </div>
 
+<!-- Hero -->
+<div class="owner-hero">
+    <h1>Owner Dashboard</h1>
+    <p>Manage your restaurant and view customer feedback</p>
+</div>
+
 <div class="dashboard">
-    <h2>My Restaurant</h2>
 
     {% if error %}
-    <div class="alert-error">{{ error }}</div>
+    <div class="alert alert-error">⚠ {{ error }}</div>
     {% endif %}
     {% if success %}
-    <div class="alert-success">{{ success }}</div>
+    <div class="alert alert-success">✓ {{ success }}</div>
     {% endif %}
 
-    <!-- Restaurant section -->
-    <div class="section">
-        <div class="section-header">
-            <span>Restaurant Details</span>
+    {% if restaurant %}
+    <!-- ── Restaurant details card ── -->
+    <div class="restaurant-card">
+        <div class="restaurant-card-banner">
+            🍽
+            <span class="cuisine-badge">{{ restaurant.cuisine or 'Restaurant' }}</span>
         </div>
-        {% if restaurant %}
-        <div class="restaurant-info">
-            <div class="name">{{ restaurant.name }}</div>
-            <div class="meta">🍽 Cuisine: <span>{{ restaurant.cuisine }}</span></div>
-            <div class="meta">📍 Location: <span>{{ restaurant.location }}</span></div>
-            {% if restaurant.dietaryTags %}
-            <div class="meta">🥗 Dietary Tags: <span>{{ restaurant.dietaryTags }}</span></div>
-            {% endif %}
+        <div class="restaurant-card-body">
+            <h2>{{ restaurant.name }}</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="label">Cuisine</div>
+                    <div class="value">{{ restaurant.cuisine or '—' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="label">Location</div>
+                    <div class="value">📍 {{ restaurant.location or '—' }}</div>
+                </div>
+                {% if restaurant.dietaryTags %}
+                <div class="info-item" style="grid-column:1/-1;">
+                    <div class="label">Dietary Options</div>
+                    <div class="diet-tags">
+                        {% for tag in restaurant.dietaryTags.split(',') %}
+                            {% if tag.strip() %}
+                            <span class="tag">{{ tag.strip() }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
             {% if restaurant.description %}
-            <div class="meta" style="margin-top:8px;">{{ restaurant.description }}</div>
+            <div class="restaurant-desc">{{ restaurant.description }}</div>
             {% endif %}
         </div>
-        {% else %}
-        <div class="no-restaurant">
-            <div>You haven't registered a restaurant yet.</div>
-        </div>
+    </div>
 
-        <!-- Create Restaurant Form -->
-        <div class="create-form">
-            <div style="font-size:15px;font-weight:600;color:#b85c38;margin-bottom:14px;">Register Your Restaurant</div>
+    <!-- ── Reviews section ── -->
+    <div class="section-title">
+        Customer Reviews
+        <span class="count">{{ reviews|length if reviews else 0 }}</span>
+    </div>
+
+    {% if reviews %}
+        {% for rv in reviews %}
+        <div class="review-card">
+            <div class="review-header">
+                <div class="reviewer-name">{{ rv.username or 'Anonymous' }}</div>
+                <div class="review-date">
+                    {% if rv.timestamp %}{{ rv.timestamp[:10] }}{% else %}—{% endif %}
+                </div>
+            </div>
+            <div class="review-stars">
+                {% set star_count = rv.rating | int %}
+                {{ '★' * star_count }}{{ '☆' * (5 - star_count) }}
+            </div>
+            {% if rv.comment %}
+            <div class="review-text">{{ rv.comment }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-reviews">
+            <div class="empty-icon">💬</div>
+            No reviews yet. Once customers rate your restaurant, they'll appear here.
+        </div>
+    {% endif %}
+
+    {% else %}
+    <!-- ── No restaurant state ── -->
+    <div class="no-restaurant-card">
+        <div class="empty-icon">🏪</div>
+        <h3>No restaurant registered yet</h3>
+        <p>Create your restaurant listing below to start receiving customers and reviews.</p>
+    </div>
+
+    <!-- ── Create restaurant form ── -->
+    <div class="form-card">
+        <div class="form-card-header">Register Your Restaurant</div>
+        <div class="form-card-body">
             <form method="POST" action="{{ url_for('owner_create_restaurant') }}">
                 <div class="form-grid">
                     <div class="form-group">
@@ -280,44 +448,6 @@
                 <button type="submit" class="btn-save">Register Restaurant</button>
             </form>
         </div>
-        {% endif %}
-    </div>
-
-    <!-- Reviews section -->
-    {% if restaurant %}
-    <div class="section">
-        <div class="section-header">Customer Reviews</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Customer</th>
-                    <th>Rating</th>
-                    <th>Review</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% if reviews %}
-                {% for rv in reviews %}
-                <tr>
-                    <td><strong>{{ rv.username or '—' }}</strong></td>
-                    <td class="stars">
-                        {% set stars = rv.rating | int %}
-                        {{ '★' * stars }}{{ '☆' * (5 - stars) }}
-                    </td>
-                    <td>{{ rv.comment or '—' }}</td>
-                    <td style="color:#aaa;font-size:13px;">
-                        {% if rv.timestamp %}
-                            {{ rv.timestamp[:10] }}
-                        {% else %}—{% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr class="empty-row"><td colspan="4">No reviews yet for your restaurant.</td></tr>
-            {% endif %}
-            </tbody>
-        </table>
     </div>
     {% endif %}
 </div>
