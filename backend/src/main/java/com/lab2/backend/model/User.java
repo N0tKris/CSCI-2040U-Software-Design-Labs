@@ -27,7 +27,7 @@ public class User {
 
     /** Allowed role values for a user. */
     public enum Role {
-        ADMIN, USER
+        ADMIN, USER, OWNER
     }
 
     public User() {}

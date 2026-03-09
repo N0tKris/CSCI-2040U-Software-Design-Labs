@@ -90,6 +90,16 @@
             border-color: #c8b8a8;
             color: #333;
         }
+        .btn-owner {
+            background: #faf8f6;
+            color: #555;
+            border: 1.5px solid #e0d8d0;
+        }
+        .btn-owner:hover {
+            background: #f0ebe5;
+            border-color: #c8b8a8;
+            color: #333;
+        }
         .icon {
             margin-right: 8px;
             font-size: 18px;
@@ -110,6 +120,9 @@
         <div class="btn-group">
             <a href="{{ url_for('user_view') }}" class="btn btn-user">
                 <span class="icon">👤</span>User View
+            </a>
+            <a href="{{ url_for('owner_view') }}" class="btn btn-owner">
+                <span class="icon">🍴</span>Owner View
             </a>
             <a href="{{ url_for('admin_login') }}" class="btn btn-admin">
                 <span class="icon">🔒</span>Admin View

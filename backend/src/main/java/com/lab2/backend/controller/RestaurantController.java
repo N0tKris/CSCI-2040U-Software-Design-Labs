@@ -29,6 +29,22 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getAllRestaurants());
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyRestaurant(@RequestHeader(value = "Authorization", required = false) String token) {
+        if (!authService.isOwner(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Owner privileges required"));
+        }
+        Long ownerId = authService.getUserByToken(token).map(u -> u.getId()).orElse(null);
+        if (ownerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid token"));
+        }
+        Restaurant restaurant = restaurantService.getRestaurantByOwner(ownerId);
+        if (restaurant == null) {
+            return ResponseEntity.ok(Map.of("restaurant", (Object) null, "hasRestaurant", false));
+        }
+        return ResponseEntity.ok(Map.of("restaurant", restaurant, "hasRestaurant", true));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Restaurant> getById(@PathVariable Long id) {
         Restaurant restaurant = restaurantService.getRestaurantById(id);
@@ -41,20 +57,39 @@ public class RestaurantController {
     @PostMapping
     public ResponseEntity<?> create(@RequestHeader(value = "Authorization", required = false) String token,
                                     @RequestBody Restaurant restaurant) {
-        // Only admin may create restaurants
-        if (!authService.isAdmin(token)) {
-            Map<String, String> err = new HashMap<>();
-            err.put("error", "Admin privileges required");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
+        // Admin may always create restaurants
+        if (authService.isAdmin(token)) {
+            if (!restaurantService.validateRestaurant(restaurant)) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "name, cuisine and location are required");
+                return ResponseEntity.badRequest().body(error);
+            }
+            Restaurant created = restaurantService.addRestaurant(restaurant);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
         }
 
-        if (!restaurantService.validateRestaurant(restaurant)) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "name, cuisine and location are required");
-            return ResponseEntity.badRequest().body(error);
+        // Owner may create exactly one restaurant linked to their account
+        if (authService.isOwner(token)) {
+            if (!restaurantService.validateRestaurant(restaurant)) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "name, cuisine and location are required");
+                return ResponseEntity.badRequest().body(error);
+            }
+            Long ownerId = authService.getUserByToken(token).map(u -> u.getId()).orElse(null);
+            if (ownerId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid token"));
+            }
+            try {
+                Restaurant created = restaurantService.addRestaurantByOwner(ownerId, restaurant);
+                return ResponseEntity.status(HttpStatus.CREATED).body(created);
+            } catch (IllegalStateException e) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+            }
         }
-        Restaurant created = restaurantService.addRestaurant(restaurant);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+
+        Map<String, String> err = new HashMap<>();
+        err.put("error", "Admin or Owner privileges required");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err);
     }
 
     @PutMapping("/{id}")

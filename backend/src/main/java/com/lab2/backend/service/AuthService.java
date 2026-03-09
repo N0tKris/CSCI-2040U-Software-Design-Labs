@@ -84,6 +84,15 @@ public class AuthService {
     }
 
     /**
+     * Check whether the given token belongs to an owner user.
+     */
+    public boolean isOwner(String token) {
+        return getUserByToken(token)
+                .map(u -> u.getRole() == User.Role.OWNER)
+                .orElse(false);
+    }
+
+    /**
      * Invalidate (log out) the given token.
      */
     public void logout(String token) {

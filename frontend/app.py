@@ -261,6 +261,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
         }
         .badge-admin { background: #fce4ec; color: #c62828; }
         .badge-user  { background: #e8f5e9; color: #2e7d32; }
+        .badge-owner { background: #fff3e0; color: #e65100; }
         .stars { color: #f5a623; letter-spacing: 1px; }
     </style>
 </head>
@@ -290,7 +291,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ u.id }}</td>
                         <td>{{ u.username }}</td>
                         <td>
-                            <span class="badge {{ 'badge-admin' if u.role == 'ADMIN' else 'badge-user' }}">
+                            {% set role_class = {'ADMIN': 'badge-admin', 'OWNER': 'badge-owner'}.get(u.role, 'badge-user') %}
+                            <span class="badge {{ role_class }}">
                                 {{ u.role }}
                             </span>
                         </td>
@@ -1127,6 +1129,272 @@ def admin_logout():
     session.pop("admin_username", None)
     session.pop("admin_role", None)
     return redirect(url_for("admin_login"))
+
+
+# ---------------------------------------------------------------------------
+# Owner routes
+# ---------------------------------------------------------------------------
+
+@app.get("/owner")
+def owner_view():
+    """Owner view landing — choose Register or Login."""
+    return render_template("owner_view.html")
+
+
+@app.route("/owner/register", methods=["GET", "POST"])
+def owner_register():
+    """Owner registration page and handler."""
+    if request.method == "GET":
+        return render_template("owner_register.html", error=None, success=None)
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+    if not username or not password:
+        return render_template(
+            "owner_register.html", error="Username and password are required.", success=None
+        )
+
+    try:
+        response = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/users/register",
+            json={"username": username, "password": password, "role": "OWNER"},
+            timeout=5,
+        )
+
+        if response.status_code == 201:
+            # Attempt automatic login after successful registration
+            try:
+                login_resp = requests.post(
+                    auth_url("/login"),
+                    json={"username": username, "password": password},
+                    timeout=5,
+                )
+                if login_resp.ok:
+                    body = login_resp.json()
+                    token = (
+                        body.get("token")
+                        or body.get("accessToken")
+                        or body.get("jwt")
+                        or ""
+                    )
+                    session["owner_token"] = token
+                    session["owner_username"] = username
+                    session["owner_role"] = "OWNER"
+                    return redirect(url_for("owner_dashboard"))
+            except requests.RequestException:
+                pass
+            return render_template(
+                "owner_register.html",
+                error=None,
+                success="Account created! Please sign in.",
+            )
+
+        elif response.status_code == 400:
+            try:
+                error_message = response.json().get("error", "Failed to create account.")
+            except ValueError:
+                error_message = "Failed to create account."
+            return render_template("owner_register.html", error=error_message, success=None)
+
+        else:
+            return render_template(
+                "owner_register.html",
+                error="Failed to create account. Please try again.",
+                success=None,
+            )
+
+    except requests.RequestException:
+        return render_template(
+            "owner_register.html",
+            error="Could not connect to the server. Please try again.",
+            success=None,
+        )
+
+
+@app.route("/owner/login", methods=["GET", "POST"])
+def owner_login():
+    """Owner login page and handler."""
+    if request.method == "GET":
+        return render_template("owner_login.html", error=None)
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+
+    if not username or not password:
+        return render_template("owner_login.html", error="Please enter username and password.")
+
+    try:
+        resp = requests.post(
+            auth_url("/login"),
+            json={"username": username, "password": password},
+            timeout=5,
+        )
+
+        if not resp.ok:
+            try:
+                msg = resp.json().get("message") or resp.json().get("error", "Invalid credentials.")
+            except ValueError:
+                msg = "Invalid credentials."
+            return render_template("owner_login.html", error=msg)
+
+        body = resp.json()
+        role = (
+            body.get("role")
+            or body.get("userRole")
+            or (body.get("user", {}) or {}).get("role")
+            or ""
+        )
+        if role.upper() != "OWNER":
+            return render_template(
+                "owner_login.html", error="Access denied. Owner account required."
+            )
+
+        token = (
+            body.get("token")
+            or body.get("accessToken")
+            or body.get("jwt")
+            or ""
+        )
+        session["owner_token"] = token
+        session["owner_username"] = username
+        session["owner_role"] = "OWNER"
+        return redirect(url_for("owner_dashboard"))
+
+    except requests.RequestException:
+        return render_template(
+            "owner_login.html",
+            error="Could not reach authentication service. Please try again.",
+        )
+
+
+@app.get("/owner/logout")
+def owner_logout():
+    """Clear owner session and redirect to owner view."""
+    token = session.get("owner_token")
+    if token:
+        try:
+            requests.post(
+                auth_url("/logout"),
+                headers={"Authorization": token},
+                timeout=5,
+            )
+        except requests.RequestException:
+            pass
+    session.pop("owner_token", None)
+    session.pop("owner_username", None)
+    session.pop("owner_role", None)
+    return redirect(url_for("owner_view"))
+
+
+@app.get("/owner/dashboard")
+def owner_dashboard():
+    """Owner dashboard — show their restaurant and its reviews."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    headers = {"Authorization": token}
+
+    restaurant = None
+    reviews: list[Any] = []
+
+    # Fetch owner's restaurant
+    try:
+        resp = requests.get(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            data = resp.json()
+            restaurant = data.get("restaurant") if isinstance(data, dict) else None
+    except (requests.RequestException, ValueError):
+        pass
+
+    # Fetch reviews for owner's restaurant
+    if restaurant and restaurant.get("id"):
+        rid = restaurant["id"]
+        try:
+            resp = requests.get(
+                f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
+                headers=headers,
+                timeout=5,
+            )
+            if resp.ok:
+                data = resp.json()
+                reviews = data if isinstance(data, list) else []
+        except (requests.RequestException, ValueError):
+            pass
+
+    return render_template(
+        "owner_dashboard.html",
+        owner_username=session.get("owner_username", "Owner"),
+        restaurant=restaurant,
+        reviews=reviews,
+    )
+
+
+@app.post("/owner/restaurant/create")
+def owner_create_restaurant():
+    """Handle owner restaurant creation from dashboard form."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+
+    name = request.form.get("name", "").strip()
+    cuisine = request.form.get("cuisine", "").strip()
+    location = request.form.get("location", "").strip()
+    dietary_tags = request.form.get("dietary_tags", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not name or not cuisine or not location:
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=None,
+            reviews=[],
+            error="Name, cuisine, and location are required.",
+        )
+
+    payload = {
+        "name": name,
+        "cuisine": cuisine,
+        "location": location,
+        "dietaryTags": dietary_tags or None,
+        "description": description or None,
+    }
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants",
+            json=payload,
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            return redirect(url_for("owner_dashboard"))
+        try:
+            msg = resp.json().get("error") or resp.json().get("message") or "Failed to create restaurant."
+        except ValueError:
+            msg = "Failed to create restaurant."
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=None,
+            reviews=[],
+            error=msg,
+        )
+    except requests.RequestException:
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=None,
+            reviews=[],
+            error="Could not connect to the server. Please try again.",
+        )
 
 
 if __name__ == "__main__":

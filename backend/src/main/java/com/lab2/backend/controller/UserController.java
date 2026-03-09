@@ -55,9 +55,16 @@ public class UserController {
     public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
         String username = request.get("username");
         String password = request.get("password");
+        String roleStr = request.get("role");
+
+        // Determine role — only USER and OWNER are allowed via self-registration
+        User.Role role = User.Role.USER;
+        if ("OWNER".equalsIgnoreCase(roleStr)) {
+            role = User.Role.OWNER;
+        }
 
         try {
-            User user = userService.register(username, password);
+            User user = userService.register(username, password, role);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", user.getId());

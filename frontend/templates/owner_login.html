@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Owner Sign In — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 40px 36px 36px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .brand {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #b85c38;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 28px;
+        }
+        .alert-error {
+            background: #fdecea;
+            color: #b71c1c;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #faf8f6;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #b85c38;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+        .btn-submit:hover { background: #a04e2e; }
+        .links {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #888;
+        }
+        .links a {
+            color: #b85c38;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .links a:hover { text-decoration: underline; }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #aaa;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #b85c38; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="brand">PlateRate</div>
+        <div class="subtitle">🍴 Sign in to your owner account</div>
+
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('owner_login') }}">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required
+                       autocomplete="username" placeholder="Enter your username" />
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required
+                       autocomplete="current-password" placeholder="Enter your password" />
+            </div>
+            <button type="submit" class="btn-submit">Sign In</button>
+        </form>
+
+        <div class="links">
+            Don't have an account? <a href="{{ url_for('owner_register') }}">Create one</a>
+        </div>
+        <a href="{{ url_for('owner_view') }}" class="back-link">&larr; Back</a>
+    </div>
+</body>
+</html>
