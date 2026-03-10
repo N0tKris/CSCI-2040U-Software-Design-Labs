@@ -14,4 +14,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     /** Check whether a restaurant owned by the given user ID exists. */
     boolean existsByOwnerId(Long ownerId);
+
+    /** Used by Yelp import to prevent duplicate entries. */
+    boolean existsByNameAndLocation(String name, String location);
 }

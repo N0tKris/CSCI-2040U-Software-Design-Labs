@@ -308,7 +308,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
         <!-- Restaurants Table -->
         <div class="section">
             <div class="section-header">Restaurants
-                <button id="open-add-modal" style="float:right;padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">+ Add restaurant</button>
+                <span style="float:right;display:flex;gap:8px;">
+                    <button id="open-yelp-modal" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">🔍 Import from Yelp</button>
+                    <button id="open-add-modal" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">+ Add restaurant</button>
+                </span>
             </div>
             <table>
                 <thead>
@@ -372,6 +375,29 @@ ADMIN_DASHBOARD_TEMPLATE = """
     {% if error %}
     <div style="max-width:1100px;margin:12px auto 0;padding:0 20px;color:#b71c1c">{{ error }}</div>
     {% endif %}
+
+    <!-- Yelp Import modal -->
+    <div id="yelp-import-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;z-index:200;">
+        <div style="width:100%;max-width:420px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;">
+            <h3 style="margin:0 0 6px 0;color:#b85c38;">Import from Yelp</h3>
+            <p style="margin:0 0 16px;color:#666;font-size:13px;">Fetch restaurants from Yelp Fusion API and add them to the database. Duplicates are automatically skipped.</p>
+            <div style="display:grid;gap:12px;margin-bottom:16px;">
+                <div>
+                    <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">Location</label>
+                    <input id="yelp_location" value="Toronto" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;" />
+                </div>
+                <div>
+                    <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">Max results (1-50)</label>
+                    <input id="yelp_limit" type="number" value="20" min="1" max="50" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;" />
+                </div>
+            </div>
+            <div id="yelp_msg" style="font-size:13px;min-height:18px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button id="yelp_import_btn" style="padding:8px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Import</button>
+                <button id="yelp_cancel_btn" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Add Restaurant modal (admin dashboard) -->
     <div class="modal-backdrop" id="admin-add-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
@@ -446,6 +472,49 @@ ADMIN_DASHBOARD_TEMPLATE = """
     </div>
 
     <script>
+        // ── Yelp Import modal ──
+        const yelpBackdrop = document.getElementById('yelp-import-backdrop');
+        document.getElementById('open-yelp-modal').addEventListener('click', () => {
+            document.getElementById('yelp_msg').textContent = '';
+            document.getElementById('yelp_msg').style.color = '';
+            yelpBackdrop.style.display = 'flex';
+        });
+        document.getElementById('yelp_cancel_btn').addEventListener('click', () => { yelpBackdrop.style.display = 'none'; });
+
+        document.getElementById('yelp_import_btn').addEventListener('click', async () => {
+            const location = document.getElementById('yelp_location').value.trim() || 'Toronto';
+            const limit = parseInt(document.getElementById('yelp_limit').value, 10) || 20;
+            const msgEl = document.getElementById('yelp_msg');
+            const btn = document.getElementById('yelp_import_btn');
+
+            btn.disabled = true;
+            btn.textContent = 'Importing…';
+            msgEl.textContent = '';
+
+            try {
+                const res = await fetch('/admin/import-yelp-restaurants', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ location, limit })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    msgEl.textContent = '✓ ' + (data.message || data.imported + ' restaurants imported');
+                    msgEl.style.color = '#2e7d32';
+                    setTimeout(() => { yelpBackdrop.style.display = 'none'; window.location.reload(); }, 1500);
+                } else {
+                    msgEl.textContent = '✗ ' + (data.error || data.message || 'Import failed');
+                    msgEl.style.color = '#b71c1c';
+                }
+            } catch (e) {
+                msgEl.textContent = '✗ Network error: ' + e;
+                msgEl.style.color = '#b71c1c';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Import';
+            }
+        });
+
         const adminBackdrop = document.getElementById('admin-add-backdrop');
         document.getElementById('open-add-modal').addEventListener('click', () => { adminBackdrop.style.display = 'flex'; });
         document.getElementById('admin_add_cancel').addEventListener('click', () => { adminBackdrop.style.display = 'none'; });
@@ -1109,6 +1178,33 @@ def admin_update_restaurant(rid: int) -> tuple[dict[str, Any], int]:
         return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend to update restaurant", str(exc)), 502
+
+
+@app.post("/admin/import-yelp-restaurants")
+def admin_import_yelp() -> tuple[dict[str, Any], int]:
+    """Proxy POST /admin/import-yelp-restaurants to backend Yelp import endpoint."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+
+    data = request.get_json(silent=True) or {}
+    location = data.get("location", "Toronto")
+    limit = int(data.get("limit", 20))
+
+    token = session.get("admin_token")
+    headers = {"Authorization": token} if token else {}
+    try:
+        url = (f"{BACKEND_BASE_URL.rstrip('/')}/api/admin/import-yelp-restaurants"
+               f"?location={requests.utils.quote(location)}&limit={limit}")
+        resp = requests.post(url, headers=headers, timeout=15)
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+        if resp.ok:
+            return body, resp.status_code
+        return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend for Yelp import", str(exc)), 502
 
 
 @app.get("/admin/logout")
