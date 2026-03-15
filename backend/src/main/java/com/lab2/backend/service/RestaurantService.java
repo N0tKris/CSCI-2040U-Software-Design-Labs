@@ -1,11 +1,17 @@
 package com.lab2.backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lab2.backend.model.Restaurant;
 import com.lab2.backend.repository.RestaurantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @Service
@@ -18,8 +24,121 @@ public class RestaurantService {
 
     @PostConstruct
     public void seedIfEmpty() {
-        // No-op: restaurant data is persisted in the database across restarts.
-        // Do not delete existing restaurants on startup.
+        if (repository.count() > 0) {
+            System.out.println("Restaurants already exist — skipping seed");
+            return;
+        }
+
+        Path[] candidates = {
+                Path.of("../restaurants_only.json"), // when running from backend/
+                Path.of("restaurants_only.json")     // fallback
+        };
+
+        Path jsonPath = null;
+        for (Path candidate : candidates) {
+            if (Files.exists(candidate)) {
+                jsonPath = candidate;
+                break;
+            }
+        }
+
+        if (jsonPath == null) {
+            System.out.println("restaurants_only.json not found — skipping restaurant seed");
+            return;
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        int inserted = 0;
+        final int MAX_SEED = 300;
+
+        try (BufferedReader reader = Files.newBufferedReader(jsonPath)) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (inserted >= MAX_SEED) break;
+                if (line.trim().isEmpty()) continue;
+
+                JsonNode node = mapper.readTree(line);
+
+                String name = text(node, "name");
+                String categories = text(node, "categories");
+                String address = text(node, "address");
+                String city = text(node, "city");
+                String state = text(node, "state");
+                String postalCode = text(node, "postal_code");
+
+                if (name == null || name.isBlank() || categories == null || categories.isBlank()) {
+                    continue;
+                }
+
+                String cuisine = firstCategory(categories);
+                String location = buildLocation(address, city, state, postalCode);
+
+                if (location.isBlank()) {
+                    continue;
+                }
+
+                if (repository.existsByNameAndLocation(name, location)) {
+                    continue;
+                }
+
+                Restaurant r = new Restaurant();
+                r.setName(name);
+                r.setCuisine(cuisine);
+                r.setLocation(location);
+                r.setDescription("Imported from restaurants_only.json");
+                r.setDietaryTags("");
+
+                repository.save(r);
+                inserted++;
+            }
+
+            System.out.println("Seeded " + inserted + " restaurants from " + jsonPath);
+        } catch (IOException e) {
+            System.out.println("Failed to seed restaurants: " + e.getMessage());
+        }
+    }
+
+    private String text(JsonNode node, String fieldName) {
+        JsonNode value = node.get(fieldName);
+        if (value == null || value.isNull()) return "";
+        return value.asText("").trim();
+    }
+
+    private String firstCategory(String categories) {
+        if (categories == null || categories.isBlank()) {
+            return "Restaurant";
+        }
+
+        String[] parts = categories.split(",");
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty() && !trimmed.equalsIgnoreCase("Restaurants") && !trimmed.equalsIgnoreCase("Food")) {
+                return trimmed;
+            }
+        }
+
+        return parts[0].trim().isEmpty() ? "Restaurant" : parts[0].trim();
+    }
+
+    private String buildLocation(String address, String city, String state, String postalCode) {
+        StringBuilder sb = new StringBuilder();
+
+        if (address != null && !address.isBlank()) sb.append(address.trim());
+        if (city != null && !city.isBlank()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(city.trim());
+        }
+        if (state != null && !state.isBlank()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(state.trim());
+        }
+        if (postalCode != null && !postalCode.isBlank()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(postalCode.trim());
+        }
+
+        return sb.toString().trim();
     }
 
     @Transactional(readOnly = true)
