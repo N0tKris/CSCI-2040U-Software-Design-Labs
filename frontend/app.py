@@ -662,9 +662,28 @@ def auth_url(path: str = "") -> str:
 
 @app.get("/")
 def index() -> str:
-    """Landing page — choose Admin or User view."""
-    return render_template("landing.html")
+    """Public homepage — show dashboard layout without requiring login."""
+    restaurants: list[Any] = []
+    try:
+        resp = requests.get(restaurants_url(), timeout=5)
+        if resp.ok:
+            data = resp.json()
+            restaurants = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
 
+    return render_template(
+        "user_dashboard.html",
+        username=session.get("user_username", "Guest"),
+        restaurants=restaurants,
+        backend_url=BACKEND_BASE_URL,
+        is_guest=not bool(session.get("user_token")),
+    )
+
+@app.get("/login")
+def login_selector():
+    """Login selection page (User / Owner / Admin)."""
+    return render_template("landing.html")
 
 @app.get("/health")
 def health() -> tuple[dict[str, Any], int]:
@@ -922,7 +941,6 @@ def user_dashboard():
     if not session.get("user_token"):
         return redirect(url_for("user_login"))
 
-    token = session["user_token"]
     restaurants: list[Any] = []
     try:
         resp = requests.get(restaurants_url(), timeout=5)
@@ -937,6 +955,7 @@ def user_dashboard():
         username=session.get("user_username", "User"),
         restaurants=restaurants,
         backend_url=BACKEND_BASE_URL,
+        is_guest=False,
     )
 
 # ---------------------------------------------------------------------------
