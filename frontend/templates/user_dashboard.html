@@ -71,33 +71,62 @@
             margin-bottom: 24px;
         }
         .search-bar {
-            max-width: 560px;
+            max-width: 600px;
             margin: 0 auto;
             display: flex;
-            gap: 0;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            align-items: center;
+            background: #fff;
+            border-radius: 48px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 6px 6px 6px 20px;
+            gap: 8px;
+            transition: box-shadow 0.25s;
+        }
+        .search-bar:focus-within {
+            box-shadow: 0 6px 28px rgba(0,0,0,0.16);
+        }
+        .search-bar .search-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            color: #999;
+            display: flex;
+            align-items: center;
+        }
+        .search-bar .search-icon svg {
+            width: 20px;
+            height: 20px;
         }
         .search-bar input {
             flex: 1;
-            padding: 14px 22px;
+            padding: 12px 8px;
             border: none;
             font-size: 15px;
             outline: none;
             font-family: inherit;
+            background: transparent;
+            color: #333;
+            min-width: 0;
+        }
+        .search-bar input::placeholder {
+            color: #aaa;
         }
         .search-bar button {
-            padding: 0 28px;
-            background: #333;
+            padding: 12px 28px;
+            background: #b85c38;
             color: #fff;
             border: none;
+            border-radius: 40px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.15s;
+            white-space: nowrap;
         }
-        .search-bar button:hover { background: #555; }
+        .search-bar button:hover {
+            background: #a04e2e;
+            transform: scale(1.03);
+        }
 
         /* ── Page wrapper ── */
         .page {
@@ -502,6 +531,8 @@
             .topbar { padding: 0 16px; }
             .hero { padding: 32px 16px 28px; }
             .hero h1 { font-size: 24px; }
+            .search-bar { padding: 4px 4px 4px 14px; }
+            .search-bar button { padding: 10px 20px; font-size: 13px; }
             .page { padding: 20px 14px 40px; }
             .restaurant-grid { grid-template-columns: 1fr; }
             .detail-panel { width: 100vw; }
@@ -534,7 +565,10 @@
         {% endif %}
     </p>
     <div class="search-bar">
-        <input type="text" id="search-input" placeholder="Search by name, cuisine, or location…" />
+        <span class="search-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Search restaurants by name, cuisine, or location…" aria-label="Search restaurants" />
         <button id="search-btn">Search</button>
     </div>
 </div>
@@ -728,6 +762,11 @@
     });
     document.getElementById('search-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') filterRestaurants(e.target.value.trim());
+    });
+    let searchTimeout;
+    document.getElementById('search-input').addEventListener('input', e => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => filterRestaurants(e.target.value.trim()), 300);
     });
 
     // ── Review modal ──
