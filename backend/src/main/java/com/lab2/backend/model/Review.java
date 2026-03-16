@@ -2,8 +2,8 @@ package com.lab2.backend.model;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDateTime;
 
 /**
@@ -30,10 +30,10 @@ public class Review {
     @JsonBackReference
     private Restaurant restaurant;
 
-    @Min(value = 1, message = "Rating must be at least 1")
-    @Max(value = 5, message = "Rating must be at most 5")
-    @Column(nullable = false)
-    private int rating;
+    @DecimalMin(value = "1.0", message = "Rating must be at least 1.0")
+    @DecimalMax(value = "5.0", message = "Rating must be at most 5.0")
+    @Column(nullable = false, columnDefinition = "DOUBLE PRECISION")
+    private double rating;
 
     @Column(columnDefinition = "TEXT")
     private String comment;
@@ -50,7 +50,7 @@ public class Review {
 
     public Review() {}
 
-    public Review(User user, Restaurant restaurant, int rating, String comment) {
+    public Review(User user, Restaurant restaurant, double rating, String comment) {
         this.user = user;
         this.restaurant = restaurant;
         this.rating = rating;
@@ -66,8 +66,8 @@ public class Review {
     public Restaurant getRestaurant() { return restaurant; }
     public void setRestaurant(Restaurant restaurant) { this.restaurant = restaurant; }
 
-    public int getRating() { return rating; }
-    public void setRating(int rating) { this.rating = rating; }
+    public double getRating() { return rating; }
+    public void setRating(double rating) { this.rating = rating; }
 
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }

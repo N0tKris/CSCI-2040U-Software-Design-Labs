@@ -765,6 +765,29 @@ def reviews_url() -> str:
     return f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews"
 
 
+@app.get("/api/reviews/restaurant/<int:restaurant_id>")
+def get_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]:
+    headers: dict[str, str] = {}
+    token = session.get("user_token") or request.headers.get("Authorization")
+    if token:
+        headers["Authorization"] = token
+    try:
+        response = requests.get(
+            f"{reviews_url()}/restaurant/{restaurant_id}",
+            headers=headers,
+            timeout=5,
+        )
+        body = response.json() if response.content else []
+        if response.ok:
+            return {"ok": True, "data": body}, 200
+        return {
+            "ok": False,
+            "message": body.get("error") if isinstance(body, dict) else "Failed to load reviews",
+        }, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to load reviews", str(exc)), 502
+
+
 @app.post("/api/reviews")
 def create_review() -> tuple[dict[str, Any], int]:
     payload = request.get_json(silent=True) or {}

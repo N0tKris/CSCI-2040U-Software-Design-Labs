@@ -8,7 +8,7 @@ public class ReviewDto {
     private Long userId;
     private String username;
     private String comment;
-    private int rating;
+    private double rating;
     private Long restaurantId;
     private LocalDateTime createdAt;
 
@@ -37,8 +37,8 @@ public class ReviewDto {
     public void setUsername(String username) { this.username = username; }
     public String getComment() { return comment; }
     public void setComment(String comment) { this.comment = comment; }
-    public int getRating() { return rating; }
-    public void setRating(int rating) { this.rating = rating; }
+    public double getRating() { return rating; }
+    public void setRating(double rating) { this.rating = rating; }
     public Long getRestaurantId() { return restaurantId; }
     public void setRestaurantId(Long restaurantId) { this.restaurantId = restaurantId; }
     public LocalDateTime getCreatedAt() { return createdAt; }

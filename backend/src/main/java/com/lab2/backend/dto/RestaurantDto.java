@@ -3,9 +3,13 @@ package com.lab2.backend.dto;
 import com.lab2.backend.model.MenuItem;
 import com.lab2.backend.model.Restaurant;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class RestaurantDto {
+    private static final Pattern YELP_RATING_PATTERN = Pattern.compile("^\\s*([0-5](?:\\.\\d+)?)\\s+stars\\b");
+
     private Long id;
     private String name;
     private String cuisine;
@@ -13,6 +17,7 @@ public class RestaurantDto {
     private String dietaryTags;
     private String description;
     private Long ownerId;
+    private double stars;
     private List<String> menuItemNames;
 
     public RestaurantDto() {}
@@ -27,6 +32,16 @@ public class RestaurantDto {
         dto.dietaryTags = r.getDietaryTags();
         dto.description = r.getDescription();
         dto.ownerId = r.getOwnerId();
+        if (r.getReviews() != null && !r.getReviews().isEmpty()) {
+            dto.stars = r.getReviews().stream()
+                    .mapToDouble(review -> review.getRating())
+                    .average()
+                    .orElse(0.0);
+        } else {
+            // Fallback for Yelp-imported restaurants where rating is embedded in description,
+            // e.g. "4.4 stars (978 reviews on Yelp)".
+            dto.stars = parseYelpRating(r.getDescription());
+        }
         if (r.getMenuItems() != null) {
             dto.menuItemNames = r.getMenuItems().stream()
                     .map(MenuItem::getItemName)
@@ -49,6 +64,23 @@ public class RestaurantDto {
     public void setDescription(String description) { this.description = description; }
     public Long getOwnerId() { return ownerId; }
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+    public double getStars() { return stars; }
+    public void setStars(double stars) { this.stars = stars; }
     public List<String> getMenuItemNames() { return menuItemNames; }
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
+
+    private static double parseYelpRating(String description) {
+        if (description == null || description.isBlank()) {
+            return 0.0;
+        }
+        Matcher matcher = YELP_RATING_PATTERN.matcher(description);
+        if (!matcher.find()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(matcher.group(1));
+        } catch (NumberFormatException ignored) {
+            return 0.0;
+        }
+    }
 }

@@ -53,13 +53,17 @@ public class ReviewService {
      *
      * @throws IllegalArgumentException if user, restaurant, or rating is invalid
      */
-    public Review createReview(Long userId, Long restaurantId, int rating, String comment) {
+    public Review createReview(Long userId, Long restaurantId, double rating, String comment) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
+        }
+        // Only allow half-step increments: 1.0, 1.5, 2.0, ... 5.0
+        if (Math.abs((rating * 2) - Math.round(rating * 2)) > 1e-9) {
+            throw new IllegalArgumentException("Rating must be in 0.5 increments");
         }
         Review review = new Review(user, restaurant, rating, comment);
         return reviewRepository.save(review);

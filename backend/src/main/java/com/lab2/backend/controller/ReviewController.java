@@ -49,17 +49,12 @@ public class ReviewController {
     /**
      * List reviews for a specific restaurant.
      * GET /api/reviews/restaurant/{restaurantId}
-     * Accessible by admin or by the owner of that restaurant.
+     * Public endpoint so guests and signed-in users can browse restaurant reviews.
      */
     @GetMapping("/restaurant/{restaurantId}")
     public ResponseEntity<?> listByRestaurant(
             @PathVariable Long restaurantId,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        // Allow admin or owner (frontend enforces owner-only-their-restaurant)
-        if (token == null || (!authService.isAdmin(token) && !authService.isOwner(token))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Insufficient privileges"));
-        }
         List<Review> reviews = reviewService.getReviewsByRestaurant(restaurantId);
         List<ReviewDto> out = reviews.stream().map(ReviewDto::fromEntity).collect(Collectors.toList());
         return ResponseEntity.ok(out);
@@ -91,7 +86,7 @@ public class ReviewController {
         }
 
         Long restaurantId;
-        int rating;
+        double rating;
         try {
             Object ridObj = body.get("restaurantId");
             Object ratingObj = body.get("rating");
@@ -100,7 +95,7 @@ public class ReviewController {
                         .body(Map.of("error", "restaurantId and rating are required"));
             }
             restaurantId = Long.valueOf(ridObj.toString());
-            rating = Integer.parseInt(ratingObj.toString());
+            rating = Double.parseDouble(ratingObj.toString());
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "restaurantId and rating must be valid numbers"));

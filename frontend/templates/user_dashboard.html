@@ -187,10 +187,30 @@
             gap: 4px;
         }
         .card-stars {
-            color: #f5a623;
             font-size: 15px;
-            letter-spacing: 1px;
             margin-bottom: 8px;
+        }
+        .card-stars .star,
+        .detail-stars .star,
+        .review-stars .star {
+            display: inline-block;
+            margin-right: 2px;
+            line-height: 1;
+            font-size: 18px;
+        }
+        .star.full { color: #f5a623; }
+        .star.empty { color: #ddd; }
+        .star.half {
+            color: #f5a623;
+            position: relative;
+        }
+        .star.half::after {
+            content: '★';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: #ddd;
+            clip-path: inset(0 0 0 50%);
         }
         .card-tags {
             display: flex;
@@ -305,20 +325,41 @@
         }
         .star-rating {
             display: inline-flex;
-            gap: 2px;
-            direction: rtl;
+            gap: 4px;
             margin-bottom: 16px;
         }
         .star-rating input { display: none; }
-        .star-rating label {
-            font-size: 28px;
-            color: #ddd;
+        .star-rating .star-btn {
+            position: relative;
+            width: 32px;
+            height: 32px;
             cursor: pointer;
+            font-size: 28px;
+            line-height: 32px;
+            color: #ddd;
+            border: none;
+            background: none;
+            padding: 0;
+            font-family: Arial, sans-serif;
             transition: color 0.15s;
         }
-        .star-rating label:hover,
-        .star-rating label:hover ~ label,
-        .star-rating input:checked ~ label { color: #f5a623; }
+        .star-rating .star-btn::before {
+            content: '★';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 100%;
+            text-align: center;
+            color: #ddd;
+            transition: color 0.15s;
+        }
+        .star-rating .star-btn:focus-visible {
+            outline: 2px solid #b85c38;
+            outline-offset: 2px;
+        }
+        .star-rating .star-btn.selected::before {
+            color: #f5a623;
+        }
         .modal-textarea {
             width: 100%;
             min-height: 100px;
@@ -520,12 +561,13 @@
         <div class="modal-sub">Rate your experience and share your thoughts.</div>
 
         <span class="modal-label">Star Rating</span>
-        <div class="star-rating" id="modal-star-rating">
-            <input type="radio" name="modal-rating" id="s5" value="5"/><label for="s5">★</label>
-            <input type="radio" name="modal-rating" id="s4" value="4"/><label for="s4">★</label>
-            <input type="radio" name="modal-rating" id="s3" value="3"/><label for="s3">★</label>
-            <input type="radio" name="modal-rating" id="s2" value="2"/><label for="s2">★</label>
-            <input type="radio" name="modal-rating" id="s1" value="1"/><label for="s1">★</label>
+        <div class="star-rating" id="modal-star-rating" aria-label="Select star rating">
+            <input type="hidden" name="modal-rating" id="modal-rating-hidden" value="0" />
+            <button type="button" class="star-btn" data-value="1"></button>
+            <button type="button" class="star-btn" data-value="2"></button>
+            <button type="button" class="star-btn" data-value="3"></button>
+            <button type="button" class="star-btn" data-value="4"></button>
+            <button type="button" class="star-btn" data-value="5"></button>
         </div>
 
         <span class="modal-label">Your Review</span>
@@ -565,8 +607,18 @@
     }
 
     function stars(n) {
-        const full = Math.round(n || 0);
-        return '★'.repeat(full) + '☆'.repeat(5 - full);
+        const rating = Math.max(0, Math.min(5, Number(n) || 0));
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            if (rating >= i) {
+                html += '<span class="star full">★</span>';
+            } else if (rating >= i - 0.5) {
+                html += '<span class="star half">★</span>';
+            } else {
+                html += '<span class="star empty">★</span>';
+            }
+        }
+        return html;
     }
 
     function setStatus(msg) {
@@ -685,7 +737,9 @@
         document.getElementById('modal-review-text').value = '';
         document.getElementById('modal-msg').textContent = '';
         document.getElementById('modal-msg').style.color = '';
-        document.querySelectorAll('input[name="modal-rating"]').forEach(r => r.checked = false);
+        document.getElementById('modal-rating-hidden').value = '0';
+        selectedModalRating = 0;
+        renderModalStarRating(0);
         document.getElementById('review-modal-backdrop').classList.add('show');
     }
 
@@ -695,11 +749,12 @@
     }
 
     async function submitModalReview() {
-        const ratingEl = document.querySelector('input[name="modal-rating"]:checked');
+        const ratingStr = document.getElementById('modal-rating-hidden').value;
+        const rating = parseFloat(ratingStr);
         const comment = document.getElementById('modal-review-text').value.trim();
         const msgEl = document.getElementById('modal-msg');
 
-        if (!ratingEl) {
+        if (!ratingStr || rating === 0) {
             msgEl.textContent = 'Please select a star rating.';
             msgEl.style.color = '#b71c1c';
             return;
@@ -707,7 +762,7 @@
 
         const payload = {
             restaurantId: activeRestaurantId,
-            rating: parseInt(ratingEl.value, 10),
+            rating,
             comment: comment
         };
 
@@ -750,6 +805,46 @@
         if (e.target === this) closeReviewModal();
     });
 
+    // ── Star rating buttons ──
+    const modalRatingInput = document.getElementById('modal-rating-hidden');
+    const modalStarRating = document.getElementById('modal-star-rating');
+    const modalStarButtons = Array.from(document.querySelectorAll('#modal-star-rating .star-btn'));
+    let selectedModalRating = 0;
+
+    function renderModalStarRating(rating) {
+        modalStarButtons.forEach((btn) => {
+            const starValue = Number(btn.dataset.value);
+            btn.classList.toggle('selected', rating >= starValue);
+        });
+    }
+
+    modalStarButtons.forEach((btn) => {
+        btn.addEventListener('mouseenter', function() {
+            const previewRating = Number(this.dataset.value) || 0;
+            renderModalStarRating(previewRating);
+        });
+
+        btn.addEventListener('focus', function() {
+            const previewRating = Number(this.dataset.value) || 0;
+            renderModalStarRating(previewRating);
+        });
+
+        btn.addEventListener('click', function() {
+            const starValue = Number(this.dataset.value);
+            const rating = Math.max(1, Math.min(5, starValue));
+
+            selectedModalRating = rating;
+            modalRatingInput.value = String(rating);
+            renderModalStarRating(rating);
+        });
+    });
+
+    modalStarRating.addEventListener('mouseleave', function() {
+        renderModalStarRating(selectedModalRating);
+    });
+
+    renderModalStarRating(0);
+
     // ── Detail panel ──
     function openDetail(restaurantId) {
         const r = allRestaurants.find(x => x.id == restaurantId);
@@ -758,7 +853,7 @@
         document.getElementById('detail-name').textContent = r.name || '';
         document.getElementById('detail-cuisine').textContent = '🍽 ' + (r.cuisine || '—');
         document.getElementById('detail-location').textContent = '📍 ' + (r.location || '—');
-        document.getElementById('detail-stars').textContent = stars(r.stars || 0);
+        document.getElementById('detail-stars').innerHTML = stars(r.stars || 0);
 
         const tagsEl = document.getElementById('detail-tags');
         const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -777,12 +872,35 @@
     async function loadDetailReviews(restaurantId) {
         const container = document.getElementById('detail-reviews');
         try {
-            const token = '{{ "user_token" }}';
-            // Reviews are public via admin or we can try unauthenticated;
-            // if the backend returns 403, show a note
-            const res = await fetch('/api/restaurants');
-            // For now, just show placeholder since user may not have permission to list reviews
-            container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">Sign in and leave a review to see it here!</div>';
+            const res = await fetch(`/api/reviews/restaurant/${restaurantId}`);
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok || !data.ok) {
+                container.innerHTML = '<div style="font-size:13px;color:#aaa;">Could not load reviews.</div>';
+                return;
+            }
+
+            const reviews = Array.isArray(data.data) ? data.data : [];
+            if (!reviews.length) {
+                container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No reviews yet for this restaurant.</div>';
+                return;
+            }
+
+            container.innerHTML = reviews.map(rv => {
+                const reviewer = escHtml(rv.username || 'Anonymous');
+                const rating = Math.max(0, Math.min(5, Number(rv.rating) || 0));
+                const comment = escHtml(rv.comment || '');
+                const ts = rv.createdAt || rv.timestamp || '';
+                const dateText = ts ? escHtml(String(ts).slice(0, 10)) : '';
+                return `
+                    <div class="detail-review-card">
+                        <div class="reviewer">${reviewer}</div>
+                        <div class="review-stars">${stars(rating)}</div>
+                        <div class="review-text">${comment || 'No comment provided.'}</div>
+                        <div class="review-date">${dateText}</div>
+                    </div>
+                `;
+            }).join('');
         } catch (_) {
             container.innerHTML = '<div style="font-size:13px;color:#aaa;">Could not load reviews.</div>';
         }
