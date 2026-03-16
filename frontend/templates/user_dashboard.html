@@ -473,15 +473,25 @@
 <div class="topbar">
     <div class="brand">PlateRate</div>
     <div class="user-info">
+        {% if is_guest %}
+        <a href="{{ url_for('login_selector') }}" class="btn-logout">Login</a>
+        {% else %}
         Welcome, <span>{{ username }}</span>
         <a href="{{ url_for('user_logout') }}" class="btn-logout">Sign out</a>
+        {% endif %}
     </div>
 </div>
 
 <!-- Hero section with search -->
 <div class="hero">
     <h1>Find your next great meal</h1>
-    <p>Browse restaurants and share your dining experiences</p>
+    <p>
+        {% if is_guest %}
+        Browse restaurants first, then log in to leave reviews.
+        {% else %}
+        Browse restaurants and share your dining experiences
+        {% endif %}
+    </p>
     <div class="search-bar">
         <input type="text" id="search-input" placeholder="Search by name, cuisine, or location…" />
         <button id="search-btn">Search</button>
@@ -613,11 +623,11 @@
                     ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
                     <div class="card-desc">${escHtml(r.description || 'A great dining experience awaits.')}</div>
                     <div class="card-actions">
-                        <button class="btn-review review-btn"
-                                data-restaurant-id="${Number(r.id)}"
-                                data-restaurant-name="${escHtml(r.name || '')}">
-                            ⭐ Leave Review
-                        </button>
+                    <button class="btn-review review-btn"
+                            data-restaurant-id="${Number(r.id)}"
+                            data-restaurant-name="${escHtml(r.name || '')}">
+                        {{ 'Login to Review' if is_guest else '⭐ Leave Review' }}
+                    </button>
                         <button class="btn-details detail-btn"
                                 data-restaurant-id="${Number(r.id)}">
                             View Details
@@ -790,12 +800,17 @@
     document.getElementById('restaurant-grid').addEventListener('click', function(e) {
         const reviewBtn = e.target.closest('.review-btn');
         if (reviewBtn) {
+            {% if is_guest %}
+            window.location.href = "{{ url_for('user_login') }}";
+            {% else %}
             openReviewModal(
                 parseInt(reviewBtn.dataset.restaurantId, 10),
                 reviewBtn.dataset.restaurantName
             );
+            {% endif %}
             return;
         }
+
         const detailBtn = e.target.closest('.detail-btn');
         if (detailBtn) {
             openDetail(parseInt(detailBtn.dataset.restaurantId, 10));
