@@ -346,6 +346,30 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </table>
         </div>
 
+        <!-- Menu Items Table -->
+        <div class="section">
+            <div class="section-header">Menu Items</div>
+            <table>
+                <thead>
+                    <tr><th>Restaurant</th><th>Name</th><th>Price</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                {% if menu_items %}
+                    {% for m in menu_items %}
+                    <tr>
+                        <td>{{ m.restaurant_name }}</td>
+                        <td>{{ m.name }}</td>
+                        <td>{{ m.price }}</td>
+                        <td>{{ m.description or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row"><td colspan="4">No menu items found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Reviews Table -->
         <div class="section">
             <div class="section-header">Reviews</div>
@@ -360,7 +384,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ rv.id }}</td>
                         <td>{{ rv.username or rv.userId or rv.user_id or '—' }}</td>
                         <td>{{ rv.restaurantId or rv.restaurant_id or '—' }}</td>
-                        <td class="stars">{{ '★' * rv.rating }}{{ '☆' * (5 - rv.rating) }}</td>
+                        {% set rating_value = (rv.rating or 0)|float %}
+                        {% set star_count = rating_value|round(0, 'common')|int %}
+                        <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} ({{ '%.1f'|format(rating_value) }})</td>
                         <td>{{ rv.comment or '—' }}</td>
                     </tr>
                     {% endfor %}
@@ -1066,6 +1092,7 @@ def admin_dashboard():
     users = []
     restaurants = []
     reviews = []
+    menu_items = []
 
     try:
         resp = requests.get(
@@ -1095,11 +1122,57 @@ def admin_dashboard():
     except (requests.RequestException, ValueError):
         pass
 
+    for restaurant in restaurants:
+        if not isinstance(restaurant, dict):
+            continue
+
+        restaurant_name = restaurant.get("name") or f"Restaurant #{restaurant.get('id', 'Unknown')}"
+        raw_menu_items = restaurant.get("menuItems") or restaurant.get("menu_items") or []
+
+        if isinstance(raw_menu_items, list) and raw_menu_items:
+            for item in raw_menu_items:
+                if not isinstance(item, dict):
+                    continue
+
+                raw_price = item.get("price")
+                if raw_price in (None, ""):
+                    price_text = "—"
+                else:
+                    try:
+                        price_text = f"${float(raw_price):.2f}"
+                    except (TypeError, ValueError):
+                        price_text = str(raw_price)
+
+                menu_items.append(
+                    {
+                        "restaurant_name": restaurant_name,
+                        "name": item.get("itemName") or item.get("name") or "Unnamed item",
+                        "price": price_text,
+                        "description": item.get("description") or "",
+                    }
+                )
+            continue
+
+        menu_names = restaurant.get("menuItemNames") or restaurant.get("menu_item_names") or []
+        if isinstance(menu_names, list):
+            for name in menu_names:
+                if not name:
+                    continue
+                menu_items.append(
+                    {
+                        "restaurant_name": restaurant_name,
+                        "name": str(name),
+                        "price": "—",
+                        "description": "",
+                    }
+                )
+
     return render_template_string(
         ADMIN_DASHBOARD_TEMPLATE,
         admin_username=session.get("admin_username", "Admin"),
         users=users,
         restaurants=restaurants,
+        menu_items=menu_items,
         reviews=reviews,
     )
 
@@ -1432,38 +1505,7 @@ def owner_dashboard():
         return redirect(url_for("owner_login"))
 
     token = session["owner_token"]
-    headers = {"Authorization": token}
-
-    restaurant = None
-    reviews: list[Any] = []
-
-    # Fetch owner's restaurant
-    try:
-        resp = requests.get(
-            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
-            headers=headers,
-            timeout=5,
-        )
-        if resp.ok:
-            data = resp.json()
-            restaurant = data.get("restaurant") if isinstance(data, dict) else None
-    except (requests.RequestException, ValueError):
-        pass
-
-    # Fetch reviews for owner's restaurant
-    if restaurant and restaurant.get("id"):
-        rid = restaurant["id"]
-        try:
-            resp = requests.get(
-                f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
-                headers=headers,
-                timeout=5,
-            )
-            if resp.ok:
-                data = resp.json()
-                reviews = data if isinstance(data, list) else []
-        except (requests.RequestException, ValueError):
-            pass
+    restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
 
     return render_template(
         "owner_dashboard.html",
@@ -1533,6 +1575,104 @@ def owner_create_restaurant():
             reviews=[],
             error="Could not connect to the server. Please try again.",
         )
+
+
+@app.post("/owner/menu/add")
+def owner_add_menu_item():
+    """Handle owner adding a menu item to their restaurant."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+
+    restaurant_id = request.form.get("restaurant_id", "").strip()
+    item_name = request.form.get("item_name", "").strip()
+    price = request.form.get("price", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not restaurant_id or not item_name or not price:
+        # Re-fetch restaurant and reviews to re-render the dashboard
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Item name and price are required.",
+        )
+
+    payload = {
+        "itemName": item_name,
+        "price": price,
+        "description": description or None,
+    }
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu",
+            json=payload,
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            return redirect(url_for("owner_dashboard"))
+        try:
+            msg = resp.json().get("error") or resp.json().get("message") or "Failed to add menu item."
+        except ValueError:
+            msg = "Failed to add menu item."
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error=msg,
+        )
+    except requests.RequestException:
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Could not connect to the server. Please try again.",
+        )
+
+
+def _fetch_owner_restaurant_and_reviews(token: str):
+    """Helper to fetch the owner's restaurant and its reviews."""
+    headers = {"Authorization": token}
+    restaurant = None
+    reviews: list[Any] = []
+
+    try:
+        resp = requests.get(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            data = resp.json()
+            restaurant = data.get("restaurant") if isinstance(data, dict) else None
+    except (requests.RequestException, ValueError):
+        pass
+
+    if restaurant and restaurant.get("id"):
+        rid = restaurant["id"]
+        try:
+            resp = requests.get(
+                f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
+                headers=headers,
+                timeout=5,
+            )
+            if resp.ok:
+                data = resp.json()
+                reviews = data if isinstance(data, list) else []
+        except (requests.RequestException, ValueError):
+            pass
+
+    return restaurant, reviews
 
 
 if __name__ == "__main__":
