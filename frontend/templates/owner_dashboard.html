@@ -350,14 +350,30 @@
 </head>
 <body>
 
-<!-- Top bar -->
-<div class="topbar">
-    <div class="brand">PlateRate</div>
-    <div class="user-info">
-        Owner: <span>{{ owner_username }}</span>
-        <a href="{{ url_for('owner_logout') }}" class="btn-logout">Sign out</a>
+<!-- Dropdown -->
+<div class="dropdown">
+    <button class="btn-logout dropdown-toggle">
+        Owner: <span>{{ owner_username }}</span> ▾
+    </button>
+    <div class="dropdown-menu">
+        <a href="{{ url_for('admin_login') }}">Login as Admin</a>
+        <a href="{{ url_for('user_login') }}">Login as User</a>
+        <a href="{{ url_for('user_register') }}">Sign up as User</a>
+        <div class="divider"></div>
+        <a href="{{ url_for('owner_logout') }}">Sign out</a>
     </div>
 </div>
+
+<style>
+.dropdown { position: relative; display: inline-block; }
+.dropdown-toggle { cursor: pointer; background: transparent; border: 1px solid #d5cfc9; border-radius: 20px; padding: 7px 18px; font-size: 13px; color: #666; transition: all 0.2s; }
+.dropdown-toggle:hover { border-color: #b85c38; color: #b85c38; }
+.dropdown-menu { display: none; position: absolute; right: 0; background: #fff; min-width: 180px; border: 1px solid #e0d8d0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; }
+.dropdown-menu a { display: block; padding: 8px 14px; font-size: 13px; color: #333; text-decoration: none; transition: background 0.2s; }
+.dropdown-menu a:hover { background: #f5f0eb; color: #b85c38; }
+.dropdown:hover .dropdown-menu { display: block; }
+.divider { height: 1px; background: #e0d8d0; margin: 6px 0; }
+</style>
 
 <!-- Hero -->
 <div class="owner-hero">
