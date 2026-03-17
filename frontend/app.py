@@ -1432,38 +1432,7 @@ def owner_dashboard():
         return redirect(url_for("owner_login"))
 
     token = session["owner_token"]
-    headers = {"Authorization": token}
-
-    restaurant = None
-    reviews: list[Any] = []
-
-    # Fetch owner's restaurant
-    try:
-        resp = requests.get(
-            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
-            headers=headers,
-            timeout=5,
-        )
-        if resp.ok:
-            data = resp.json()
-            restaurant = data.get("restaurant") if isinstance(data, dict) else None
-    except (requests.RequestException, ValueError):
-        pass
-
-    # Fetch reviews for owner's restaurant
-    if restaurant and restaurant.get("id"):
-        rid = restaurant["id"]
-        try:
-            resp = requests.get(
-                f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
-                headers=headers,
-                timeout=5,
-            )
-            if resp.ok:
-                data = resp.json()
-                reviews = data if isinstance(data, list) else []
-        except (requests.RequestException, ValueError):
-            pass
+    restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
 
     return render_template(
         "owner_dashboard.html",
@@ -1533,6 +1502,104 @@ def owner_create_restaurant():
             reviews=[],
             error="Could not connect to the server. Please try again.",
         )
+
+
+@app.post("/owner/menu/add")
+def owner_add_menu_item():
+    """Handle owner adding a menu item to their restaurant."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+
+    restaurant_id = request.form.get("restaurant_id", "").strip()
+    item_name = request.form.get("item_name", "").strip()
+    price = request.form.get("price", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not restaurant_id or not item_name or not price:
+        # Re-fetch restaurant and reviews to re-render the dashboard
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Item name and price are required.",
+        )
+
+    payload = {
+        "itemName": item_name,
+        "price": price,
+        "description": description or None,
+    }
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu",
+            json=payload,
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            return redirect(url_for("owner_dashboard"))
+        try:
+            msg = resp.json().get("error") or resp.json().get("message") or "Failed to add menu item."
+        except ValueError:
+            msg = "Failed to add menu item."
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error=msg,
+        )
+    except requests.RequestException:
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Could not connect to the server. Please try again.",
+        )
+
+
+def _fetch_owner_restaurant_and_reviews(token: str):
+    """Helper to fetch the owner's restaurant and its reviews."""
+    headers = {"Authorization": token}
+    restaurant = None
+    reviews: list[Any] = []
+
+    try:
+        resp = requests.get(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
+            headers=headers,
+            timeout=5,
+        )
+        if resp.ok:
+            data = resp.json()
+            restaurant = data.get("restaurant") if isinstance(data, dict) else None
+    except (requests.RequestException, ValueError):
+        pass
+
+    if restaurant and restaurant.get("id"):
+        rid = restaurant["id"]
+        try:
+            resp = requests.get(
+                f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
+                headers=headers,
+                timeout=5,
+            )
+            if resp.ok:
+                data = resp.json()
+                reviews = data if isinstance(data, list) else []
+        except (requests.RequestException, ValueError):
+            pass
+
+    return restaurant, reviews
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ public class RestaurantDto {
     private Long ownerId;
     private double stars;
     private List<String> menuItemNames;
+    private List<MenuItemDto> menuItems;
 
     public RestaurantDto() {}
 
@@ -46,6 +47,9 @@ public class RestaurantDto {
             dto.menuItemNames = r.getMenuItems().stream()
                     .map(MenuItem::getItemName)
                     .collect(Collectors.toList());
+            dto.menuItems = r.getMenuItems().stream()
+                    .map(MenuItemDto::fromEntity)
+                    .collect(Collectors.toList());
         }
         return dto;
     }
@@ -68,6 +72,8 @@ public class RestaurantDto {
     public void setStars(double stars) { this.stars = stars; }
     public List<String> getMenuItemNames() { return menuItemNames; }
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
+    public List<MenuItemDto> getMenuItems() { return menuItems; }
+    public void setMenuItems(List<MenuItemDto> menuItems) { this.menuItems = menuItems; }
 
     private static double parseYelpRating(String description) {
         if (description == null || description.isBlank()) {

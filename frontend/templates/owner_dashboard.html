@@ -242,6 +242,38 @@
         }
         .btn-save:hover { background: #a04e2e; }
 
+        /* ── Menu section ── */
+        .menu-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .menu-item-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0ebe5;
+            font-size: 14px;
+        }
+        .menu-item-row:last-child { border-bottom: none; }
+        .menu-item-name { font-weight: 600; color: #333; }
+        .menu-item-desc { font-size: 12px; color: #888; margin-top: 2px; }
+        .menu-item-price {
+            font-weight: 700;
+            color: #b85c38;
+            white-space: nowrap;
+            margin-left: 16px;
+        }
+        .empty-menu {
+            padding: 24px 20px;
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+
         /* ── Reviews section ── */
         .section-title {
             font-size: 18px;
@@ -376,6 +408,58 @@
             {% if restaurant.description %}
             <div class="restaurant-desc">{{ restaurant.description }}</div>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Menu section ── -->
+    <div class="section-title">
+        Menu
+        <span class="count">{{ restaurant.menuItems|length if restaurant.menuItems else 0 }}</span>
+    </div>
+
+    <div class="menu-card">
+        <div class="form-card-header">Current Menu</div>
+        <div class="form-card-body">
+            {% if restaurant.menuItems %}
+                {% for item in restaurant.menuItems %}
+                <div class="menu-item-row">
+                    <div>
+                        <div class="menu-item-name">{{ item.itemName }}</div>
+                        {% if item.description %}
+                        <div class="menu-item-desc">{{ item.description }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="menu-item-price">${{ "%.2f"|format(item.price) }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-menu">No menu items yet. Add your first item below.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Add menu item form ── -->
+    <div class="form-card">
+        <div class="form-card-header">Add Menu Item</div>
+        <div class="form-card-body">
+            <form method="POST" action="{{ url_for('owner_add_menu_item') }}">
+                <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="item_name">Item Name *</label>
+                        <input type="text" id="item_name" name="item_name" required placeholder="e.g. Margherita Pizza" />
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price *</label>
+                        <input type="number" id="price" name="price" required step="0.01" min="0" placeholder="e.g. 12.99" />
+                    </div>
+                    <div class="form-group full">
+                        <label for="item_description">Description</label>
+                        <textarea id="item_description" name="description" rows="2" placeholder="Optional item description…"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn-save">Add Item</button>
+            </form>
         </div>
     </div>
 

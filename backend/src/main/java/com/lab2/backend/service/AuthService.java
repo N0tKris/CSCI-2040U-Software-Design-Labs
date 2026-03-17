@@ -71,6 +71,9 @@ public class AuthService {
      * @return the authenticated {@link User}, or empty if the token is invalid
      */
     public Optional<User> getUserByToken(String token) {
+        if (token == null || token.isBlank()) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(tokenStore.get(token));
     }
 
@@ -97,5 +100,12 @@ public class AuthService {
      */
     public void logout(String token) {
         tokenStore.remove(token);
+    }
+
+    /**
+     * Clear all active tokens. Intended for use in tests only.
+     */
+    public void clearTokens() {
+        tokenStore.clear();
     }
 }
