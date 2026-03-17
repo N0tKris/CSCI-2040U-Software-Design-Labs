@@ -346,6 +346,30 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </table>
         </div>
 
+        <!-- Menu Items Table -->
+        <div class="section">
+            <div class="section-header">Menu Items</div>
+            <table>
+                <thead>
+                    <tr><th>Restaurant</th><th>Name</th><th>Price</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                {% if menu_items %}
+                    {% for m in menu_items %}
+                    <tr>
+                        <td>{{ m.restaurant_name }}</td>
+                        <td>{{ m.name }}</td>
+                        <td>{{ m.price }}</td>
+                        <td>{{ m.description or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row"><td colspan="4">No menu items found</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Reviews Table -->
         <div class="section">
             <div class="section-header">Reviews</div>
@@ -360,7 +384,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ rv.id }}</td>
                         <td>{{ rv.username or rv.userId or rv.user_id or '—' }}</td>
                         <td>{{ rv.restaurantId or rv.restaurant_id or '—' }}</td>
-                        <td class="stars">{{ '★' * rv.rating }}{{ '☆' * (5 - rv.rating) }}</td>
+                        {% set rating_value = (rv.rating or 0)|float %}
+                        {% set star_count = rating_value|round(0, 'common')|int %}
+                        <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} ({{ '%.1f'|format(rating_value) }})</td>
                         <td>{{ rv.comment or '—' }}</td>
                     </tr>
                     {% endfor %}
@@ -1066,6 +1092,7 @@ def admin_dashboard():
     users = []
     restaurants = []
     reviews = []
+    menu_items = []
 
     try:
         resp = requests.get(
@@ -1095,11 +1122,57 @@ def admin_dashboard():
     except (requests.RequestException, ValueError):
         pass
 
+    for restaurant in restaurants:
+        if not isinstance(restaurant, dict):
+            continue
+
+        restaurant_name = restaurant.get("name") or f"Restaurant #{restaurant.get('id', 'Unknown')}"
+        raw_menu_items = restaurant.get("menuItems") or restaurant.get("menu_items") or []
+
+        if isinstance(raw_menu_items, list) and raw_menu_items:
+            for item in raw_menu_items:
+                if not isinstance(item, dict):
+                    continue
+
+                raw_price = item.get("price")
+                if raw_price in (None, ""):
+                    price_text = "—"
+                else:
+                    try:
+                        price_text = f"${float(raw_price):.2f}"
+                    except (TypeError, ValueError):
+                        price_text = str(raw_price)
+
+                menu_items.append(
+                    {
+                        "restaurant_name": restaurant_name,
+                        "name": item.get("itemName") or item.get("name") or "Unnamed item",
+                        "price": price_text,
+                        "description": item.get("description") or "",
+                    }
+                )
+            continue
+
+        menu_names = restaurant.get("menuItemNames") or restaurant.get("menu_item_names") or []
+        if isinstance(menu_names, list):
+            for name in menu_names:
+                if not name:
+                    continue
+                menu_items.append(
+                    {
+                        "restaurant_name": restaurant_name,
+                        "name": str(name),
+                        "price": "—",
+                        "description": "",
+                    }
+                )
+
     return render_template_string(
         ADMIN_DASHBOARD_TEMPLATE,
         admin_username=session.get("admin_username", "Admin"),
         users=users,
         restaurants=restaurants,
+        menu_items=menu_items,
         reviews=reviews,
     )
 
