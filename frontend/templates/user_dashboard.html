@@ -507,6 +507,29 @@
             padding-bottom: 6px;
             border-bottom: 1px solid #ece5de;
         }
+        .detail-menu-table {
+            width: 100%; border-collapse: collapse;
+            font-size: 13px; margin-bottom: 10px;
+        }
+        .detail-menu-table th {
+            text-align: left; font-weight: 700; color: #333;
+            padding: 8px 6px 8px 0; border-bottom: 1px solid #ece5de;
+        }
+        .detail-menu-table td {
+            padding: 10px 6px 10px 0; border-bottom: 1px solid #f0ebe5;
+            color: #555;
+        }
+        .detail-menu-table tr:last-child td { border-bottom: none; }
+        .detail-menu-table .menu-name {
+            font-weight: 600; color: #333;
+        }
+        .detail-menu-table .menu-price {
+            color: #b85c38; font-weight: 600;
+        }
+        .detail-menu-table .menu-desc {
+            font-size: 12px; color: #999;
+            font-style: italic; padding-top: 2px;
+        }
         .detail-review-card {
             background: #faf8f6;
             border-radius: 8px;
@@ -626,7 +649,11 @@
     <div class="detail-stars" id="detail-stars"></div>
     <div class="detail-tags" id="detail-tags"></div>
     <div class="detail-desc" id="detail-desc"></div>
-    <div class="detail-section-title">Reviews</div>
+    <div class="detail-section-title">Menu Items</div>
+    <div id="detail-menu">
+        <div style="font-size:13px;color:#aaa;font-style:italic;">Loading menu…</div>
+    </div>
+    <div class="detail-section-title" style="margin-top:20px;">Reviews</div>
     <div id="detail-reviews">
         <div style="font-size:13px;color:#aaa;font-style:italic;">Loading reviews…</div>
     </div>
@@ -899,13 +926,48 @@
         tagsEl.innerHTML = tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
 
         document.getElementById('detail-desc').textContent = r.description || 'No description available.';
+        document.getElementById('detail-menu').innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">Loading menu…</div>';
         document.getElementById('detail-reviews').innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">Loading reviews…</div>';
 
         document.getElementById('detail-backdrop').classList.add('show');
         document.getElementById('detail-panel').classList.add('open');
 
-        // Load reviews for this restaurant
+        // Load menu items and reviews for this restaurant
+        loadDetailMenu(restaurantId);
         loadDetailReviews(restaurantId);
+    }
+
+    function loadDetailMenu(restaurantId) {
+        const container = document.getElementById('detail-menu');
+        // Use restaurant data already loaded in memory instead of making a new API call
+        const restaurant = allRestaurants.find(r => r.id == restaurantId);
+        
+        if (!restaurant) {
+            container.innerHTML = '<div style="font-size:13px;color:#aaa;">Restaurant not found.</div>';
+            return;
+        }
+
+        const menuItems = restaurant.menuItems || restaurant.menu_items || [];
+
+        if (!Array.isArray(menuItems) || menuItems.length === 0) {
+            container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No menu items available.</div>';
+            return;
+        }
+
+        // Build menu table
+        let html = `<table class="detail-menu-table"><thead><tr><th>Name</th><th>Price</th></tr></thead><tbody>`;
+        menuItems.forEach(item => {
+            const itemName = item.itemName || item.name || 'Unnamed item';
+            const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : '—';
+            const description = item.description || '';
+            html += `<tr><td><div class="menu-name">${escHtml(itemName)}</div>`;
+            if (description) {
+                html += `<div class="menu-desc">${escHtml(description)}</div>`;
+            }
+            html += `</td><td class="menu-price">${price}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+        container.innerHTML = html;
     }
 
     async function loadDetailReviews(restaurantId) {
