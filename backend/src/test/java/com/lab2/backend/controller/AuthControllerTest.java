@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
@@ -28,11 +29,14 @@ class AuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
         // Seed an admin user for tests
-        userRepository.save(new User("admin", "admin123", User.Role.ADMIN));
+        userRepository.save(new User("admin", passwordEncoder.encode("admin123"), User.Role.ADMIN));
     }
 
     @Test
@@ -67,7 +71,7 @@ class AuthControllerTest {
     @Test
     void adminRoleIsRecognizedInResponse() throws Exception {
         // Create a regular user
-        userRepository.save(new User("user1", "pass1", User.Role.USER));
+        userRepository.save(new User("user1", passwordEncoder.encode("pass1"), User.Role.USER));
 
         // Admin login should return ADMIN role
         mockMvc.perform(post("/api/auth/login")
