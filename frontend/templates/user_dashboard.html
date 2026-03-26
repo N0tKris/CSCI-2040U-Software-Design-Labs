@@ -427,6 +427,24 @@
             font-size: 48px;
             color: #c4a882;
             position: relative;
+            overflow: hidden;
+        }
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        .restaurant-card:hover .card-img img {
+            transform: scale(1.05);
+        }
+        .card-img .card-img-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
         }
         .card-img .cuisine-badge {
             position: absolute;
@@ -1142,9 +1160,14 @@
             const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
             const card = document.createElement('div');
             card.className = 'restaurant-card';
+            const backendUrl = {{ backend_url | tojson }};
+            const imageUrl = r.imageUrl || r.image_url;
+            const cardImgContent = imageUrl
+                ? `<img src="${backendUrl.replace(/\/$/, '')}${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>' + cuisineEmoji(${JSON.stringify(r.cuisine || '')}) + '</div>'" />`
+                : `<div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>`;
             card.innerHTML = `
                 <div class="card-img">
-                    ${cuisineEmoji(r.cuisine)}
+                    ${cardImgContent}
                     <span class="cuisine-badge">${escHtml(r.cuisine || 'Restaurant')}</span>
                 </div>
                 <div class="card-body">
