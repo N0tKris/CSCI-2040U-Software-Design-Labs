@@ -216,6 +216,50 @@ public class RestaurantService {
         }).orElse(null);
     }
 
+    @Transactional
+    public Restaurant updateRestaurantWithOptionalImage(Long id, Restaurant updated, MultipartFile file, Path uploadDir) throws IOException {
+        Restaurant restaurant = repository.findById(id).orElse(null);
+        if (restaurant == null) {
+            return null;
+        }
+
+        restaurant.setName(updated.getName());
+        restaurant.setCuisine(updated.getCuisine());
+        restaurant.setLocation(updated.getLocation());
+        restaurant.setDescription(updated.getDescription());
+        restaurant.setDietaryTags(updated.getDietaryTags());
+        if (updated.getOwnerId() != null) {
+            restaurant.setOwnerId(updated.getOwnerId());
+        }
+
+        if (file != null && !file.isEmpty()) {
+            String contentType = file.getContentType();
+            if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+                throw new IllegalArgumentException("Invalid file type. Only JPG, PNG, GIF and WebP images are allowed.");
+            }
+            if (file.getSize() > MAX_IMAGE_SIZE) {
+                throw new IllegalArgumentException("File too large. Maximum size is 5 MB.");
+            }
+
+            Files.createDirectories(uploadDir);
+
+            String originalFilename = file.getOriginalFilename();
+            String extension = (originalFilename != null && originalFilename.contains("."))
+                    ? originalFilename.substring(originalFilename.lastIndexOf('.'))
+                    : ".jpg";
+            if (!Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp").contains(extension.toLowerCase(Locale.ROOT))) {
+                extension = ".jpg";
+            }
+
+            String filename = "restaurant-" + id + "-" + System.currentTimeMillis() + extension;
+            Path dest = uploadDir.resolve(filename);
+            file.transferTo(dest);
+            restaurant.setImageUrl("/uploads/" + filename);
+        }
+
+        return repository.save(restaurant);
+    }
+
     public boolean deleteRestaurant(Long id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
