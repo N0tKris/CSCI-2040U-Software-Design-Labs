@@ -434,7 +434,16 @@
             height: 100%;
             object-fit: cover;
             display: block;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+        }
+        .card-img img.loading {
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
         }
         .restaurant-card:hover .card-img img {
             transform: scale(1.05);
@@ -445,6 +454,8 @@
             justify-content: center;
             width: 100%;
             height: 100%;
+            font-size: 48px;
+            z-index: 1;
         }
         .card-img .cuisine-badge {
             position: absolute;
@@ -1162,12 +1173,12 @@
             card.className = 'restaurant-card';
             const backendUrl = {{ backend_url | tojson }};
             const imageUrl = r.imageUrl || r.image_url;
-            const cardImgContent = imageUrl
-                ? `<img src="${backendUrl.replace(/\/$/, '')}${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'card-img-placeholder\\'>' + cuisineEmoji(${JSON.stringify(r.cuisine || '')}) + '</div>'" />`
-                : `<div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>`;
+            
+            // Create card HTML structure
             card.innerHTML = `
                 <div class="card-img">
-                    ${cardImgContent}
+                    ${imageUrl ? `<img src="${backendUrl.replace(/\/$/, '')}${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" class="loading" />` : ''}
+                    <div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>
                     <span class="cuisine-badge">${escHtml(r.cuisine || 'Restaurant')}</span>
                 </div>
                 <div class="card-body">
@@ -1192,6 +1203,22 @@
                 </div>
             `;
             grid.appendChild(card);
+            
+            // Handle image load/error states
+            if (imageUrl) {
+                const img = card.querySelector('.card-img img');
+                const placeholder = card.querySelector('.card-img-placeholder');
+                if (img) {
+                    img.addEventListener('load', () => {
+                        img.classList.remove('loading');
+                        placeholder.style.display = 'none';
+                    });
+                    img.addEventListener('error', () => {
+                        img.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                    });
+                }
+            }
         });
     }
 
