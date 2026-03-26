@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
@@ -198,6 +199,32 @@ class RestaurantServiceTest {
         verify(repository, times(1)).save(any(Restaurant.class));
     }
 
+    @Test
+    void testAddRestaurantTrimsFieldsBeforeSave() {
+        // Arrange
+        Restaurant newRestaurant = new Restaurant();
+        newRestaurant.setId(999L);
+        newRestaurant.setName("  Trim Me  ");
+        newRestaurant.setCuisine("  Italian  ");
+        newRestaurant.setLocation("  123 Main St  ");
+        newRestaurant.setDietaryTags("  vegan, gluten-free  ");
+        newRestaurant.setDescription("  Cozy place  ");
+
+        when(repository.save(any(Restaurant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Restaurant result = restaurantService.addRestaurant(newRestaurant);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("Trim Me", result.getName());
+        assertEquals("Italian", result.getCuisine());
+        assertEquals("123 Main St", result.getLocation());
+        assertEquals("vegan, gluten-free", result.getDietaryTags());
+        assertEquals("Cozy place", result.getDescription());
+        verify(repository).save(argThat(saved -> saved.getId() == null));
+    }
+
     // ============ addRestaurantByOwner() Tests ============
 
     @Test
@@ -265,6 +292,33 @@ class RestaurantServiceTest {
 
         // Assert
         verify(repository, times(1)).save(any(Restaurant.class));
+    }
+
+    @Test
+    void testAddRestaurantByOwnerTrimsFieldsBeforeSave() {
+        // Arrange
+        Long ownerId = 7L;
+        Restaurant newRestaurant = new Restaurant();
+        newRestaurant.setName("  Owner Spot  ");
+        newRestaurant.setCuisine("  Thai  ");
+        newRestaurant.setLocation("  77 King St  ");
+        newRestaurant.setDietaryTags("  halal  ");
+        newRestaurant.setDescription("  Family-friendly  ");
+
+        when(repository.existsByOwnerId(ownerId)).thenReturn(false);
+        when(repository.save(any(Restaurant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Restaurant result = restaurantService.addRestaurantByOwner(ownerId, newRestaurant);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(ownerId, result.getOwnerId());
+        assertEquals("Owner Spot", result.getName());
+        assertEquals("Thai", result.getCuisine());
+        assertEquals("77 King St", result.getLocation());
+        assertEquals("halal", result.getDietaryTags());
+        assertEquals("Family-friendly", result.getDescription());
     }
 
     // ============ getRestaurantByOwner() Tests ============
@@ -417,6 +471,38 @@ class RestaurantServiceTest {
 
         // Assert
         verify(repository, times(1)).save(any(Restaurant.class));
+    }
+
+    @Test
+    void testUpdateRestaurantTrimsFieldsBeforeSave() {
+        // Arrange
+        Long restaurantId = 1L;
+        Restaurant updated = new Restaurant();
+        updated.setName("  Updated Name  ");
+        updated.setCuisine("  Updated Cuisine  ");
+        updated.setLocation("  Updated Location  ");
+        updated.setDescription("  Updated Description  ");
+        updated.setDietaryTags("  vegetarian  ");
+
+        Restaurant existing = new Restaurant();
+        existing.setId(restaurantId);
+        existing.setName("Old Name");
+        existing.setCuisine("Old Cuisine");
+        existing.setLocation("Old Location");
+
+        when(repository.findById(restaurantId)).thenReturn(Optional.of(existing));
+        when(repository.save(any(Restaurant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Restaurant result = restaurantService.updateRestaurant(restaurantId, updated);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("Updated Name", result.getName());
+        assertEquals("Updated Cuisine", result.getCuisine());
+        assertEquals("Updated Location", result.getLocation());
+        assertEquals("Updated Description", result.getDescription());
+        assertEquals("vegetarian", result.getDietaryTags());
     }
 
     // ============ deleteRestaurant() Tests ============
