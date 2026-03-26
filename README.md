@@ -74,6 +74,28 @@ Use a Python virtual environment for the frontend. Windows users: PowerShell exa
 
 ## Running Locally
 
+### Quick Start (Windows)
+
+Run the entire system (backend + frontend) from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run-system.ps1
+```
+
+Optional flags:
+
+```powershell
+# Skip Python dependency installation
+powershell -ExecutionPolicy Bypass -File .\run-system.ps1 -SkipInstall
+
+# Start backend with default profile (PostgreSQL) instead of dev profile
+powershell -ExecutionPolicy Bypass -File .\run-system.ps1 -UsePostgresProfile
+
+# Start only one service
+powershell -ExecutionPolicy Bypass -File .\run-system.ps1 -NoFrontend
+powershell -ExecutionPolicy Bypass -File .\run-system.ps1 -NoBackend
+```
+
 ### 1) Start Postgres (optional)
 
 ```
