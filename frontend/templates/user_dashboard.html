@@ -128,6 +128,96 @@
             transform: scale(1.03);
         }
 
+        /* ── Filter Panel ── */
+        .filter-toggle {
+            display: none;
+            padding: 10px 16px;
+            background: #fff;
+            border: 1.5px solid #e0d8d0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            margin-bottom: 16px;
+        }
+        .filter-toggle:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+        }
+        .filter-panel {
+            background: #fff;
+            border-radius: 10px;
+            border: 1px solid #e0d8d0;
+            padding: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+        }
+        .filter-panel.collapsed {
+            display: none;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 12px;
+            border: 1px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #faf8f6;
+        }
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+        }
+        .dietary-tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .dietary-tags-list label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 400;
+            cursor: pointer;
+        }
+        .dietary-tags-list input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            cursor: pointer;
+        }
+        .btn-clear-filters {
+            padding: 10px 16px;
+            background: #fff;
+            border: 1.5px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-clear-filters:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+        }
+
         /* ── Page wrapper ── */
         .page {
             max-width: 1080px;
@@ -559,6 +649,20 @@
             .page { padding: 20px 14px 40px; }
             .restaurant-grid { grid-template-columns: 1fr; }
             .detail-panel { width: 100vw; }
+            .filter-toggle { display: block; }
+            .filter-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-panel.collapsed {
+                display: none;
+            }
+            .filter-group {
+                min-width: auto;
+            }
+            .btn-clear-filters {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -598,6 +702,24 @@
 
 <!-- Main content -->
 <div class="page">
+    <button class="filter-toggle" id="filter-toggle-btn">🔍 Filters</button>
+
+    <div class="filter-panel" id="filter-panel">
+        <div class="filter-group">
+            <label for="cuisine-filter">Cuisine</label>
+            <select id="cuisine-filter">
+                <option value="">All Cuisines</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Dietary Tags</label>
+            <div class="dietary-tags-list" id="dietary-tags-container"></div>
+        </div>
+
+        <button class="btn-clear-filters" id="clear-filters-btn">Clear Filters</button>
+    </div>
+
     <div class="results-header">
         <h2>Restaurants near you</h2>
         <span id="status-bar">Loading…</span>
@@ -662,9 +784,112 @@
 <script>
     let allRestaurants = [];
     let activeRestaurantId = null;
+    let currentSearchQuery = '';
+    let selectedCuisine = '';
+    let selectedDietaryTags = [];
 
     function escHtml(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Filter utility functions ──
+    function extractUniqueCuisines(restaurants) {
+        const cuisines = new Set();
+        restaurants.forEach(r => {
+            if (r.cuisine) cuisines.add(r.cuisine);
+        });
+        return Array.from(cuisines).sort();
+    }
+
+    function extractUniqueDietaryTags(restaurants) {
+        const tags = new Set();
+        restaurants.forEach(r => {
+            const tagString = r.dietaryTags || r.dietary_tags || '';
+            if (tagString) {
+                tagString.split(',').forEach(tag => {
+                    const trimmed = tag.trim();
+                    if (trimmed) tags.add(trimmed);
+                });
+            }
+        });
+        return Array.from(tags).sort();
+    }
+
+    function renderFilterPanel() {
+        // Populate cuisine dropdown
+        const cuisineSelect = document.getElementById('cuisine-filter');
+        const currentValue = cuisineSelect.value;
+        const cuisines = extractUniqueCuisines(allRestaurants);
+
+        // Preserve existing option
+        cuisineSelect.innerHTML = '<option value="">All Cuisines</option>';
+        cuisines.forEach(cuisine => {
+            const option = document.createElement('option');
+            option.value = cuisine;
+            option.textContent = cuisine;
+            cuisineSelect.appendChild(option);
+        });
+        cuisineSelect.value = currentValue;
+
+        // Populate dietary tags checkboxes
+        const tagsContainer = document.getElementById('dietary-tags-container');
+        const tags = extractUniqueDietaryTags(allRestaurants);
+
+        tagsContainer.innerHTML = '';
+        tags.forEach(tag => {
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'dietary-tag';
+            checkbox.value = tag;
+            checkbox.checked = selectedDietaryTags.includes(tag);
+            checkbox.addEventListener('change', onTagFilterChange);
+
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode(tag));
+            tagsContainer.appendChild(label);
+        });
+    }
+
+    // ── Combined filtering logic ──
+    function applyFilters() {
+        if (!allRestaurants.length) {
+            renderCards([]);
+            setStatus('No restaurants available');
+            return;
+        }
+
+        const filtered = allRestaurants.filter(r => {
+            // Filter by cuisine (exact match)
+            if (selectedCuisine && (r.cuisine || '').toLowerCase() !== selectedCuisine.toLowerCase()) {
+                return false;
+            }
+
+            // Filter by dietary tags (all selected tags must be present)
+            if (selectedDietaryTags.length > 0) {
+                const restaurantTags = (r.dietaryTags || r.dietary_tags || '')
+                    .toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+                const allTagsPresent = selectedDietaryTags.every(tag =>
+                    restaurantTags.includes(tag.toLowerCase())
+                );
+                if (!allTagsPresent) return false;
+            }
+
+            // Filter by search query
+            if (currentSearchQuery) {
+                const q = currentSearchQuery.toLowerCase();
+                const matches = (r.name || '').toLowerCase().includes(q) ||
+                    (r.cuisine || '').toLowerCase().includes(q) ||
+                    (r.location || '').toLowerCase().includes(q) ||
+                    (r.dietaryTags || r.dietary_tags || '').toLowerCase().includes(q);
+                if (!matches) return false;
+            }
+
+            return true;
+        });
+
+        renderCards(filtered);
+        setStatus(filtered.length + ' restaurant(s) found');
     }
 
     function stars(n) {
@@ -763,38 +988,59 @@
                 return;
             }
             allRestaurants = data.data || [];
-            renderCards(allRestaurants);
-            setStatus(allRestaurants.length + ' restaurant(s) found');
+            renderFilterPanel();
+            applyFilters();
         } catch (e) {
             setStatus('Network error: ' + e);
         }
     }
 
-    // ── Search / filter ──
-    function filterRestaurants(query) {
-        if (!query) { renderCards(allRestaurants); setStatus(allRestaurants.length + ' restaurant(s) found'); return; }
-        const q = query.toLowerCase();
-        const filtered = allRestaurants.filter(r =>
-            (r.name || '').toLowerCase().includes(q) ||
-            (r.cuisine || '').toLowerCase().includes(q) ||
-            (r.location || '').toLowerCase().includes(q) ||
-            (r.dietaryTags || r.dietary_tags || '').toLowerCase().includes(q)
-        );
-        renderCards(filtered);
-        setStatus(filtered.length + ' result(s) for "' + escHtml(query) + '"');
+    // ── Search / filter event handlers ──
+    function onCuisineFilterChange(e) {
+        selectedCuisine = e.target.value;
+        applyFilters();
+    }
+
+    function onTagFilterChange() {
+        const checkboxes = document.querySelectorAll('input[name="dietary-tag"]:checked');
+        selectedDietaryTags = Array.from(checkboxes).map(cb => cb.value);
+        applyFilters();
+    }
+
+    function onClearFilters() {
+        document.getElementById('cuisine-filter').value = '';
+        document.querySelectorAll('input[name="dietary-tag"]').forEach(cb => cb.checked = false);
+        selectedCuisine = '';
+        selectedDietaryTags = [];
+        applyFilters();
+    }
+
+    function onSearchInput(query) {
+        currentSearchQuery = query.trim();
+        applyFilters();
     }
 
     document.getElementById('search-btn').addEventListener('click', () => {
-        filterRestaurants(document.getElementById('search-input').value.trim());
+        onSearchInput(document.getElementById('search-input').value.trim());
     });
     document.getElementById('search-input').addEventListener('keydown', e => {
-        if (e.key === 'Enter') filterRestaurants(e.target.value.trim());
+        if (e.key === 'Enter') onSearchInput(e.target.value.trim());
     });
     let searchTimeout;
     document.getElementById('search-input').addEventListener('input', e => {
         clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => filterRestaurants(e.target.value.trim()), 300);
+        searchTimeout = setTimeout(() => onSearchInput(e.target.value.trim()), 300);
     });
+
+    // ── Filter panel toggle for mobile ──
+    document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+        const panel = document.getElementById('filter-panel');
+        panel.classList.toggle('collapsed');
+    });
+
+    // ── Filter event handlers ──
+    document.getElementById('cuisine-filter').addEventListener('change', onCuisineFilterChange);
+    document.getElementById('clear-filters-btn').addEventListener('click', onClearFilters);
 
     // ── Review modal ──
     function openReviewModal(restaurantId, restaurantName) {

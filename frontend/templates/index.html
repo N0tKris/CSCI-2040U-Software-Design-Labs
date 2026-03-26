@@ -263,6 +263,78 @@
             background: #f0f0f0;
         }
 
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 180px;
+        }
+
+        .filter-group label {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .filter-section select {
+            height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #bbb;
+            font-size: 14px;
+            background: white;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .dietary-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            min-height: 38px;
+        }
+
+        .dietary-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border: 1px solid #bbb;
+            background: white;
+            user-select: none;
+        }
+
+        .dietary-tag:has(input:checked) {
+            background: #e9ecef;
+            border-color: #555;
+        }
+
+        .dietary-tag input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .filter-count {
+            font-size: 13px;
+            color: #555;
+            min-height: 16px;
+        }
+
+        .filter-actions {
+            justify-content: flex-end;
+            align-self: flex-end;
+        }
+
         @media (max-width: 800px) {
             .topbar {
                 flex-direction: column;
@@ -274,6 +346,10 @@
 
             .form-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .filter-group {
+                min-width: 100%;
             }
         }
     </style>
@@ -306,6 +382,27 @@
         </div>
 
         <div class="status" id="status">Ready — you can load restaurants.</div>
+    </div>
+
+    <div class="card">
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="cuisine-filter">Cuisine</label>
+                <select id="cuisine-filter">
+                    <option value="">All Cuisines</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Dietary</label>
+                <div id="dietary-checkboxes" class="dietary-tags">
+                    <span style="font-size:13px;color:#999;">Load restaurants to see options</span>
+                </div>
+            </div>
+            <div class="filter-group filter-actions">
+                <button id="clear-filters">Clear Filters</button>
+            </div>
+        </div>
+        <div id="filter-count" class="filter-count"></div>
     </div>
 
     <div class="card">
@@ -359,6 +456,7 @@
     const listEl = document.getElementById("restaurant-list");
     const modalBackdrop = document.getElementById("modal-backdrop");
     let editingRestaurantId = null;
+    let allRestaurants = [];
 
     function setStatus(msg) {
         statusEl.textContent = msg;
@@ -382,11 +480,86 @@
         document.getElementById('create').textContent = 'Save restaurant';
     }
 
-    function renderRestaurants(restaurants) {
+    function filterRestaurants(restaurants, cuisineFilter, dietaryFilters) {
+        const cuisineLower = cuisineFilter ? cuisineFilter.toLowerCase() : '';
+        return restaurants.filter(r => {
+            if (cuisineLower && (!r.cuisine || r.cuisine.toLowerCase() !== cuisineLower)) {
+                return false;
+            }
+            if (dietaryFilters.length > 0) {
+                const tags = (r.dietaryTags || r.dietary_tags || '').toLowerCase()
+                    .split(',').map(t => t.trim()).filter(Boolean);
+                if (!dietaryFilters.every(df => tags.includes(df.toLowerCase()))) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    function applyFilters() {
+        const cuisineFilter = document.getElementById('cuisine-filter').value;
+        const dietaryFilters = [...document.querySelectorAll('#dietary-checkboxes input:checked')].map(el => el.value);
+        const filtersActive = cuisineFilter !== '' || dietaryFilters.length > 0;
+        const filtered = filterRestaurants(allRestaurants, cuisineFilter, dietaryFilters);
+        renderRestaurants(filtered, filtersActive);
+        const countEl = document.getElementById('filter-count');
+        countEl.textContent = filtersActive
+            ? `${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''} found`
+            : '';
+    }
+
+    function populateCuisineDropdown(restaurants) {
+        const select = document.getElementById('cuisine-filter');
+        const currentVal = select.value;
+        const cuisines = [...new Set(
+            restaurants.map(r => r.cuisine).filter(Boolean).map(c => c.trim())
+        )].sort();
+        select.innerHTML = '<option value="">All Cuisines</option>';
+        for (const c of cuisines) {
+            const opt = document.createElement('option');
+            opt.value = c;
+            opt.textContent = c;
+            if (c === currentVal) opt.selected = true;
+            select.appendChild(opt);
+        }
+    }
+
+    function populateDietaryCheckboxes(restaurants) {
+        const container = document.getElementById('dietary-checkboxes');
+        const currentChecked = [...container.querySelectorAll('input:checked')].map(el => el.value);
+        const tags = [...new Set(
+            restaurants.flatMap(r =>
+                (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim().toLowerCase())
+            ).filter(Boolean)
+        )].sort();
+        container.innerHTML = '';
+        if (tags.length === 0) {
+            container.innerHTML = '<span style="font-size:13px;color:#999;">No dietary tags available</span>';
+            return;
+        }
+        for (const tag of tags) {
+            const lbl = document.createElement('label');
+            lbl.className = 'dietary-tag';
+            const inp = document.createElement('input');
+            inp.type = 'checkbox';
+            inp.value = tag;
+            if (currentChecked.includes(tag)) inp.checked = true;
+            inp.addEventListener('change', applyFilters);
+            lbl.appendChild(inp);
+            const displayName = tag.length > 0
+                ? tag.charAt(0).toUpperCase() + tag.slice(1)
+                : tag;
+            lbl.appendChild(document.createTextNode('\u00a0' + displayName));
+            container.appendChild(lbl);
+        }
+    }
+
+    function renderRestaurants(restaurants, filtersActive) {
         listEl.innerHTML = '';
 
         if (!restaurants || restaurants.length === 0) {
-            listEl.innerHTML = '<div class="empty">No restaurants found.</div>';
+            listEl.innerHTML = `<div class="empty">${filtersActive ? 'No restaurants match your filters.' : 'No restaurants found.'}</div>`;
             return;
         }
 
@@ -432,8 +605,11 @@
                 return;
             }
 
-            renderRestaurants(data.data);
-            setStatus(`Loaded ${data.data.length} restaurant(s).`);
+            allRestaurants = data.data;
+            populateCuisineDropdown(allRestaurants);
+            populateDietaryCheckboxes(allRestaurants);
+            applyFilters();
+            setStatus(`Loaded ${allRestaurants.length} restaurant(s).`);
         } catch (err) {
             setStatus(`Network error: ${err}`);
         }
@@ -560,6 +736,12 @@
     });
     document.getElementById('close-modal').addEventListener('click', closeModal);
     document.getElementById('delete-selected').addEventListener('click', deleteSelectedRestaurants);
+    document.getElementById('cuisine-filter').addEventListener('change', applyFilters);
+    document.getElementById('clear-filters').addEventListener('click', () => {
+        document.getElementById('cuisine-filter').value = '';
+        document.querySelectorAll('#dietary-checkboxes input').forEach(el => { el.checked = false; });
+        applyFilters();
+    });
 
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
