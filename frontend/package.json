@@ -1,0 +1,22 @@
+{
+  "name": "platerate-frontend",
+  "version": "1.0.0",
+  "description": "PlateRate frontend - Flask + JavaScript",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "**/__tests__/**/*.test.js"
+    ]
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}
