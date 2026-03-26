@@ -335,6 +335,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                                 data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
                                 data-description="{{ (r.description or '')|e }}"
                                 style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">Edit</button>
+                            <button class="admin-upload-img" data-id="{{ r.id }}" data-name="{{ r.name|e }}" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">📷 Image</button>
                             <button class="admin-delete" data-id="{{ r.id }}" style="padding:6px 10px;border-radius:6px;border:1px solid #e2bdb0;background:#fff;color:#b85c38;cursor:pointer;">Delete</button>
                         </td>
                     </tr>
@@ -497,6 +498,28 @@ ADMIN_DASHBOARD_TEMPLATE = """
         </div>
     </div>
 
+    <!-- Upload Image modal (admin dashboard) -->
+    <div class="modal-backdrop" id="admin-upload-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;z-index:200;">
+        <div style="width:100%;max-width:480px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;">
+            <h3 style="margin:0 0 6px 0;color:#b85c38;">Upload Restaurant Image</h3>
+            <p id="admin-upload-subtitle" style="margin:0 0 16px;color:#666;font-size:13px;"></p>
+            <form id="admin-upload-form" enctype="multipart/form-data">
+                <img id="admin-upload-preview" style="display:none;width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:12px;" src="#" alt="Preview" />
+                <div id="admin-upload-drop-zone" style="border:2px dashed #d5cfc9;border-radius:8px;padding:28px 16px;text-align:center;cursor:pointer;position:relative;transition:border-color 0.2s,background 0.2s;">
+                    <input type="file" id="admin-upload-file" name="file" accept="image/jpeg,image/png,image/gif,image/webp" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;" />
+                    <div style="font-size:32px;margin-bottom:8px;">📷</div>
+                    <div style="font-size:14px;"><strong>Click or drag &amp; drop</strong> an image</div>
+                    <div style="font-size:12px;color:#888;margin-top:4px;">JPG, PNG, GIF or WebP · Max 5 MB</div>
+                </div>
+                <div id="admin-upload-msg" style="font-size:13px;min-height:18px;margin-top:10px;"></div>
+                <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" id="admin-upload-save" disabled style="padding:8px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Upload</button>
+                    <button type="button" id="admin-upload-cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ── Yelp Import modal ──
         const yelpBackdrop = document.getElementById('yelp-import-backdrop');
@@ -651,6 +674,110 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 alert('Failed to update restaurant: ' + (data.error || data.message || JSON.stringify(data)));
             } catch (e) {
                 alert('Request failed: ' + e);
+            }
+        });
+
+        // ── Upload Image modal ──
+        const uploadBackdrop = document.getElementById('admin-upload-backdrop');
+        const adminUploadFile = document.getElementById('admin-upload-file');
+        const adminUploadPreview = document.getElementById('admin-upload-preview');
+        const adminUploadSave = document.getElementById('admin-upload-save');
+        const adminUploadMsg = document.getElementById('admin-upload-msg');
+        const adminUploadDropZone = document.getElementById('admin-upload-drop-zone');
+
+        document.querySelectorAll('.admin-upload-img').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-id');
+                const name = btn.getAttribute('data-name') || ('Restaurant #' + id);
+                document.getElementById('admin-upload-subtitle').textContent = 'Uploading image for: ' + name;
+                adminUploadSave.setAttribute('data-id', id);
+                adminUploadSave.disabled = true;
+                adminUploadMsg.textContent = '';
+                adminUploadPreview.style.display = 'none';
+                adminUploadFile.value = '';
+                uploadBackdrop.style.display = 'flex';
+            });
+        });
+
+        document.getElementById('admin-upload-cancel').addEventListener('click', () => { uploadBackdrop.style.display = 'none'; });
+
+        adminUploadFile.addEventListener('change', handleAdminFileSelect);
+
+        adminUploadDropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            adminUploadDropZone.style.borderColor = '#b85c38';
+            adminUploadDropZone.style.background = '#faf6f3';
+        });
+        adminUploadDropZone.addEventListener('dragleave', () => {
+            adminUploadDropZone.style.borderColor = '#d5cfc9';
+            adminUploadDropZone.style.background = '';
+        });
+        adminUploadDropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            adminUploadDropZone.style.borderColor = '#d5cfc9';
+            adminUploadDropZone.style.background = '';
+            if (e.dataTransfer.files.length) {
+                adminUploadFile.files = e.dataTransfer.files;
+                handleAdminFileSelect();
+            }
+        });
+
+        function handleAdminFileSelect() {
+            const file = adminUploadFile.files[0];
+            if (!file) return;
+            const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowed.includes(file.type)) {
+                adminUploadMsg.textContent = '✗ Invalid file type. Use JPG, PNG, GIF or WebP.';
+                adminUploadMsg.style.color = '#b71c1c';
+                adminUploadFile.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                adminUploadMsg.textContent = '✗ File too large. Max 5 MB.';
+                adminUploadMsg.style.color = '#b71c1c';
+                adminUploadFile.value = '';
+                return;
+            }
+            adminUploadMsg.textContent = '';
+            const reader = new FileReader();
+            reader.onload = e => {
+                adminUploadPreview.src = e.target.result;
+                adminUploadPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            adminUploadSave.disabled = false;
+        }
+
+        adminUploadSave.addEventListener('click', async () => {
+            const id = adminUploadSave.getAttribute('data-id');
+            if (!id || !adminUploadFile.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('file', adminUploadFile.files[0]);
+
+            adminUploadSave.disabled = true;
+            adminUploadMsg.textContent = 'Uploading…';
+            adminUploadMsg.style.color = '#666';
+
+            try {
+                const res = await fetch('/admin/restaurants/' + encodeURIComponent(id) + '/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok) {
+                    adminUploadMsg.textContent = '✓ Image uploaded successfully!';
+                    adminUploadMsg.style.color = '#2e7d32';
+                    setTimeout(() => { uploadBackdrop.style.display = 'none'; window.location.reload(); }, 1200);
+                } else {
+                    adminUploadMsg.textContent = '✗ ' + (data.error || data.message || 'Upload failed');
+                    adminUploadMsg.style.color = '#b71c1c';
+                    adminUploadSave.disabled = false;
+                }
+            } catch (e) {
+                adminUploadMsg.textContent = '✗ Network error: ' + e;
+                adminUploadMsg.style.color = '#b71c1c';
+                adminUploadSave.disabled = false;
             }
         });
     </script>
@@ -1322,6 +1449,35 @@ def admin_import_yelp() -> tuple[dict[str, Any], int]:
         return _error_payload("Couldn't reach backend for Yelp import", str(exc)), 502
 
 
+@app.post("/admin/restaurants/<int:rid>/upload-image")
+def admin_upload_restaurant_image(rid: int) -> tuple[dict[str, Any], int]:
+    """Proxy image upload for a restaurant from admin dashboard."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+
+    token = session.get("admin_token")
+    uploaded_file = request.files.get("file")
+    if not uploaded_file or not uploaded_file.filename:
+        return {"error": "No image file provided"}, 400
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{rid}/upload-image",
+            headers={"Authorization": token},
+            files={"file": (uploaded_file.filename, uploaded_file.stream, uploaded_file.content_type)},
+            timeout=10,
+        )
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+        if resp.ok:
+            return body, resp.status_code
+        return {"error": body.get("error") or body.get("message") or str(body)}, resp.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to upload image", str(exc)), 502
+
+
 @app.get("/admin/logout")
 def admin_logout():
     """Clear admin session and redirect to login page."""
@@ -1512,6 +1668,7 @@ def owner_dashboard():
         owner_username=session.get("owner_username", "Owner"),
         restaurant=restaurant,
         reviews=reviews,
+        backend_url=BACKEND_BASE_URL,
     )
 
 
@@ -1537,6 +1694,7 @@ def owner_create_restaurant():
             restaurant=None,
             reviews=[],
             error="Name, cuisine, and location are required.",
+            backend_url=BACKEND_BASE_URL,
         )
 
     payload = {
@@ -1566,6 +1724,7 @@ def owner_create_restaurant():
             restaurant=None,
             reviews=[],
             error=msg,
+            backend_url=BACKEND_BASE_URL,
         )
     except requests.RequestException:
         return render_template(
@@ -1574,6 +1733,7 @@ def owner_create_restaurant():
             restaurant=None,
             reviews=[],
             error="Could not connect to the server. Please try again.",
+            backend_url=BACKEND_BASE_URL,
         )
 
 
@@ -1600,6 +1760,7 @@ def owner_add_menu_item():
             restaurant=restaurant,
             reviews=reviews,
             error="Item name and price are required.",
+            backend_url=BACKEND_BASE_URL,
         )
 
     payload = {
@@ -1628,6 +1789,7 @@ def owner_add_menu_item():
             restaurant=restaurant,
             reviews=reviews,
             error=msg,
+            backend_url=BACKEND_BASE_URL,
         )
     except requests.RequestException:
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
@@ -1637,6 +1799,74 @@ def owner_add_menu_item():
             restaurant=restaurant,
             reviews=reviews,
             error="Could not connect to the server. Please try again.",
+            backend_url=BACKEND_BASE_URL,
+        )
+
+
+@app.post("/owner/restaurant/upload-image")
+def owner_upload_image():
+    """Handle owner uploading an image for their restaurant."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    restaurant_id = request.form.get("restaurant_id", "").strip()
+
+    if not restaurant_id:
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Restaurant ID is missing.",
+            backend_url=BACKEND_BASE_URL,
+        )
+
+    uploaded_file = request.files.get("file")
+    if not uploaded_file or not uploaded_file.filename:
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="No image file selected.",
+            backend_url=BACKEND_BASE_URL,
+        )
+
+    try:
+        resp = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/upload-image",
+            headers={"Authorization": token},
+            files={"file": (uploaded_file.filename, uploaded_file.stream, uploaded_file.content_type)},
+            timeout=10,
+        )
+        if resp.ok:
+            return redirect(url_for("owner_dashboard"))
+        try:
+            resp_json = resp.json()
+            msg = resp_json.get("error") or resp_json.get("message") or "Failed to upload image."
+        except ValueError:
+            msg = "Failed to upload image."
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error=msg,
+            backend_url=BACKEND_BASE_URL,
+        )
+    except requests.RequestException:
+        restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error="Could not connect to the server. Please try again.",
+            backend_url=BACKEND_BASE_URL,
         )
 
 

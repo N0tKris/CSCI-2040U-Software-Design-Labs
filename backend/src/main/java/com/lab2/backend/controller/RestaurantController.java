@@ -2,12 +2,17 @@ package com.lab2.backend.controller;
 
 import com.lab2.backend.model.Restaurant;
 import com.lab2.backend.dto.RestaurantDto;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import com.lab2.backend.service.AuthService;
 import com.lab2.backend.service.RestaurantService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -143,6 +148,52 @@ public class RestaurantController {
             return ResponseEntity.ok(Map.of("message", "All restaurants deleted"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to delete restaurants"));
+        }
+    }
+
+    @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadImage(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+
+        boolean isAdmin = authService.isAdmin(token);
+        boolean isOwner = authService.isOwner(token);
+
+        if (!isAdmin && !isOwner) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Admin or Owner privileges required"));
+        }
+
+        // Owners may only upload images for their own restaurant
+        if (isOwner && !isAdmin) {
+            Long ownerId = authService.getUserByToken(token).map(user -> user.getId()).orElse(null);
+            if (ownerId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Invalid token"));
+            }
+            Restaurant existing = restaurantService.getRestaurantById(id);
+            if (existing == null) {
+                return ResponseEntity.notFound().build();
+            }
+            if (!ownerId.equals(existing.getOwnerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You can only upload images for your own restaurant"));
+            }
+        }
+
+        Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads");
+        try {
+            Restaurant updated = restaurantService.uploadImage(id, file, uploadDir);
+            if (updated == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(RestaurantDto.fromEntity(updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to store image: " + e.getMessage()));
         }
     }
 }

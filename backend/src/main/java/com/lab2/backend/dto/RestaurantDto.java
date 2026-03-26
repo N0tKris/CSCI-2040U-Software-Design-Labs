@@ -18,6 +18,7 @@ public class RestaurantDto {
     private String description;
     private Long ownerId;
     private double stars;
+    private String imageUrl;
     private List<String> menuItemNames;
     private List<MenuItemDto> menuItems;
 
@@ -33,6 +34,7 @@ public class RestaurantDto {
         dto.dietaryTags = r.getDietaryTags();
         dto.description = r.getDescription();
         dto.ownerId = r.getOwnerId();
+        dto.imageUrl = r.getImageUrl();
         if (r.getReviews() != null && !r.getReviews().isEmpty()) {
             dto.stars = r.getReviews().stream()
                     .mapToDouble(review -> review.getRating())
@@ -70,6 +72,8 @@ public class RestaurantDto {
     public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
     public double getStars() { return stars; }
     public void setStars(double stars) { this.stars = stars; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public List<String> getMenuItemNames() { return menuItemNames; }
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
     public List<MenuItemDto> getMenuItems() { return menuItems; }

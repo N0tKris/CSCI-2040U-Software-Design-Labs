@@ -48,6 +48,10 @@ public class Restaurant {
     @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
 
+    /** URL path to the restaurant's uploaded image, e.g. "/uploads/restaurant-1.jpg". */
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     public Restaurant() {}
 
     public Restaurant(String name, String cuisine, String dietaryTags,
@@ -85,4 +89,7 @@ public class Restaurant {
 
     public List<Review> getReviews() { return reviews; }
     public void setReviews(List<Review> reviews) { this.reviews = reviews; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

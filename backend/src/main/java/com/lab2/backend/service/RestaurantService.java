@@ -6,6 +6,7 @@ import com.lab2.backend.model.Restaurant;
 import com.lab2.backend.repository.RestaurantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
@@ -13,6 +14,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class RestaurantService {
@@ -224,6 +227,58 @@ public class RestaurantService {
     /** Delete all restaurants (admin action). */
     public void deleteAll() {
         repository.deleteAll();
+    }
+
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/gif", "image/webp"
+    );
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    /**
+     * Store an uploaded image for the restaurant, saving it under {@code uploadDir},
+     * and update the restaurant's {@code imageUrl} to the served path.
+     *
+     * @param id        restaurant ID
+     * @param file      multipart image file
+     * @param uploadDir directory where uploads are stored on disk
+     * @return updated restaurant, or {@code null} if not found
+     * @throws IOException              if the file cannot be written
+     * @throws IllegalArgumentException if the file type or size is invalid
+     */
+    @Transactional
+    public Restaurant uploadImage(Long id, MultipartFile file, Path uploadDir) throws IOException {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("No file provided");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+            throw new IllegalArgumentException("Invalid file type. Only JPG, PNG, GIF and WebP images are allowed.");
+        }
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            throw new IllegalArgumentException("File too large. Maximum size is 5 MB.");
+        }
+
+        Restaurant restaurant = repository.findById(id).orElse(null);
+        if (restaurant == null) {
+            return null;
+        }
+
+        Files.createDirectories(uploadDir);
+
+        String originalFilename = file.getOriginalFilename();
+        String extension = (originalFilename != null && originalFilename.contains("."))
+                ? originalFilename.substring(originalFilename.lastIndexOf('.'))
+                : ".jpg";
+        // Sanitize extension — allow only known image extensions
+        if (!Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp").contains(extension.toLowerCase(Locale.ROOT))) {
+            extension = ".jpg";
+        }
+        String filename = "restaurant-" + id + "-" + System.currentTimeMillis() + extension;
+        Path dest = uploadDir.resolve(filename);
+        file.transferTo(dest);
+
+        restaurant.setImageUrl("/uploads/" + filename);
+        return repository.save(restaurant);
     }
 
     public boolean validateRestaurant(Restaurant r) {

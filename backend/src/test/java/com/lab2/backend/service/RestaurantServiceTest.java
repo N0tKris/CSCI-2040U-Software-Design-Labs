@@ -6,10 +6,14 @@ import com.lab2.backend.repository.RestaurantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -569,5 +573,94 @@ class RestaurantServiceTest {
 
         // Assert
         assertFalse(result);
+    }
+
+    // ============ uploadImage() Tests ============
+
+    @Test
+    void testUploadImageSuccess(@TempDir Path tempDir) throws IOException {
+        // Arrange
+        Long restaurantId = 1L;
+        when(repository.findById(restaurantId)).thenReturn(Optional.of(testRestaurant));
+        when(repository.save(any(Restaurant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "photo.jpg", "image/jpeg", "fake-image-content".getBytes()
+        );
+
+        // Act
+        Restaurant result = restaurantService.uploadImage(restaurantId, file, tempDir);
+
+        // Assert
+        assertNotNull(result);
+        assertNotNull(result.getImageUrl());
+        assertTrue(result.getImageUrl().startsWith("/uploads/"));
+        assertTrue(result.getImageUrl().endsWith(".jpg"));
+        verify(repository, times(1)).save(any(Restaurant.class));
+    }
+
+    @Test
+    void testUploadImageRestaurantNotFound(@TempDir Path tempDir) throws IOException {
+        // Arrange
+        Long restaurantId = 99L;
+        when(repository.findById(restaurantId)).thenReturn(Optional.empty());
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "photo.jpg", "image/jpeg", "fake-image-content".getBytes()
+        );
+
+        // Act
+        Restaurant result = restaurantService.uploadImage(restaurantId, file, tempDir);
+
+        // Assert
+        assertNull(result);
+        verify(repository, times(0)).save(any(Restaurant.class));
+    }
+
+    @Test
+    void testUploadImageInvalidFileType(@TempDir Path tempDir) {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "document.pdf", "application/pdf", "pdf-content".getBytes()
+        );
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                restaurantService.uploadImage(1L, file, tempDir)
+        );
+        assertTrue(exception.getMessage().contains("Invalid file type"));
+    }
+
+    @Test
+    void testUploadImageEmptyFile(@TempDir Path tempDir) {
+        // Arrange
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "empty.jpg", "image/jpeg", new byte[0]
+        );
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                restaurantService.uploadImage(1L, file, tempDir)
+        );
+        assertTrue(exception.getMessage().contains("No file provided"));
+    }
+
+    @Test
+    void testUploadImagePngExtension(@TempDir Path tempDir) throws IOException {
+        // Arrange
+        Long restaurantId = 1L;
+        when(repository.findById(restaurantId)).thenReturn(Optional.of(testRestaurant));
+        when(repository.save(any(Restaurant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "photo.png", "image/png", "fake-png-content".getBytes()
+        );
+
+        // Act
+        Restaurant result = restaurantService.uploadImage(restaurantId, file, tempDir);
+
+        // Assert
+        assertNotNull(result);
+        assertTrue(result.getImageUrl().endsWith(".png"));
     }
 }
