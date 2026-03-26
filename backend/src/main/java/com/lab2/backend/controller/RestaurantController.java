@@ -121,6 +121,47 @@ public class RestaurantController {
         return ResponseEntity.ok(RestaurantDto.fromEntity(updated));
     }
 
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateWithImage(@RequestHeader(value = "Authorization", required = false) String token,
+                                             @PathVariable Long id,
+                                             @RequestParam("name") String name,
+                                             @RequestParam("cuisine") String cuisine,
+                                             @RequestParam("location") String location,
+                                             @RequestParam(value = "dietaryTags", required = false) String dietaryTags,
+                                             @RequestParam(value = "description", required = false) String description,
+                                             @RequestParam(value = "file", required = false) MultipartFile file) {
+        if (!authService.isAdmin(token)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin privileges required"));
+        }
+
+        Restaurant payload = new Restaurant();
+        payload.setName(name);
+        payload.setCuisine(cuisine);
+        payload.setLocation(location);
+        payload.setDietaryTags(dietaryTags);
+        payload.setDescription(description);
+
+        if (!restaurantService.validateRestaurant(payload)) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "name, cuisine and location are required");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        try {
+            Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads");
+            Restaurant updated = restaurantService.updateRestaurantWithOptionalImage(id, payload, file, uploadDir);
+            if (updated == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(RestaurantDto.fromEntity(updated));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to store image: " + e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@RequestHeader(value = "Authorization", required = false) String token,
                                     @PathVariable Long id) {

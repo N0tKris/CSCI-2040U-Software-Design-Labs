@@ -16,11 +16,20 @@ from flask import (
     session,
     url_for,
 )
+from werkzeug.exceptions import RequestEntityTooLarge
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", secrets.token_hex(32))
+app.config['MAX_CONTENT_LENGTH'] = None  # Disable content length limit
 
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://localhost:8080")
+
+
+@app.errorhandler(413)
+def handle_413(e):
+    """Handle Payload Too Large errors."""
+    print(f"DEBUG: 413 error caught - {e}")
+    return jsonify({"error": "File too large"}), 413
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +41,7 @@ ADMIN_LOGIN_TEMPLATE = """
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Login — PlateRate</title>
+    <title>Admin Login - PlateRate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -159,7 +168,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard — PlateRate</title>
+    <title>Admin Dashboard - PlateRate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -267,7 +276,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 </head>
 <body>
     <div class="topbar">
-        <div class="brand">PlateRate — Admin Dashboard</div>
+        <div class="brand">PlateRate - Admin Dashboard</div>
         <div class="user-info">
             Logged in as <span>{{ admin_username }}</span>
             <a href="{{ url_for('admin_logout') }}" class="btn-logout">Logout</a>
@@ -325,17 +334,17 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ r.name }}</td>
                         <td>{{ r.cuisine }}</td>
                         <td>{{ r.location }}</td>
-                        <td>{{ r.dietaryTags or r.dietary_tags or '—' }}</td>
+                        <td>{{ r.dietaryTags or r.dietary_tags or '-' }}</td>
                         <td>
-                            <button class="admin-edit" 
-                                data-id="{{ r.id }}" 
-                                data-name="{{ r.name|e }}" 
-                                data-cuisine="{{ r.cuisine|e }}" 
-                                data-location="{{ r.location|e }}" 
+                            <button class="admin-edit"
+                                data-id="{{ r.id }}"
+                                data-name="{{ r.name|e }}"
+                                data-cuisine="{{ r.cuisine|e }}"
+                                data-location="{{ r.location|e }}"
                                 data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
                                 data-description="{{ (r.description or '')|e }}"
+                                data-image="{{ (r.imageUrl or r.image_url)|default('')|e }}"
                                 style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">Edit</button>
-                            <button class="admin-upload-img" data-id="{{ r.id }}" data-name="{{ r.name|e }}" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">📷 Image</button>
                             <button class="admin-delete" data-id="{{ r.id }}" style="padding:6px 10px;border-radius:6px;border:1px solid #e2bdb0;background:#fff;color:#b85c38;cursor:pointer;">Delete</button>
                         </td>
                     </tr>
@@ -361,7 +370,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         <td>{{ m.restaurant_name }}</td>
                         <td>{{ m.name }}</td>
                         <td>{{ m.price }}</td>
-                        <td>{{ m.description or '—' }}</td>
+                        <td>{{ m.description or '-' }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}
@@ -383,12 +392,12 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     {% for rv in reviews %}
                     <tr>
                         <td>{{ rv.id }}</td>
-                        <td>{{ rv.username or rv.userId or rv.user_id or '—' }}</td>
-                        <td>{{ rv.restaurantId or rv.restaurant_id or '—' }}</td>
+                        <td>{{ rv.username or rv.userId or rv.user_id or '-' }}</td>
+                        <td>{{ rv.restaurantId or rv.restaurant_id or '-' }}</td>
                         {% set rating_value = (rv.rating or 0)|float %}
                         {% set star_count = rating_value|round(0, 'common')|int %}
                         <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} ({{ '%.1f'|format(rating_value) }})</td>
-                        <td>{{ rv.comment or '—' }}</td>
+                        <td>{{ rv.comment or '-' }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}
@@ -464,36 +473,51 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
     <!-- Edit Restaurant modal (admin dashboard) -->
     <div class="modal-backdrop" id="admin-edit-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
-        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:20px;border-radius:8px;">
+        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;max-height:90vh;overflow-y:auto;">
             <h3 style="margin:0 0 8px 0;color:#b85c38;">Edit Restaurant</h3>
-            <p style="margin:0 0 12px;color:#666">Update the restaurant details below.</p>
+            <p style="margin:0 0 16px;color:#666;font-size:13px;">Update restaurant details and image below.</p>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <!-- Image Section -->
+            <div style="margin-bottom:20px;border:1px solid #e0d8d0;border-radius:8px;padding:16px;background:#faf8f6;">
+                <p style="margin:0 0 12px 0;font-weight:600;font-size:13px;color:#333;">Restaurant Image</p>
+                <img id="admin_edit_image_preview" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:6px;margin-bottom:12px;" src="#" alt="Current image" />
+                <div id="admin_edit_no_image" style="display:none;width:100%;height:120px;background:#fff;border:1px dashed #d5cfc9;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px;margin-bottom:12px;">No image uploaded</div>
+                <div id="admin_edit_drop_zone" style="border:2px dashed #d5cfc9;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;">
+                    <input type="file" id="admin_edit_image_file" accept="image/jpeg,image/png,image/gif,image/webp" style="position:absolute;opacity:0;width:0;height:0;" />
+                    <div style="font-size:28px;margin-bottom:6px;">📷</div>
+                    <div style="font-size:13px;color:#555;"><strong>Click or drag image</strong> to upload</div>
+                    <div style="font-size:11px;color:#999;margin-top:4px;">JPG, PNG, GIF or WebP · Max 5 MB</div>
+                </div>
+                <div id="admin_edit_image_msg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>
+            </div>
+
+            <!-- Details Section -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                 <div>
                     <label style="font-weight:600;font-size:13px;">Name</label>
-                    <input id="admin_edit_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                    <input id="admin_edit_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
                 </div>
                 <div>
                     <label style="font-weight:600;font-size:13px;">Cuisine</label>
-                    <input id="admin_edit_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                    <input id="admin_edit_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
                 </div>
                 <div>
                     <label style="font-weight:600;font-size:13px;">Dietary Tags</label>
-                    <input id="admin_edit_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                    <input id="admin_edit_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
                 </div>
                 <div>
                     <label style="font-weight:600;font-size:13px;">Location</label>
-                    <input id="admin_edit_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
+                    <input id="admin_edit_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
                 </div>
                 <div style="grid-column:1/ -1;">
                     <label style="font-weight:600;font-size:13px;">Description</label>
-                    <textarea id="admin_edit_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;min-height:80px"></textarea>
+                    <textarea id="admin_edit_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;min-height:80px;font-family:inherit;"></textarea>
                 </div>
             </div>
 
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-                <button id="admin_edit_save" style="padding:8px 12px;background:#b85c38;color:#fff;border:none;border-radius:6px;">Save</button>
-                <button id="admin_edit_cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;">Cancel</button>
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button id="admin_edit_save" style="padding:9px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">Save Changes</button>
+                <button id="admin_edit_cancel" style="padding:9px 16px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px;color:#555;">Cancel</button>
             </div>
         </div>
     </div>
@@ -591,7 +615,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
-                    // Success — refresh dashboard to show new restaurant
+                    // Success - refresh dashboard to show new restaurant
                     adminBackdrop.style.display = 'none';
                     window.location.reload();
                     return;
@@ -623,7 +647,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             });
         });
 
-        // Edit button handlers — open modal and populate fields
+        // Edit button handlers - open modal and populate fields
         document.querySelectorAll('.admin-edit').forEach(btn => {
             btn.addEventListener('click', (ev) => {
                 const id = btn.getAttribute('data-id');
@@ -633,17 +657,97 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 document.getElementById('admin_edit_location').value = btn.getAttribute('data-location') || '';
                 document.getElementById('admin_edit_dietary').value = btn.getAttribute('data-dietary') || '';
                 document.getElementById('admin_edit_description').value = btn.getAttribute('data-description') || '';
-                // store id on save button for later
+
+                // Handle image preview
+                const imageUrl = btn.getAttribute('data-image') || '';
+                const imagePreview = document.getElementById('admin_edit_image_preview');
+                const noImageMsg = document.getElementById('admin_edit_no_image');
+                if (imageUrl) {
+                    imagePreview.src = imageUrl;
+                    imagePreview.style.display = 'block';
+                    noImageMsg.style.display = 'none';
+                } else {
+                    imagePreview.style.display = 'none';
+                    noImageMsg.style.display = 'flex';
+                }
+
+                // Reset image file input
+                document.getElementById('admin_edit_image_file').value = '';
+                document.getElementById('admin_edit_image_msg').textContent = '';
+
+                // Store id on save button for later
                 document.getElementById('admin_edit_save').setAttribute('data-id', id);
                 document.getElementById('admin-edit-backdrop').style.display = 'flex';
             });
         });
 
-        document.getElementById('admin_edit_cancel').addEventListener('click', () => { document.getElementById('admin-edit-backdrop').style.display = 'none'; });
+        document.getElementById('admin_edit_cancel').addEventListener('click', () => {
+            document.getElementById('admin-edit-backdrop').style.display = 'none';
+            document.getElementById('admin_edit_image_file').value = '';
+        });
+
+        // Image file handling in edit modal
+        const editImageFile = document.getElementById('admin_edit_image_file');
+        const editDropZone = document.getElementById('admin_edit_drop_zone');
+        const editImageMsg = document.getElementById('admin_edit_image_msg');
+        const editImagePreview = document.getElementById('admin_edit_image_preview');
+
+        editDropZone.addEventListener('click', () => editImageFile.click());
+
+        editImageFile.addEventListener('change', handleEditImageFileSelect);
+
+        editDropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            editDropZone.style.borderColor = '#b85c38';
+            editDropZone.style.background = '#faf6f3';
+        });
+
+        editDropZone.addEventListener('dragleave', () => {
+            editDropZone.style.borderColor = '#d5cfc9';
+            editDropZone.style.background = '';
+        });
+
+        editDropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            editDropZone.style.borderColor = '#d5cfc9';
+            editDropZone.style.background = '';
+            if (e.dataTransfer.files.length) {
+                editImageFile.files = e.dataTransfer.files;
+                handleEditImageFileSelect();
+            }
+        });
+
+        function handleEditImageFileSelect() {
+            const file = editImageFile.files[0];
+            if (!file) return;
+            const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowed.includes(file.type)) {
+                editImageMsg.textContent = '✗ Invalid file type. Use JPG, PNG, GIF or WebP.';
+                editImageMsg.style.color = '#b71c1c';
+                editImageFile.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                editImageMsg.textContent = '✗ File too large. Max 5 MB.';
+                editImageMsg.style.color = '#b71c1c';
+                editImageFile.value = '';
+                return;
+            }
+            editImageMsg.textContent = '✓ Image ready to upload';
+            editImageMsg.style.color = '#2e7d32';
+            const reader = new FileReader();
+            reader.onload = e => {
+                editImagePreview.src = e.target.result;
+                editImagePreview.style.display = 'block';
+                document.getElementById('admin_edit_no_image').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
 
         document.getElementById('admin_edit_save').addEventListener('click', async () => {
             const id = document.getElementById('admin_edit_save').getAttribute('data-id');
             if (!id) return alert('No restaurant selected');
+
             const payload = {
                 name: document.getElementById('admin_edit_name').value.trim(),
                 cuisine: document.getElementById('admin_edit_cuisine').value.trim(),
@@ -651,12 +755,18 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 location: document.getElementById('admin_edit_location').value.trim(),
                 description: document.getElementById('admin_edit_description').value.trim()
             };
+
             if (!payload.name || !payload.cuisine || !payload.location) {
                 alert('Please provide name, cuisine and location');
                 return;
             }
 
+            const saveBtn = document.getElementById('admin_edit_save');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+
             try {
+                // First, update restaurant details via PUT
                 const res = await fetch('/admin/restaurants/' + encodeURIComponent(id), {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -665,15 +775,40 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
                 const data = await res.json().catch(() => ({}));
 
-                if (res.ok) {
-                    document.getElementById('admin-edit-backdrop').style.display = 'none';
-                    window.location.reload();
+                if (!res.ok) {
+                    alert('Failed to update restaurant: ' + (data.error || data.message || JSON.stringify(data)));
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Changes';
                     return;
                 }
 
-                alert('Failed to update restaurant: ' + (data.error || data.message || JSON.stringify(data)));
+                // Then, if a new image was selected, upload it
+                const imageFile = document.getElementById('admin_edit_image_file').files[0];
+                if (imageFile) {
+                    saveBtn.textContent = 'Uploading image…';
+                    const formData = new FormData();
+                    formData.append('file', imageFile);
+
+                    const uploadRes = await fetch('/admin/restaurants/' + encodeURIComponent(id) + '/upload-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!uploadRes.ok) {
+                        const uploadData = await uploadRes.json().catch(() => ({}));
+                        const errorMsg = uploadData.error || uploadData.message || 'Unknown error';
+                        console.error('Image upload failed:', { status: uploadRes.status, response: uploadData });
+                        alert('Image upload failed (HTTP ' + uploadRes.status + '): ' + errorMsg);
+                    }
+                }
+
+                // Close modal and reload
+                document.getElementById('admin-edit-backdrop').style.display = 'none';
+                window.location.reload();
             } catch (e) {
                 alert('Request failed: ' + e);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes';
             }
         });
 
@@ -815,7 +950,7 @@ def auth_url(path: str = "") -> str:
 
 @app.get("/")
 def index() -> str:
-    """Public homepage — show dashboard layout without requiring login."""
+    """Public homepage - show dashboard layout without requiring login."""
     restaurants: list[Any] = []
     try:
         resp = requests.get(restaurants_url(), timeout=5)
@@ -964,7 +1099,7 @@ def create_review() -> tuple[dict[str, Any], int]:
 
 @app.get("/user")
 def user_view():
-    """User view landing — choose Register or Login."""
+    """User view landing - choose Register or Login."""
     return render_template("user_view.html")
 
 
@@ -1113,7 +1248,7 @@ def user_logout():
 
 @app.get("/user/dashboard")
 def user_dashboard():
-    """User dashboard — restaurant list + review submission."""
+    """User dashboard - restaurant list + review submission."""
     if not session.get("user_token"):
         return redirect(url_for("user_login"))
 
@@ -1263,7 +1398,7 @@ def admin_dashboard():
 
                 raw_price = item.get("price")
                 if raw_price in (None, ""):
-                    price_text = "—"
+                    price_text = "-"
                 else:
                     try:
                         price_text = f"${float(raw_price):.2f}"
@@ -1289,7 +1424,7 @@ def admin_dashboard():
                     {
                         "restaurant_name": restaurant_name,
                         "name": str(name),
-                        "price": "—",
+                        "price": "-",
                         "description": "",
                     }
                 )
@@ -1452,6 +1587,10 @@ def admin_import_yelp() -> tuple[dict[str, Any], int]:
 @app.post("/admin/restaurants/<int:rid>/upload-image")
 def admin_upload_restaurant_image(rid: int) -> tuple[dict[str, Any], int]:
     """Proxy image upload for a restaurant from admin dashboard."""
+    print(f"DEBUG: Upload handler called for restaurant {rid}")
+    print(f"DEBUG: Content-Length: {request.content_length}")
+    print(f"DEBUG: Files in request: {list(request.files.keys())}")
+
     if not session.get("admin_token"):
         return {"error": "Not authenticated"}, 401
 
@@ -1504,7 +1643,7 @@ def admin_logout():
 
 @app.get("/owner")
 def owner_view():
-    """Owner view landing — choose Register or Login."""
+    """Owner view landing - choose Register or Login."""
     return render_template("owner_view.html")
 
 
@@ -1656,7 +1795,7 @@ def owner_logout():
 
 @app.get("/owner/dashboard")
 def owner_dashboard():
-    """Owner dashboard — show their restaurant and its reviews."""
+    """Owner dashboard - show their restaurant and its reviews."""
     if not session.get("owner_token"):
         return redirect(url_for("owner_login"))
 
