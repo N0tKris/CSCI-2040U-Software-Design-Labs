@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authentication — PlateRate</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f0eb 0%, #e8e0d8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            padding: 20px;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .auth-card {
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            padding: 40px 36px;
+            width: 100%;
+        }
+
+        /* ── Header ── */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header .brand {
+            font-size: 26px;
+            font-weight: 800;
+            color: #b85c38;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .auth-header .subtitle {
+            font-size: 13px;
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* ── Role Selector ── */
+        .role-selector {
+            margin-bottom: 28px;
+        }
+
+        .role-selector label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 12px;
+        }
+
+        .role-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 11px 12px;
+            border: 1.5px solid #d5cfc9;
+            background: #faf8f6;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .role-btn:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+            background: #fff;
+        }
+
+        .role-btn.active {
+            background: #b85c38;
+            border-color: #b85c38;
+            color: #fff;
+        }
+
+        /* ── Tab Navigation ── */
+        .tab-navigation {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0d8d0;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 0;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            position: relative;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            color: #555;
+        }
+
+        .tab-btn.active {
+            color: #b85c38;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            height: 2px;
+            width: 50%;
+            background: #b85c38;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ── Forms ── */
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #d5cfc9;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #faf8f6;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.1);
+        }
+
+        .error-message {
+            display: none;
+            background: #fdecea;
+            color: #b71c1c;
+            font-size: 13px;
+            padding: 11px 14px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message {
+            display: none;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 13px;
+            padding: 11px 14px;
+            border-radius: 8px;
+            margin-bottom: 18px;
+            text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: #b85c38;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            margin-bottom: 12px;
+        }
+
+        .btn-submit:hover {
+            background: #a04e2e;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-footer {
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+        }
+
+        .form-footer a {
+            color: #b85c38;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Footer ── */
+        .auth-footer {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .back-link {
+            display: inline-block;
+            font-size: 13px;
+            color: #999;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #b85c38;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .auth-card {
+                padding: 32px 24px;
+            }
+
+            .auth-header .brand {
+                font-size: 22px;
+            }
+
+            .role-buttons {
+                gap: 6px;
+            }
+
+            .role-btn {
+                font-size: 12px;
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <!-- Header -->
+        <div class="auth-header">
+            <div class="brand">PlateRate</div>
+            <div class="subtitle">Discover Great Dining Experiences</div>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <label>Choose your role:</label>
+            <div class="role-buttons">
+                <button type="button" class="role-btn active" data-role="user">👤 User</button>
+                <button type="button" class="role-btn" data-role="owner">🏪 Owner</button>
+                <button type="button" class="role-btn" data-role="admin">🔐 Admin</button>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button type="button" class="tab-btn active" data-tab="login">Login</button>
+            <button type="button" class="tab-btn" data-tab="signup">Sign Up</button>
+            <div class="tab-indicator" id="tab-indicator"></div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form active">
+            <div class="error-message" id="login-error"></div>
+
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" placeholder="Enter your username" required autocomplete="username" />
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" placeholder="Enter your password" required autocomplete="current-password" />
+            </div>
+
+            <button type="submit" class="btn-submit">Login</button>
+
+            <p class="form-footer">
+                Don't have an account?
+                <a href="#" class="switch-tab" data-tab="signup">Sign up here</a>
+            </p>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="signup-form" class="auth-form">
+            <div class="error-message" id="signup-error"></div>
+            <div class="success-message" id="signup-success"></div>
+
+            <div class="form-group">
+                <label for="signup-username">Username</label>
+                <input type="text" id="signup-username" placeholder="Choose a username" required autocomplete="username" />
+            </div>
+
+            <div class="form-group">
+                <label for="signup-password">Password</label>
+                <input type="password" id="signup-password" placeholder="Create a password" required autocomplete="new-password" />
+            </div>
+
+            <button type="submit" class="btn-submit">Create Account</button>
+
+            <p class="form-footer">
+                Already have an account?
+                <a href="#" class="switch-tab" data-tab="login">Sign in here</a>
+            </p>
+        </form>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedRole = 'user';
+    let selectedTab = 'login';
+
+    // ── DOM Elements ──
+    const roleButtons = document.querySelectorAll('.role-btn');
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabIndicator = document.getElementById('tab-indicator');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const loginError = document.getElementById('login-error');
+    const signupError = document.getElementById('signup-error');
+    const signupSuccess = document.getElementById('signup-success');
+    const switchTabLinks = document.querySelectorAll('.switch-tab');
+
+    // ── Role Selection ──
+    roleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            clearMessages();
+            selectedRole = btn.dataset.role;
+            updateRoleButtons();
+        });
+    });
+
+    function updateRoleButtons() {
+        roleButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.role === selectedRole);
+        });
+    }
+
+    // ── Tab Switching ──
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            clearMessages();
+            selectedTab = btn.dataset.tab;
+            updateTabs();
+        });
+    });
+
+    function updateTabs() {
+        tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === selectedTab);
+        });
+
+        // Update indicator position
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab) {
+            const tabCount = tabButtons.length;
+            const tabIndex = Array.from(tabButtons).indexOf(activeTab);
+            const triggerBCR = activeTab.parentElement.getBoundingClientRect();
+            const indicatorPosition = (tabIndex / tabCount) * 100;
+            tabIndicator.style.left = indicatorPosition + '%';
+        }
+
+        // Update form visibility
+        loginForm.classList.toggle('active', selectedTab === 'login');
+        signupForm.classList.toggle('active', selectedTab === 'signup');
+
+        // Focus first input of visible form
+        if (selectedTab === 'login') {
+            document.getElementById('login-username').focus();
+        } else {
+            document.getElementById('signup-username').focus();
+        }
+    }
+
+    // ── Switch Tab via Links ──
+    switchTabLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            selectedTab = link.dataset.tab;
+            clearMessages();
+            updateTabs();
+        });
+    });
+
+    // ── Message Management ──
+    function clearMessages() {
+        loginError.classList.remove('show');
+        signupError.classList.remove('show');
+        signupSuccess.classList.remove('show');
+        loginError.textContent = '';
+        signupError.textContent = '';
+        signupSuccess.textContent = '';
+    }
+
+    function showLoginError(message) {
+        loginError.textContent = message;
+        loginError.classList.add('show');
+    }
+
+    function showSignupError(message) {
+        signupError.textContent = message;
+        signupError.classList.add('show');
+    }
+
+    function showSignupSuccess(message) {
+        signupSuccess.textContent = message;
+        signupSuccess.classList.add('show');
+    }
+
+    // ── Form Submission ──
+    loginForm.addEventListener('submit', handleLogin);
+    signupForm.addEventListener('submit', handleSignup);
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        clearMessages();
+
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        const submitBtn = loginForm.querySelector('.btn-submit');
+
+        if (!username || !password) {
+            showLoginError('Please enter username and password.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in…';
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+                // Determine dashboard based on role returned from backend
+                const role = (data.role || '').toUpperCase();
+                let dashboard = '/user/dashboard';
+                if (role === 'OWNER') {
+                    dashboard = '/owner/dashboard';
+                } else if (role === 'ADMIN') {
+                    dashboard = '/admin/dashboard';
+                }
+                window.location.href = dashboard;
+            } else {
+                showLoginError(data.error || data.message || 'Login failed. Please try again.');
+            }
+        } catch (e) {
+            showLoginError('Connection error. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login';
+        }
+    }
+
+    async function handleSignup(e) {
+        e.preventDefault();
+        clearMessages();
+
+        const username = document.getElementById('signup-username').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const submitBtn = signupForm.querySelector('.btn-submit');
+
+        if (!username || !password) {
+            showSignupError('Please enter username and password.');
+            return;
+        }
+
+        if (password.length < 4) {
+            showSignupError('Password must be at least 4 characters.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account…';
+
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username,
+                    password,
+                    role: selectedRole.toUpperCase()
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 201 || res.ok) {
+                // Show success message, then switch to login
+                showSignupSuccess('✓ Account created! Please log in with your credentials.');
+                document.getElementById('signup-username').value = '';
+                document.getElementById('signup-password').value = '';
+
+                // Switch to login tab after 1.5 seconds
+                setTimeout(() => {
+                    selectedTab = 'login';
+                    updateTabs();
+                    document.getElementById('login-username').value = username;
+                    document.getElementById('login-password').focus();
+                }, 1500);
+            } else {
+                showSignupError(data.error || data.message || 'Failed to create account. Please try again.');
+            }
+        } catch (e) {
+            showSignupError('Connection error. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Account';
+        }
+    }
+
+    // ── Initialization ──
+    // Get URL params if any
+    const params = new URLSearchParams(window.location.search);
+    const paramRole = params.get('role');
+    const paramMode = params.get('mode');
+
+    if (paramRole && ['user', 'owner', 'admin'].includes(paramRole)) {
+        selectedRole = paramRole;
+        updateRoleButtons();
+    }
+
+    if (paramMode && ['login', 'signup'].includes(paramMode)) {
+        selectedTab = paramMode;
+        updateTabs();
+    }
+</script>
+
+</body>
+</html>
