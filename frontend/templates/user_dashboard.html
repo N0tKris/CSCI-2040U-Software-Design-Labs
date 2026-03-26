@@ -131,15 +131,16 @@
         /* ── Filter Panel ── */
         .filter-toggle {
             display: none;
-            padding: 10px 16px;
+            padding: 12px 18px;
             background: #fff;
-            border: 1.5px solid #e0d8d0;
-            border-radius: 8px;
+            border: 1.5px solid #d5cfc9;
+            border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             color: #555;
-            margin-bottom: 16px;
+            margin-bottom: 18px;
+            transition: all 0.2s;
         }
         .filter-toggle:hover {
             border-color: #b85c38;
@@ -147,12 +148,13 @@
         }
         .filter-panel {
             background: #fff;
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid #e0d8d0;
-            padding: 20px;
-            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 24px;
+            margin-bottom: 28px;
             display: flex;
-            gap: 20px;
+            gap: 24px;
             align-items: flex-end;
         }
         .filter-panel.collapsed {
@@ -161,49 +163,203 @@
         .filter-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
+        }
+        .filter-group:first-child {
+            flex: 0 1 240px;
+        }
+        .filter-group:nth-child(2) {
+            flex: 2;
         }
         .filter-group label {
             font-size: 13px;
-            font-weight: 600;
-            color: #555;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
+
+        /* ── Custom Dropdown ── */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        .dropdown-trigger {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #d5cfc9;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #faf8f6;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+            color: #333;
+            font-weight: 500;
+        }
+        .dropdown-trigger:hover {
+            border-color: #b85c38;
+            background: #fff;
+        }
+        .dropdown-trigger:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.1);
+        }
+        .dropdown-trigger.open {
+            border-color: #b85c38;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 0;
+            background: #fff;
+        }
+        .dropdown-arrow {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .dropdown-trigger.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1.5px solid #b85c38;
+            border-top: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            animation: dropdownSlide 0.2s ease forwards;
+        }
+        @keyframes dropdownSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .dropdown-menu.show {
+            display: block;
+        }
+        .dropdown-option {
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border-bottom: 1px solid #f5f5f5;
+            color: #555;
+            font-size: 14px;
+        }
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+        .dropdown-option:hover {
+            background: #faf8f6;
+            color: #b85c38;
+            padding-left: 18px;
+        }
+        .dropdown-option.selected {
+            background: rgba(184, 92, 56, 0.05);
+            color: #b85c38;
+            font-weight: 600;
+        }
+        .dropdown-option:focus {
+            outline: none;
+            background: #faf8f6;
+        }
+        .dropdown-search {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0d8d0;
+            position: sticky;
+            top: 0;
+            background: #faf8f6;
+            z-index: 10;
+        }
+        .dropdown-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d5cfc9;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #fff;
+        }
+        .dropdown-search input:focus {
+            outline: none;
+            border-color: #b85c38;
+        }
+
         .filter-group select,
         .filter-group input {
-            padding: 10px 12px;
-            border: 1px solid #d5cfc9;
+            padding: 11px 14px;
+            border: 1.5px solid #d5cfc9;
             border-radius: 8px;
             font-size: 14px;
             background: #faf8f6;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .filter-group select {
+            cursor: pointer;
+            appearance: none;
+            padding-right: 32px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%23888' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 34px;
         }
         .filter-group select:focus,
         .filter-group input:focus {
             outline: none;
             border-color: #b85c38;
-            background: #fff;
+            background-color: #fff;
         }
         .dietary-tags-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 14px;
+            align-items: center;
         }
         .dietary-tags-list label {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-weight: 400;
+            gap: 8px;
+            font-weight: 500;
             cursor: pointer;
+            color: #555;
+            font-size: 13px;
+            white-space: nowrap;
         }
         .dietary-tags-list input[type="checkbox"] {
-            width: auto;
-            padding: 0;
+            width: 18px;
+            height: 18px;
             cursor: pointer;
+            accent-color: #b85c38;
         }
         .btn-clear-filters {
-            padding: 10px 16px;
-            background: #fff;
+            padding: 11px 20px;
+            background: transparent;
             border: 1.5px solid #d5cfc9;
             border-radius: 8px;
             font-size: 13px;
@@ -212,10 +368,13 @@
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
+            align-self: flex-end;
+            height: fit-content;
         }
         .btn-clear-filters:hover {
             border-color: #b85c38;
             color: #b85c38;
+            background: rgba(184, 92, 56, 0.03);
         }
 
         /* ── Page wrapper ── */
@@ -653,15 +812,29 @@
             .filter-panel {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 16px;
+                padding: 20px;
+                margin-bottom: 24px;
             }
             .filter-panel.collapsed {
                 display: none;
             }
             .filter-group {
                 min-width: auto;
+                gap: 8px;
+            }
+            .filter-group:first-child {
+                flex: none;
+            }
+            .filter-group:nth-child(2) {
+                flex: none;
+            }
+            .dietary-tags-list {
+                gap: 12px;
             }
             .btn-clear-filters {
                 width: 100%;
+                align-self: auto;
             }
         }
     </style>
@@ -706,10 +879,19 @@
 
     <div class="filter-panel" id="filter-panel">
         <div class="filter-group">
-            <label for="cuisine-filter">Cuisine</label>
-            <select id="cuisine-filter">
-                <option value="">All Cuisines</option>
-            </select>
+            <label for="cuisine-dropdown-trigger">Cuisine</label>
+            <div class="custom-dropdown" id="cuisine-dropdown">
+                <button type="button" class="dropdown-trigger" id="cuisine-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="cuisine-dropdown-value">All Cuisines</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="cuisine-dropdown-menu">
+                    <div class="dropdown-search">
+                        <input type="text" id="cuisine-search" placeholder="Search cuisines…" autocomplete="off" />
+                    </div>
+                    <div id="cuisine-options-container"></div>
+                </div>
+            </div>
         </div>
 
         <div class="filter-group">
@@ -817,19 +999,32 @@
 
     function renderFilterPanel() {
         // Populate cuisine dropdown
-        const cuisineSelect = document.getElementById('cuisine-filter');
-        const currentValue = cuisineSelect.value;
         const cuisines = extractUniqueCuisines(allRestaurants);
+        const optionsContainer = document.getElementById('cuisine-options-container');
 
-        // Preserve existing option
-        cuisineSelect.innerHTML = '<option value="">All Cuisines</option>';
+        optionsContainer.innerHTML = '';
+
+        // Add "All Cuisines" option
+        const allOption = document.createElement('button');
+        allOption.type = 'button';
+        allOption.className = 'dropdown-option' + (selectedCuisine === '' ? ' selected' : '');
+        allOption.textContent = 'All Cuisines';
+        allOption.value = '';
+        allOption.setAttribute('role', 'option');
+        allOption.addEventListener('click', () => onCuisineSelect('', 'All Cuisines'));
+        optionsContainer.appendChild(allOption);
+
+        // Add cuisine options
         cuisines.forEach(cuisine => {
-            const option = document.createElement('option');
-            option.value = cuisine;
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'dropdown-option' + (selectedCuisine === cuisine ? ' selected' : '');
             option.textContent = cuisine;
-            cuisineSelect.appendChild(option);
+            option.value = cuisine;
+            option.setAttribute('role', 'option');
+            option.addEventListener('click', () => onCuisineSelect(cuisine, cuisine));
+            optionsContainer.appendChild(option);
         });
-        cuisineSelect.value = currentValue;
 
         // Populate dietary tags checkboxes
         const tagsContainer = document.getElementById('dietary-tags-container');
@@ -1001,6 +1196,38 @@
         applyFilters();
     }
 
+    function onCuisineSelect(value, label) {
+        selectedCuisine = value;
+        document.getElementById('cuisine-dropdown-value').textContent = label;
+        closeDropdown('cuisine');
+        applyFilters();
+    }
+
+    function closeDropdown(dropdownId) {
+        const trigger = document.getElementById(dropdownId + '-dropdown-trigger');
+        const menu = document.getElementById(dropdownId + '-dropdown-menu');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('show');
+    }
+
+    function openDropdown(dropdownId) {
+        const trigger = document.getElementById(dropdownId + '-dropdown-trigger');
+        const menu = document.getElementById(dropdownId + '-dropdown-menu');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        menu.classList.add('show');
+    }
+
+    function toggleDropdown(dropdownId) {
+        const trigger = document.getElementById(dropdownId + '-dropdown-trigger');
+        if (trigger.classList.contains('open')) {
+            closeDropdown(dropdownId);
+        } else {
+            openDropdown(dropdownId);
+        }
+    }
+
     function onTagFilterChange() {
         const checkboxes = document.querySelectorAll('input[name="dietary-tag"]:checked');
         selectedDietaryTags = Array.from(checkboxes).map(cb => cb.value);
@@ -1008,8 +1235,9 @@
     }
 
     function onClearFilters() {
-        document.getElementById('cuisine-filter').value = '';
+        document.getElementById('cuisine-dropdown-value').textContent = 'All Cuisines';
         document.querySelectorAll('input[name="dietary-tag"]').forEach(cb => cb.checked = false);
+        document.getElementById('cuisine-search').value = '';
         selectedCuisine = '';
         selectedDietaryTags = [];
         applyFilters();
@@ -1038,8 +1266,72 @@
         panel.classList.toggle('collapsed');
     });
 
+    // ── Custom Dropdown Event Handlers ──
+    const cuisineDropdownTrigger = document.getElementById('cuisine-dropdown-trigger');
+    const cuisineDropdownMenu = document.getElementById('cuisine-dropdown-menu');
+    const cuisineSearch = document.getElementById('cuisine-search');
+
+    cuisineDropdownTrigger.addEventListener('click', () => {
+        toggleDropdown('cuisine');
+        // Focus search on open
+        if (cuisineDropdownTrigger.classList.contains('open')) {
+            setTimeout(() => cuisineSearch.focus(), 50);
+        }
+    });
+
+    cuisineDropdownTrigger.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleDropdown('cuisine');
+        } else if (e.key === 'ArrowDown' && cuisineDropdownTrigger.classList.contains('open')) {
+            const firstOption = cuisineDropdownMenu.querySelector('.dropdown-option');
+            if (firstOption) firstOption.focus();
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#cuisine-dropdown')) {
+            closeDropdown('cuisine');
+        }
+    });
+
+    // Dropdown search functionality
+    cuisineSearch.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const options = cuisineDropdownMenu.querySelectorAll('.dropdown-option');
+
+        options.forEach(option => {
+            const text = option.textContent.toLowerCase();
+            option.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+
+    // Keyboard navigation in dropdown
+    cuisineDropdownMenu.addEventListener('keydown', (e) => {
+        const options = Array.from(cuisineDropdownMenu.querySelectorAll('.dropdown-option:not([style*="display: none"])'));
+        const currentFocus = cuisineDropdownMenu.querySelector('.dropdown-option:focus');
+        const currentIndex = options.indexOf(currentFocus);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = currentIndex + 1 < options.length ? currentIndex + 1 : 0;
+            options[nextIndex].focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = currentIndex - 1 >= 0 ? currentIndex - 1 : options.length - 1;
+            options[prevIndex].focus();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.target.click();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeDropdown('cuisine');
+            cuisineDropdownTrigger.focus();
+        }
+    });
+
     // ── Filter event handlers ──
-    document.getElementById('cuisine-filter').addEventListener('change', onCuisineFilterChange);
     document.getElementById('clear-filters-btn').addEventListener('click', onClearFilters);
 
     // ── Review modal ──
