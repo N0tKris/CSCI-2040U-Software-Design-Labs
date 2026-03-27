@@ -2,7 +2,7 @@ param(
     [switch]$SkipInstall,
     [switch]$NoBackend,
     [switch]$NoFrontend,
-    [switch]$UsePostgresProfile
+    [switch]$UseDevProfile
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,6 +15,35 @@ function Write-Step {
 function Test-Command {
     param([string]$Name)
     return $null -ne (Get-Command $Name -ErrorAction SilentlyContinue)
+}
+
+function Wait-Backend {
+    param(
+        [int]$TimeoutSeconds = 120,
+        [System.Diagnostics.Process]$BackendProcess
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $url = "http://127.0.0.1:8080/api/restaurants"
+
+    while ((Get-Date) -lt $deadline) {
+        if ($BackendProcess -and $BackendProcess.HasExited) {
+            throw "Backend process exited before startup completed. Check the backend terminal window for errors."
+        }
+
+        try {
+            $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 2
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+                return
+            }
+        } catch {
+            # Keep waiting while backend is starting.
+        }
+
+        Start-Sleep -Seconds 2
+    }
+
+    throw "Backend did not become ready within $TimeoutSeconds seconds at $url"
 }
 
 $repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -53,18 +82,24 @@ if (-not $NoFrontend) {
 }
 
 if (-not $NoBackend) {
-    $backendCmd = if ($UsePostgresProfile) {
-        "Set-Location '$backendDir'; .\mvnw.cmd spring-boot:run"
-    } else {
+    $backendCmd = if ($UseDevProfile) {
         "Set-Location '$backendDir'; `$env:SPRING_PROFILES_ACTIVE='dev'; .\mvnw.cmd spring-boot:run"
+    } else {
+        "Set-Location '$backendDir'; .\mvnw.cmd spring-boot:run"
     }
 
     Write-Step "Starting backend in a new PowerShell window..."
-    Start-Process powershell -ArgumentList @(
+    $backendProcess = Start-Process powershell -PassThru -ArgumentList @(
         "-NoExit",
         "-ExecutionPolicy", "Bypass",
         "-Command", $backendCmd
-    ) | Out-Null
+    )
+
+    if (-not $NoFrontend) {
+        Write-Step "Waiting for backend to become ready before starting frontend..."
+        Wait-Backend -TimeoutSeconds 150 -BackendProcess $backendProcess
+        Write-Step "Backend is ready."
+    }
 }
 
 if (-not $NoFrontend) {
@@ -84,6 +119,6 @@ Write-Host "Backend:  http://127.0.0.1:8080" -ForegroundColor Green
 Write-Host ""
 Write-Host "Options:" -ForegroundColor Yellow
 Write-Host "  -SkipInstall        Skip pip install"
-Write-Host "  -UsePostgresProfile Run backend with default profile instead of dev"
+Write-Host "  -UseDevProfile      Run backend with dev profile (H2)"
 Write-Host "  -NoBackend          Start only frontend"
 Write-Host "  -NoFrontend         Start only backend"
