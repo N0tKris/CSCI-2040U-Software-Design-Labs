@@ -188,35 +188,56 @@
         }
         .dropdown-trigger {
             width: 100%;
-            padding: 11px 14px;
-            border: 1.5px solid #d5cfc9;
+            min-height: 46px;
+            padding: 9px 14px;
+            border: 1.5px solid #d7cec6;
             border-radius: 12px;
             font-size: 14px;
-            background: #faf8f6;
+            background: #fcfbfa;
             font-family: inherit;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.2s ease;
+            gap: 10px;
+            transition: all 0.22s ease;
             color: #333;
             font-weight: 500;
+            box-shadow: 0 1px 3px rgba(22, 15, 10, 0.04);
         }
         .dropdown-trigger:hover {
             border-color: #b85c38;
             background: #fff;
+            box-shadow: 0 4px 12px rgba(31, 21, 14, 0.08);
         }
         .dropdown-trigger:focus {
             outline: none;
             border-color: #b85c38;
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.1);
+            box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.12), 0 4px 14px rgba(31, 21, 14, 0.08);
         }
         .dropdown-trigger.open {
             border-color: #b85c38;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 0;
             background: #fff;
+            box-shadow: 0 8px 24px rgba(31, 21, 14, 0.13);
+        }
+        #cuisine-dropdown-value {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: left;
+        }
+        #cuisine-dropdown-value.selected {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f6ede7;
+            color: #9e4f32;
+            font-weight: 600;
+            max-width: 100%;
         }
         .dropdown-arrow {
             width: 16px;
@@ -234,79 +255,149 @@
         }
         .dropdown-menu {
             position: absolute;
-            top: 100%;
+            top: calc(100% + 8px);
             left: 0;
             right: 0;
             background: #fff;
-            border: 1.5px solid #b85c38;
-            border-top: none;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            max-height: 300px;
+            border: 1px solid #e2d8cf;
+            border-radius: 14px;
+            box-shadow: 0 16px 36px rgba(25, 17, 11, 0.15);
+            max-height: 340px;
             overflow-y: auto;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
             z-index: 1000;
             display: none;
+            padding: 10px;
             animation: dropdownSlide 0.2s ease forwards;
+        }
+        .dropdown-menu::-webkit-scrollbar {
+            width: 10px;
+        }
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: #d8ccc2;
+            border-radius: 999px;
+            border: 2px solid #fff;
+        }
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: #c8b7a9;
+        }
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: transparent;
         }
         @keyframes dropdownSlide {
             from {
                 opacity: 0;
-                transform: translateY(-8px);
+                transform: translateY(-6px) scale(0.99);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
         .dropdown-menu.show {
             display: block;
         }
-        .dropdown-option {
-            padding: 12px 14px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            border-bottom: 1px solid #f5f5f5;
-            color: #555;
-            font-size: 14px;
+        #cuisine-options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-top: 8px;
         }
-        .dropdown-option:last-child {
-            border-bottom: none;
+        .dropdown-option {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 12px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: #fff;
+            color: #544a42;
+            font-size: 14px;
+            font-family: inherit;
+            text-align: left;
         }
         .dropdown-option:hover {
-            background: #faf8f6;
+            background: #f8f2ed;
             color: #b85c38;
-            padding-left: 18px;
+            border-color: #efded0;
+            transform: translateX(2px);
         }
         .dropdown-option.selected {
-            background: rgba(184, 92, 56, 0.05);
-            color: #b85c38;
+            background: #f5e7dc;
+            border-color: #ddb79d;
+            color: #8f4127;
             font-weight: 600;
+        }
+        .dropdown-option.selected::after {
+            content: '✓';
+            color: #b85c38;
+            font-weight: 700;
+            font-size: 13px;
+            margin-left: auto;
         }
         .dropdown-option:focus {
             outline: none;
-            background: #faf8f6;
+            background: #f8f2ed;
+            border-color: #e7c7af;
+            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.12);
         }
         .dropdown-search {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e0d8d0;
+            padding: 8px;
             position: sticky;
             top: 0;
-            background: #faf8f6;
+            background: #fff;
             z-index: 10;
+            border-bottom: 1px solid #efe5de;
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         .dropdown-search input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #d5cfc9;
-            border-radius: 6px;
+            flex: 1;
+            min-width: 0;
+            padding: 9px 12px;
+            border: 1.5px solid #d9cec4;
+            border-radius: 999px;
             font-size: 13px;
             font-family: inherit;
-            background: #fff;
+            background: #fcfbfa;
+            color: #433930;
+            transition: all 0.18s ease;
+        }
+        .dropdown-search input::placeholder {
+            color: #a5968a;
         }
         .dropdown-search input:focus {
             outline: none;
             border-color: #b85c38;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.12);
+        }
+        .dropdown-clear {
+            border: none;
+            background: #f6ede7;
+            color: #9f4f32;
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+        .dropdown-clear:hover {
+            background: #eddccf;
+            color: #8f4127;
+        }
+        .dropdown-clear:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.12);
         }
 
         .filter-group select,
@@ -917,6 +1008,7 @@
                 <div class="dropdown-menu" id="cuisine-dropdown-menu">
                     <div class="dropdown-search">
                         <input type="text" id="cuisine-search" placeholder="Search cuisines…" autocomplete="off" />
+                        <button type="button" class="dropdown-clear" id="cuisine-clear-btn">Clear</button>
                     </div>
                     <div id="cuisine-options-container"></div>
                 </div>
@@ -1248,7 +1340,9 @@
 
     function onCuisineSelect(value, label) {
         selectedCuisine = value;
-        document.getElementById('cuisine-dropdown-value').textContent = label;
+        const valueNode = document.getElementById('cuisine-dropdown-value');
+        valueNode.textContent = label;
+        valueNode.classList.toggle('selected', Boolean(value));
         closeDropdown('cuisine');
         applyFilters();
     }
@@ -1285,7 +1379,9 @@
     }
 
     function onClearFilters() {
-        document.getElementById('cuisine-dropdown-value').textContent = 'All Cuisines';
+        const valueNode = document.getElementById('cuisine-dropdown-value');
+        valueNode.textContent = 'All Cuisines';
+        valueNode.classList.remove('selected');
         document.querySelectorAll('input[name="dietary-tag"]').forEach(cb => cb.checked = false);
         document.getElementById('cuisine-search').value = '';
         selectedCuisine = '';
@@ -1320,6 +1416,7 @@
     const cuisineDropdownTrigger = document.getElementById('cuisine-dropdown-trigger');
     const cuisineDropdownMenu = document.getElementById('cuisine-dropdown-menu');
     const cuisineSearch = document.getElementById('cuisine-search');
+    const cuisineClearBtn = document.getElementById('cuisine-clear-btn');
 
     cuisineDropdownTrigger.addEventListener('click', () => {
         toggleDropdown('cuisine');
@@ -1353,8 +1450,20 @@
 
         options.forEach(option => {
             const text = option.textContent.toLowerCase();
-            option.style.display = text.includes(searchTerm) ? 'block' : 'none';
+            option.style.display = text.includes(searchTerm) ? '' : 'none';
         });
+    });
+
+    cuisineClearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        onCuisineSelect('', 'All Cuisines');
+        document.getElementById('cuisine-search').value = '';
+        const options = cuisineDropdownMenu.querySelectorAll('.dropdown-option');
+        options.forEach(option => {
+            option.style.display = '';
+        });
+        openDropdown('cuisine');
+        setTimeout(() => cuisineSearch.focus(), 50);
     });
 
     // Keyboard navigation in dropdown

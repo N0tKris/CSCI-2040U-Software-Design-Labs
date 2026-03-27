@@ -166,6 +166,7 @@ public class RestaurantService {
     }
 
     public Restaurant addRestaurant(Restaurant restaurant) {
+        normalizeTextFields(restaurant);
         restaurant.setId(null);
         return repository.save(restaurant);
     }
@@ -180,6 +181,7 @@ public class RestaurantService {
         if (repository.existsByOwnerId(ownerId)) {
             throw new IllegalStateException("Owner already has a restaurant");
         }
+        normalizeTextFields(restaurant);
         restaurant.setId(null);
         restaurant.setOwnerId(ownerId);
         return repository.save(restaurant);
@@ -203,6 +205,7 @@ public class RestaurantService {
 
     @Transactional
     public Restaurant updateRestaurant(Long id, Restaurant updated) {
+        normalizeTextFields(updated);
         return repository.findById(id).map(r -> {
             r.setName(updated.getName());
             r.setCuisine(updated.getCuisine());
@@ -218,6 +221,7 @@ public class RestaurantService {
 
     @Transactional
     public Restaurant updateRestaurantWithOptionalImage(Long id, Restaurant updated, MultipartFile file, Path uploadDir) throws IOException {
+        normalizeTextFields(updated);
         Restaurant restaurant = repository.findById(id).orElse(null);
         if (restaurant == null) {
             return null;
@@ -334,5 +338,26 @@ public class RestaurantService {
 
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
+    }
+
+    /** Trim whitespace around text fields and normalize blank optional fields to null. */
+    private void normalizeTextFields(Restaurant restaurant) {
+        if (restaurant == null) {
+            return;
+        }
+
+        restaurant.setName(trimToNull(restaurant.getName()));
+        restaurant.setCuisine(trimToNull(restaurant.getCuisine()));
+        restaurant.setLocation(trimToNull(restaurant.getLocation()));
+        restaurant.setDietaryTags(trimToNull(restaurant.getDietaryTags()));
+        restaurant.setDescription(trimToNull(restaurant.getDescription()));
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
