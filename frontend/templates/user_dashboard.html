@@ -851,11 +851,35 @@
             color: #888;
             margin-bottom: 4px;
         }
+        .detail-panel .detail-img {
+            width: 100%;
+            height: 180px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin: 14px 0 10px;
+            background: #f2ebe4;
+            border: 1px solid #eee5dc;
+            display: none;
+        }
         .detail-panel .detail-stars {
             color: #f5a623;
             font-size: 18px;
             letter-spacing: 1px;
             margin: 10px 0 6px;
+        }
+        .detail-panel .detail-yelp-meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .detail-panel .detail-yelp-meta a {
+            color: #b85c38;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .detail-panel .detail-yelp-meta a:hover {
+            text-decoration: underline;
         }
         .detail-panel .detail-tags {
             display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
@@ -1071,7 +1095,9 @@
     <h2 id="detail-name"></h2>
     <div class="detail-meta" id="detail-cuisine"></div>
     <div class="detail-meta" id="detail-location"></div>
+    <img id="detail-image" class="detail-img" alt="Restaurant image" />
     <div class="detail-stars" id="detail-stars"></div>
+    <div class="detail-yelp-meta" id="detail-yelp-meta"></div>
     <div class="detail-tags" id="detail-tags"></div>
     <div class="detail-desc" id="detail-desc"></div>
     <div class="detail-section-title">Menu Items</div>
@@ -1223,6 +1249,26 @@
         return html;
     }
 
+    function resolveImageUrl(rawUrl) {
+        if (!rawUrl) return '';
+        const value = String(rawUrl).trim();
+        if (!value) return '';
+        if (/^https?:\/\//i.test(value)) {
+            return value;
+        }
+        const backendUrl = {{ backend_url | tojson }}.replace(/\/$/, '');
+        return value.startsWith('/') ? (backendUrl + value) : (backendUrl + '/' + value);
+    }
+
+    function safeExternalUrl(rawUrl) {
+        if (!rawUrl) return '';
+        const value = String(rawUrl).trim();
+        if (!/^https?:\/\//i.test(value)) {
+            return '';
+        }
+        return value;
+    }
+
     function setStatus(msg) {
         document.getElementById('status-bar').textContent = msg;
     }
@@ -1263,13 +1309,12 @@
             const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
             const card = document.createElement('div');
             card.className = 'restaurant-card';
-            const backendUrl = {{ backend_url | tojson }};
-            const imageUrl = r.imageUrl || r.image_url;
+            const imageUrl = resolveImageUrl(r.imageUrl || r.image_url);
             
             // Create card HTML structure
             card.innerHTML = `
                 <div class="card-img">
-                    ${imageUrl ? `<img src="${backendUrl.replace(/\/$/, '')}${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" class="loading" />` : ''}
+                    ${imageUrl ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" class="loading" />` : ''}
                     <div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>
                     <span class="cuisine-badge">${escHtml(r.cuisine || 'Restaurant')}</span>
                 </div>
@@ -1617,6 +1662,38 @@
         document.getElementById('detail-cuisine').textContent = '🍽 ' + (r.cuisine || '—');
         document.getElementById('detail-location').textContent = '📍 ' + (r.location || '—');
         document.getElementById('detail-stars').innerHTML = stars(r.stars || 0);
+
+        const detailImageEl = document.getElementById('detail-image');
+        const detailImageUrl = resolveImageUrl(r.imageUrl || r.image_url || r.yelpImageUrl || r.yelp_image_url);
+        if (detailImageUrl) {
+            detailImageEl.src = detailImageUrl;
+            detailImageEl.style.display = 'block';
+            detailImageEl.onerror = () => { detailImageEl.style.display = 'none'; };
+        } else {
+            detailImageEl.removeAttribute('src');
+            detailImageEl.style.display = 'none';
+        }
+
+        const yelpMetaParts = [];
+        if (r.yelpPrice || r.yelp_price) {
+            yelpMetaParts.push(`Price: ${escHtml(r.yelpPrice || r.yelp_price)}`);
+        }
+        if ((r.yelpPhone || r.yelp_phone)) {
+            yelpMetaParts.push(`Phone: ${escHtml(r.yelpPhone || r.yelp_phone)}`);
+        }
+        const yelpStatus = (r.yelpIsClosed ?? r.yelp_is_closed);
+        if (typeof yelpStatus === 'boolean') {
+            yelpMetaParts.push(yelpStatus ? 'Currently closed' : 'Currently open');
+        }
+        const yelpReviews = (r.yelpReviewCount ?? r.yelp_review_count);
+        if (yelpReviews != null && yelpReviews !== '') {
+            yelpMetaParts.push(`${Number(yelpReviews)} Yelp reviews`);
+        }
+        const yelpUrl = safeExternalUrl(r.yelpUrl || r.yelp_url);
+        if (yelpUrl) {
+            yelpMetaParts.push(`<a href="${escHtml(yelpUrl)}" target="_blank" rel="noopener noreferrer">View on Yelp ↗</a>`);
+        }
+        document.getElementById('detail-yelp-meta').innerHTML = yelpMetaParts.join(' • ');
 
         const tagsEl = document.getElementById('detail-tags');
         const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);

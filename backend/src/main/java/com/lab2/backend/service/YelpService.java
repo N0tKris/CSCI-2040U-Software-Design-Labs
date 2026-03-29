@@ -113,8 +113,10 @@ public class YelpService {
         if (location == null || location.isBlank()) return null;
 
         // Rating → stored in description for now (the entity has no rating column)
-        double rating = biz.path("rating").asDouble(0);
-        int reviewCount = biz.path("review_count").asInt(0);
+        JsonNode ratingNode = biz.path("rating");
+        JsonNode reviewCountNode = biz.path("review_count");
+        double rating = ratingNode.asDouble(0);
+        int reviewCount = reviewCountNode.asInt(0);
 
         // Build a quick description from Yelp data
         String description = String.format("%.1f stars (%d reviews on Yelp)", rating, reviewCount);
@@ -124,6 +126,16 @@ public class YelpService {
         r.setCuisine(cuisine.length() > 50 ? cuisine.substring(0, 50) : cuisine);
         r.setLocation(location.length() > 255 ? location.substring(0, 255) : location);
         r.setDescription(description);
+        r.setYelpImageUrl(truncate(textOrNull(biz, "image_url"), 512));
+        r.setYelpUrl(truncate(textOrNull(biz, "url"), 512));
+        r.setYelpPhone(truncate(firstNonBlank(
+                textOrNull(biz, "display_phone"),
+                textOrNull(biz, "phone")
+        ), 64));
+        r.setYelpPrice(truncate(textOrNull(biz, "price"), 16));
+        r.setYelpRating(isPresentValueNode(ratingNode) ? rating : null);
+        r.setYelpReviewCount(isPresentValueNode(reviewCountNode) ? reviewCount : null);
+        r.setYelpIsClosed(parseBooleanOrNull(biz.path("is_closed")));
         return r;
     }
 
@@ -142,5 +154,30 @@ public class YelpService {
         if (address != null && city != null) return address + ", " + city;
         if (city != null) return city;
         return address;       // may be null → caller checks
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private static String truncate(String value, int maxLength) {
+        if (value == null) return null;
+        return value.length() > maxLength ? value.substring(0, maxLength) : value;
+    }
+
+    private static Boolean parseBooleanOrNull(JsonNode node) {
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return null;
+        }
+        return node.asBoolean();
+    }
+
+    private static boolean isPresentValueNode(JsonNode node) {
+        return node != null && !node.isMissingNode() && !node.isNull();
     }
 }
