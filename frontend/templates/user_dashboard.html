@@ -458,9 +458,9 @@
         }
         .dietary-tags-list {
             display: flex;
-            flex-wrap: wrap;
-            gap: 14px;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
         }
         .dietary-tags-list label {
             display: flex;
@@ -1017,9 +1017,10 @@
 <div class="topbar">
     <a href="{{ url_for('index') }}" class="brand"><span aria-hidden="true">🍽</span> PlateRate</a>
     <div class="user-info">
-        <a href="{{ url_for('owner_view') }}" class="nav-btn">For Business</a>
         {% if is_guest %}
-        <a href="{{ url_for('login_selector') }}" class="nav-btn nav-btn-primary">Sign In</a>
+        <a href="{{ url_for('user_login') }}" class="nav-btn nav-btn-primary">Sign In</a>
+        <a href="{{ url_for('owner_view') }}" class="nav-btn">For Businesses</a>
+        <a href="{{ url_for('admin_login') }}" class="nav-btn">Admin Login</a>
         {% else %}
         <span>Logged in as <span>{{ username }}</span></span>
         <a href="{{ url_for('user_logout') }}" class="nav-btn">Sign Out</a>
@@ -1151,6 +1152,31 @@
     let currentSearchQuery = '';
     let selectedCuisine = '';
     let selectedDietaryTags = [];
+    const CANONICAL_DIETARY_OPTIONS = [
+        'Vegan',
+        'Vegetarian',
+        'Gluten-Free',
+        'Halal',
+        'Kosher',
+        'Dairy-Free',
+        'Nut-Free'
+    ];
+
+    const DIETARY_ALIASES = {
+        vegan: 'Vegan',
+        vegetarian: 'Vegetarian',
+        'gluten free': 'Gluten-Free',
+        glutenfree: 'Gluten-Free',
+        'gluten-free': 'Gluten-Free',
+        halal: 'Halal',
+        kosher: 'Kosher',
+        'dairy free': 'Dairy-Free',
+        dairyfree: 'Dairy-Free',
+        'dairy-free': 'Dairy-Free',
+        'nut free': 'Nut-Free',
+        nutfree: 'Nut-Free',
+        'nut-free': 'Nut-Free'
+    };
 
     function escHtml(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -1165,18 +1191,19 @@
         return Array.from(cuisines).sort();
     }
 
-    function extractUniqueDietaryTags(restaurants) {
-        const tags = new Set();
-        restaurants.forEach(r => {
-            const tagString = r.dietaryTags || r.dietary_tags || '';
-            if (tagString) {
-                tagString.split(',').forEach(tag => {
-                    const trimmed = tag.trim();
-                    if (trimmed) tags.add(trimmed);
-                });
-            }
-        });
-        return Array.from(tags).sort();
+    function normalizeDietaryTag(raw) {
+        const key = String(raw || '').trim().toLowerCase();
+        if (!key) return '';
+        return DIETARY_ALIASES[key] || '';
+    }
+
+    function getCanonicalDietaryTagsForRestaurant(restaurant) {
+        const tagString = restaurant.dietaryTags || restaurant.dietary_tags || '';
+        if (!tagString) return [];
+        return tagString
+            .split(',')
+            .map(t => normalizeDietaryTag(t))
+            .filter(Boolean);
     }
 
     function renderFilterPanel() {
@@ -1208,12 +1235,11 @@
             optionsContainer.appendChild(option);
         });
 
-        // Populate dietary tags checkboxes
+        // Populate dietary tags checkboxes with canonical options only
         const tagsContainer = document.getElementById('dietary-preferences-container');
-        const tags = extractUniqueDietaryTags(allRestaurants);
 
         tagsContainer.innerHTML = '';
-        tags.forEach(tag => {
+        CANONICAL_DIETARY_OPTIONS.forEach(tag => {
             const label = document.createElement('label');
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -1244,8 +1270,8 @@
 
             // Filter by dietary tags (all selected tags must be present)
             if (selectedDietaryTags.length > 0) {
-                const restaurantTags = (r.dietaryTags || r.dietary_tags || '')
-                    .toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+                const restaurantTags = getCanonicalDietaryTagsForRestaurant(r)
+                    .map(t => t.toLowerCase());
                 const allTagsPresent = selectedDietaryTags.every(tag =>
                     restaurantTags.includes(tag.toLowerCase())
                 );

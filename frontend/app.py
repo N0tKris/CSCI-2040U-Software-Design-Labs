@@ -1666,6 +1666,8 @@ def admin_logout():
 @app.get("/owner")
 def owner_view():
     """Owner view landing - choose Register or Login."""
+    if session.get("owner_token"):
+        return redirect(url_for("owner_dashboard"))
     return render_template("owner_view.html")
 
 
@@ -1673,6 +1675,8 @@ def owner_view():
 def owner_register():
     """Owner registration page and handler."""
     if request.method == "GET":
+        if session.get("owner_token"):
+            return redirect(url_for("owner_dashboard"))
         return render_template("owner_register.html", error=None, success=None)
 
     username = request.form.get("username", "").strip()
@@ -1700,6 +1704,18 @@ def owner_register():
                 )
                 if login_resp.ok:
                     body = login_resp.json()
+                    role = (
+                        body.get("role")
+                        or body.get("userRole")
+                        or (body.get("user", {}) or {}).get("role")
+                        or ""
+                    )
+                    if role.upper() != "OWNER":
+                        return render_template(
+                            "owner_register.html",
+                            error="Account created but owner sign-in failed. Please use Owner Sign In.",
+                            success=None,
+                        )
                     token = (
                         body.get("token")
                         or body.get("accessToken")
@@ -1744,6 +1760,8 @@ def owner_register():
 def owner_login():
     """Owner login page and handler."""
     if request.method == "GET":
+        if session.get("owner_token"):
+            return redirect(url_for("owner_dashboard"))
         return render_template("owner_login.html", error=None)
 
     username = request.form.get("username", "").strip()
@@ -1786,7 +1804,7 @@ def owner_login():
         )
         session["owner_token"] = token
         session["owner_username"] = username
-        session["owner_role"] = "OWNER"
+        session["owner_role"] = role.upper() or "OWNER"
         return redirect(url_for("owner_dashboard"))
 
     except requests.RequestException:
