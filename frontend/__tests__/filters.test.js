@@ -101,6 +101,15 @@ function applyFilters(restaurants, searchQuery, selectedCuisine, selectedDietary
   });
 }
 
+function resolveImageUrl(rawUrl, backendUrl) {
+  if (!rawUrl) return '';
+  const value = String(rawUrl).trim();
+  if (!value) return '';
+  if (/^https?:\/\//i.test(value)) return value;
+  const base = String(backendUrl || '').replace(/\/$/, '');
+  return value.startsWith('/') ? (base + value) : (base + '/' + value);
+}
+
 // ──────────────────────────────────────────────────────────────
 // TESTS
 // ──────────────────────────────────────────────────────────────
@@ -272,6 +281,18 @@ describe('Restaurant Filters', () => {
     test('should return all restaurants when no filters applied', () => {
       const filtered = applyFilters(mockRestaurants, '', '', []);
       expect(filtered.length).toBe(4);
+    });
+  });
+
+  describe('resolveImageUrl', () => {
+    test('should keep absolute yelp image urls unchanged', () => {
+      const result = resolveImageUrl('https://images.yelpcdn.com/photo.jpg', 'http://localhost:8080');
+      expect(result).toBe('https://images.yelpcdn.com/photo.jpg');
+    });
+
+    test('should prefix backend url for local upload paths', () => {
+      const result = resolveImageUrl('/uploads/restaurant-1.jpg', 'http://localhost:8080/');
+      expect(result).toBe('http://localhost:8080/uploads/restaurant-1.jpg');
     });
   });
 

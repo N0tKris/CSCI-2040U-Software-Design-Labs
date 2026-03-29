@@ -19,6 +19,13 @@ public class RestaurantDto {
     private Long ownerId;
     private double stars;
     private String imageUrl;
+    private String yelpImageUrl;
+    private String yelpUrl;
+    private String yelpPhone;
+    private String yelpPrice;
+    private Double yelpRating;
+    private Integer yelpReviewCount;
+    private Boolean yelpIsClosed;
     private List<String> menuItemNames;
     private List<MenuItemDto> menuItems;
 
@@ -34,12 +41,21 @@ public class RestaurantDto {
         dto.dietaryTags = r.getDietaryTags();
         dto.description = r.getDescription();
         dto.ownerId = r.getOwnerId();
-        dto.imageUrl = r.getImageUrl();
+        dto.yelpImageUrl = r.getYelpImageUrl();
+        dto.imageUrl = hasText(r.getImageUrl()) ? r.getImageUrl() : r.getYelpImageUrl();
+        dto.yelpUrl = r.getYelpUrl();
+        dto.yelpPhone = r.getYelpPhone();
+        dto.yelpPrice = r.getYelpPrice();
+        dto.yelpRating = r.getYelpRating();
+        dto.yelpReviewCount = r.getYelpReviewCount();
+        dto.yelpIsClosed = r.getYelpIsClosed();
         if (r.getReviews() != null && !r.getReviews().isEmpty()) {
             dto.stars = r.getReviews().stream()
                     .mapToDouble(review -> review.getRating())
                     .average()
                     .orElse(0.0);
+        } else if (r.getYelpRating() != null) {
+            dto.stars = r.getYelpRating();
         } else {
             // Fallback for Yelp-imported restaurants where rating is embedded in description,
             // e.g. "4.4 stars (978 reviews on Yelp)".
@@ -74,6 +90,20 @@ public class RestaurantDto {
     public void setStars(double stars) { this.stars = stars; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getYelpImageUrl() { return yelpImageUrl; }
+    public void setYelpImageUrl(String yelpImageUrl) { this.yelpImageUrl = yelpImageUrl; }
+    public String getYelpUrl() { return yelpUrl; }
+    public void setYelpUrl(String yelpUrl) { this.yelpUrl = yelpUrl; }
+    public String getYelpPhone() { return yelpPhone; }
+    public void setYelpPhone(String yelpPhone) { this.yelpPhone = yelpPhone; }
+    public String getYelpPrice() { return yelpPrice; }
+    public void setYelpPrice(String yelpPrice) { this.yelpPrice = yelpPrice; }
+    public Double getYelpRating() { return yelpRating; }
+    public void setYelpRating(Double yelpRating) { this.yelpRating = yelpRating; }
+    public Integer getYelpReviewCount() { return yelpReviewCount; }
+    public void setYelpReviewCount(Integer yelpReviewCount) { this.yelpReviewCount = yelpReviewCount; }
+    public Boolean getYelpIsClosed() { return yelpIsClosed; }
+    public void setYelpIsClosed(Boolean yelpIsClosed) { this.yelpIsClosed = yelpIsClosed; }
     public List<String> getMenuItemNames() { return menuItemNames; }
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
     public List<MenuItemDto> getMenuItems() { return menuItems; }
@@ -92,5 +122,9 @@ public class RestaurantDto {
         } catch (NumberFormatException ignored) {
             return 0.0;
         }
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }

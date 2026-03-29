@@ -52,6 +52,28 @@ public class Restaurant {
     @Column(name = "image_url", length = 512)
     private String imageUrl;
 
+    /** Yelp-provided primary image URL (remote), retained as fallback when no local image is uploaded. */
+    @Column(name = "yelp_image_url", length = 512)
+    private String yelpImageUrl;
+
+    @Column(name = "yelp_url", length = 512)
+    private String yelpUrl;
+
+    @Column(name = "yelp_phone", length = 64)
+    private String yelpPhone;
+
+    @Column(name = "yelp_price", length = 16)
+    private String yelpPrice;
+
+    @Column(name = "yelp_rating")
+    private Double yelpRating;
+
+    @Column(name = "yelp_review_count")
+    private Integer yelpReviewCount;
+
+    @Column(name = "yelp_is_closed")
+    private Boolean yelpIsClosed;
+
     public Restaurant() {}
 
     public Restaurant(String name, String cuisine, String dietaryTags,
@@ -92,4 +114,25 @@ public class Restaurant {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getYelpImageUrl() { return yelpImageUrl; }
+    public void setYelpImageUrl(String yelpImageUrl) { this.yelpImageUrl = yelpImageUrl; }
+
+    public String getYelpUrl() { return yelpUrl; }
+    public void setYelpUrl(String yelpUrl) { this.yelpUrl = yelpUrl; }
+
+    public String getYelpPhone() { return yelpPhone; }
+    public void setYelpPhone(String yelpPhone) { this.yelpPhone = yelpPhone; }
+
+    public String getYelpPrice() { return yelpPrice; }
+    public void setYelpPrice(String yelpPrice) { this.yelpPrice = yelpPrice; }
+
+    public Double getYelpRating() { return yelpRating; }
+    public void setYelpRating(Double yelpRating) { this.yelpRating = yelpRating; }
+
+    public Integer getYelpReviewCount() { return yelpReviewCount; }
+    public void setYelpReviewCount(Integer yelpReviewCount) { this.yelpReviewCount = yelpReviewCount; }
+
+    public Boolean getYelpIsClosed() { return yelpIsClosed; }
+    public void setYelpIsClosed(Boolean yelpIsClosed) { this.yelpIsClosed = yelpIsClosed; }
 }
