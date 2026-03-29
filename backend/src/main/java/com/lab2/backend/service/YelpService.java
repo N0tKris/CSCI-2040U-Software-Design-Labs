@@ -7,11 +7,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Fetches restaurant data from the Yelp Fusion API and imports it into the
@@ -19,6 +34,8 @@ import java.util.List;
  */
 @Service
 public class YelpService {
+
+    private static final Pattern YELP_BIZ_ALIAS_PATTERN = Pattern.compile("/biz/([^/?#]+)");
 
     private final RestTemplate restTemplate;
     private final RestaurantRepository restaurantRepository;
@@ -66,6 +83,44 @@ public class YelpService {
         return parseAndSave(response.getBody());
     }
 
+    /**
+     * Fetches Yelp review text for a restaurant previously imported from Yelp.
+     * The restaurant's Yelp business alias is inferred from its yelpUrl field.
+     */
+    public List<Map<String, Object>> getReviewsForRestaurant(Long restaurantId) {
+        if (yelpApiKey == null || yelpApiKey.isBlank()) {
+            throw new IllegalStateException("YELP_API_KEY is not configured");
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found"));
+
+        // Only call Yelp reviews API when a valid Yelp business ID exists.
+        if (restaurant.getYelpId() == null || restaurant.getYelpId().isBlank()) {
+            return Collections.emptyList();
+        }
+
+        String yelpId = restaurant.getYelpId().trim();
+        System.out.println("Using Yelp ID: " + yelpId);
+        System.out.println("Yelp ID: " + yelpId);
+
+        List<Map<String, Object>> reviews = getReviews(yelpId);
+        System.out.println("Number of reviews fetched: " + reviews.size());
+        return reviews;
+    }
+
+    public List<Map<String, Object>> getReviews(String yelpId) {
+        if (yelpId == null || yelpId.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            return fetchReviewsByBusinessRef(yelpId.trim());
+        } catch (HttpClientErrorException.NotFound e) {
+            System.out.println("Yelp reviews not found for ID: " + yelpId);
+            return Collections.emptyList();
+        }
+    }
+
     // ── Internal helpers ────────────────────────────────────────────
 
     private int parseAndSave(String json) {
@@ -91,6 +146,251 @@ public class YelpService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse Yelp response: " + e.getMessage(), e);
         }
+    }
+
+    private List<Map<String, Object>> parseReviews(String json) {
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            JsonNode reviews = root.path("reviews");
+            if (!reviews.isArray()) {
+                return List.of();
+            }
+
+            List<Map<String, Object>> out = new ArrayList<>();
+            for (JsonNode review : reviews) {
+                Map<String, Object> mapped = new HashMap<>();
+                mapped.put("source", "yelp");
+                mapped.put("username", review.path("user").path("name").asText("Yelp User"));
+                mapped.put("rating", review.path("rating").asDouble(0.0));
+                mapped.put("comment", textOrNull(review, "text"));
+                mapped.put("createdAt", textOrNull(review, "time_created"));
+                mapped.put("url", textOrNull(review, "url"));
+                out.add(mapped);
+            }
+            return out;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse Yelp reviews response: " + e.getMessage(), e);
+        }
+    }
+
+    private static String extractBusinessAlias(String yelpUrl) {
+        if (yelpUrl == null || yelpUrl.isBlank()) {
+            return null;
+        }
+
+        String raw = yelpUrl.trim();
+        Matcher matcher = YELP_BIZ_ALIAS_PATTERN.matcher(raw);
+        if (matcher.find()) {
+            String encodedAlias = matcher.group(1);
+            if (encodedAlias != null && !encodedAlias.isBlank()) {
+                try {
+                    String decoded = URLDecoder.decode(encodedAlias, StandardCharsets.UTF_8);
+                    return decoded.isBlank() ? null : decoded;
+                } catch (Exception ignored) {
+                    return encodedAlias;
+                }
+            }
+        }
+
+        try {
+            URI uri = URI.create(raw);
+            String path = uri.getPath();
+            if (path == null) {
+                return null;
+            }
+            int bizIndex = path.indexOf("/biz/");
+            if (bizIndex < 0) {
+                return null;
+            }
+            String aliasPath = path.substring(bizIndex + 5);
+            int slashIndex = aliasPath.indexOf('/');
+            String alias = (slashIndex >= 0) ? aliasPath.substring(0, slashIndex) : aliasPath;
+            return alias.isBlank() ? null : alias;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private List<Map<String, Object>> fetchReviewsByBusinessRef(String businessRef) {
+        String url = UriComponentsBuilder.fromHttpUrl(yelpBaseUrl + "/businesses/{ref}/reviews")
+                .buildAndExpand(Map.of("ref", businessRef))
+                .toUriString();
+
+        System.out.println("Using Yelp ID: " + businessRef);
+        System.out.println("Fetching Yelp reviews for ID: " + businessRef);
+        System.out.println("Request URL: " + url);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(yelpApiKey);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+        } catch (HttpClientErrorException.NotFound e) {
+            System.out.println("Response status: 404");
+            System.out.println("Response body: " + e.getResponseBodyAsString());
+            throw e;
+        }
+
+        System.out.println("Response status: " + response.getStatusCode().value());
+        System.out.println("Response body: " + response.getBody());
+        System.out.println("Response: " + response.getBody());
+
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new RuntimeException("Yelp reviews API returned status " + response.getStatusCode());
+        }
+        return parseReviews(response.getBody());
+    }
+
+    private Optional<String> resolveBusinessIdBySearch(Restaurant restaurant) {
+        String name = restaurant.getName();
+        String location = restaurant.getLocation();
+        if (name == null || name.isBlank()) {
+            return Optional.empty();
+        }
+
+        List<String> locationCandidates = new ArrayList<>();
+        if (location != null && !location.isBlank()) {
+            locationCandidates.add(location);
+            String maybeCity = extractCityFromLocation(location);
+            if (maybeCity != null && !maybeCity.isBlank()) {
+                locationCandidates.add(maybeCity);
+            }
+        }
+        if (locationCandidates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        for (String candidateLocation : locationCandidates) {
+            Optional<String> found = resolveBusinessIdBySearch(name, candidateLocation);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> resolveBusinessIdBySearch(String name, String location) {
+        String url = UriComponentsBuilder.fromHttpUrl(yelpBaseUrl + "/businesses/search")
+                .queryParam("term", name)
+                .queryParam("location", location)
+                .queryParam("categories", "restaurants")
+                .queryParam("limit", 5)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(yelpApiKey);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return Optional.empty();
+            }
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode businesses = root.path("businesses");
+            if (!businesses.isArray() || businesses.isEmpty()) {
+                return Optional.empty();
+            }
+
+            String targetName = normalize(name);
+            for (JsonNode biz : businesses) {
+                String candidateName = normalize(biz.path("name").asText(""));
+                String id = textOrNull(biz, "id");
+                if (Objects.equals(candidateName, targetName) && id != null && !id.isBlank()) {
+                    return Optional.of(id);
+                }
+            }
+
+            String firstId = textOrNull(businesses.get(0), "id");
+            return (firstId == null || firstId.isBlank()) ? Optional.empty() : Optional.of(firstId);
+        } catch (Exception ignored) {
+            return Optional.empty();
+        }
+    }
+
+    private Optional<String> resolveBusinessIdByPhone(String yelpPhone) {
+        String phone = normalizePhone(yelpPhone);
+        if (phone == null || phone.isBlank()) {
+            return Optional.empty();
+        }
+
+        String url = UriComponentsBuilder.fromHttpUrl(yelpBaseUrl + "/businesses/search/phone")
+                .queryParam("phone", phone)
+                .toUriString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(yelpApiKey);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                return Optional.empty();
+            }
+
+            JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode businesses = root.path("businesses");
+            if (!businesses.isArray() || businesses.isEmpty()) {
+                return Optional.empty();
+            }
+
+            String id = textOrNull(businesses.get(0), "id");
+            return (id == null || id.isBlank()) ? Optional.empty() : Optional.of(id);
+        } catch (Exception ignored) {
+            return Optional.empty();
+        }
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.toLowerCase()
+                .replace("&", "and")
+                .replaceAll("[^a-z0-9]+", "")
+                .trim();
+    }
+
+    private static String normalizePhone(String rawPhone) {
+        if (rawPhone == null || rawPhone.isBlank()) {
+            return null;
+        }
+        String digits = rawPhone.replaceAll("[^0-9+]", "");
+        if (digits.isBlank()) {
+            return null;
+        }
+
+        // Yelp search/phone expects E.164 (e.g., +17038138181)
+        if (digits.startsWith("+")) {
+            return digits;
+        }
+        if (digits.length() == 11 && digits.startsWith("1")) {
+            return "+" + digits;
+        }
+        if (digits.length() == 10) {
+            return "+1" + digits;
+        }
+        return "+" + digits;
+    }
+
+    private static String extractCityFromLocation(String location) {
+        if (location == null || location.isBlank()) {
+            return null;
+        }
+        List<String> parts = Arrays.stream(location.split(","))
+                .map(String::trim)
+                .filter(part -> !part.isBlank())
+                .toList();
+        if (parts.isEmpty()) {
+            return null;
+        }
+        return parts.get(parts.size() - 1);
     }
 
     private Restaurant mapToRestaurant(JsonNode biz) {
@@ -128,6 +428,7 @@ public class YelpService {
         r.setDescription(description);
         r.setYelpImageUrl(truncate(textOrNull(biz, "image_url"), 512));
         r.setYelpUrl(truncate(textOrNull(biz, "url"), 512));
+        r.setYelpId(truncate(textOrNull(biz, "id"), 128));
         r.setYelpPhone(truncate(firstNonBlank(
                 textOrNull(biz, "display_phone"),
                 textOrNull(biz, "phone")

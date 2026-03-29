@@ -59,6 +59,10 @@ public class Restaurant {
     @Column(name = "yelp_url", length = 512)
     private String yelpUrl;
 
+    /** Yelp business ID from Yelp API response (business.id). */
+    @Column(name = "yelp_id", length = 128)
+    private String yelpId;
+
     @Column(name = "yelp_phone", length = 64)
     private String yelpPhone;
 
@@ -120,6 +124,9 @@ public class Restaurant {
 
     public String getYelpUrl() { return yelpUrl; }
     public void setYelpUrl(String yelpUrl) { this.yelpUrl = yelpUrl; }
+
+    public String getYelpId() { return yelpId; }
+    public void setYelpId(String yelpId) { this.yelpId = yelpId; }
 
     public String getYelpPhone() { return yelpPhone; }
     public void setYelpPhone(String yelpPhone) { this.yelpPhone = yelpPhone; }

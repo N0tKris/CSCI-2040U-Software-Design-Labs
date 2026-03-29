@@ -1746,37 +1746,79 @@
 
     async function loadDetailReviews(restaurantId) {
         const container = document.getElementById('detail-reviews');
+        const restaurant = allRestaurants.find(r => String(r.id) === String(restaurantId));
         try {
-            const res = await fetch(`/api/reviews/restaurant/${restaurantId}`);
-            const data = await res.json().catch(() => ({}));
+            const [localResult, yelpResult] = await Promise.all([
+                fetch(`/api/reviews/restaurant/${restaurantId}`)
+                    .then(async (res) => ({
+                        ok: res.ok,
+                        payload: await res.json().catch(() => ({}))
+                    }))
+                    .catch(() => ({ ok: false, payload: {} })),
+                fetch(`/api/yelp/reviews/restaurant/${restaurantId}`)
+                    .then(async (res) => ({
+                        ok: res.ok,
+                        payload: await res.json().catch(() => ({}))
+                    }))
+                    .catch(() => ({ ok: false, payload: {} }))
+            ]);
 
-            if (!res.ok || !data.ok) {
-                container.innerHTML = '<div style="font-size:13px;color:#aaa;">Could not load reviews.</div>';
+            const localReviews = (localResult.ok && localResult.payload && localResult.payload.ok)
+                ? (Array.isArray(localResult.payload.data) ? localResult.payload.data : [])
+                : [];
+            const yelpReviews = (yelpResult.ok && yelpResult.payload && yelpResult.payload.ok)
+                ? (Array.isArray(yelpResult.payload.data) ? yelpResult.payload.data : [])
+                : [];
+            const yelpFailed = !(yelpResult.ok && yelpResult.payload && yelpResult.payload.ok);
+
+            if (!localReviews.length && !yelpReviews.length) {
+                const yelpCount = Number((restaurant && (restaurant.yelpReviewCount ?? restaurant.yelp_review_count)) || 0);
+                const yelpRating = Number((restaurant && (restaurant.yelpRating ?? restaurant.yelp_rating)) || 0);
+                const yelpUrl = (restaurant && (restaurant.yelpUrl || restaurant.yelp_url)) || '';
+                const safeYelpUrl = safeExternalUrl(yelpUrl);
+
+                if (yelpCount > 0) {
+                    const sourceLink = safeYelpUrl
+                        ? `<a href="${escHtml(safeYelpUrl)}" target="_blank" rel="noopener noreferrer">Open Yelp reviews ↗</a>`
+                        : 'Open Yelp to view reviews.';
+                    container.innerHTML = `
+                        <div class="detail-review-card">
+                            <div class="reviewer">Yelp <span style="font-size:11px;color:#999;">(summary)</span></div>
+                            <div class="review-stars">${stars(yelpRating)}</div>
+                            <div class="review-text">This restaurant has ${escHtml(String(yelpCount))} review(s) on Yelp. Full review text is unavailable via the API for this listing.</div>
+                            <div class="review-date">${sourceLink}</div>
+                        </div>
+                    `;
+                } else if (yelpFailed) {
+                    container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No Yelp reviews available</div>';
+                } else {
+                    container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No Yelp reviews available</div>';
+                }
                 return;
             }
 
-            const reviews = Array.isArray(data.data) ? data.data : [];
-            if (!reviews.length) {
-                container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No reviews yet for this restaurant.</div>';
-                return;
-            }
+            const allReviews = [
+                ...localReviews.map(rv => ({ ...rv, __source: 'local' })),
+                ...yelpReviews.map(rv => ({ ...rv, __source: 'yelp' }))
+            ];
 
-            container.innerHTML = reviews.map(rv => {
+            container.innerHTML = allReviews.map(rv => {
                 const reviewer = escHtml(rv.username || 'Anonymous');
                 const rating = Math.max(0, Math.min(5, Number(rv.rating) || 0));
                 const comment = escHtml(rv.comment || '');
-                const ts = rv.createdAt || rv.timestamp || '';
+                const ts = rv.createdAt || rv.time_created || rv.timestamp || '';
                 const dateText = ts ? escHtml(String(ts).slice(0, 10)) : '';
+                const sourceLabel = rv.__source === 'yelp' ? 'Yelp' : 'PlateRate';
                 return `
                     <div class="detail-review-card">
-                        <div class="reviewer">${reviewer}</div>
+                        <div class="reviewer">${reviewer} <span style="font-size:11px;color:#999;">(${sourceLabel})</span></div>
                         <div class="review-stars">${stars(rating)}</div>
                         <div class="review-text">${comment || 'No comment provided.'}</div>
                         <div class="review-date">${dateText}</div>
                     </div>
                 `;
             }).join('');
-        } catch (_) {
+        } catch (e) {
             container.innerHTML = '<div style="font-size:13px;color:#aaa;">Could not load reviews.</div>';
         }
     }

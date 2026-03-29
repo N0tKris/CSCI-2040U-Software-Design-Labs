@@ -21,6 +21,7 @@ public class RestaurantDto {
     private String imageUrl;
     private String yelpImageUrl;
     private String yelpUrl;
+    private String yelpId;
     private String yelpPhone;
     private String yelpPrice;
     private Double yelpRating;
@@ -44,6 +45,7 @@ public class RestaurantDto {
         dto.yelpImageUrl = r.getYelpImageUrl();
         dto.imageUrl = hasText(r.getImageUrl()) ? r.getImageUrl() : r.getYelpImageUrl();
         dto.yelpUrl = r.getYelpUrl();
+        dto.yelpId = r.getYelpId();
         dto.yelpPhone = r.getYelpPhone();
         dto.yelpPrice = r.getYelpPrice();
         dto.yelpRating = r.getYelpRating();
@@ -94,6 +96,8 @@ public class RestaurantDto {
     public void setYelpImageUrl(String yelpImageUrl) { this.yelpImageUrl = yelpImageUrl; }
     public String getYelpUrl() { return yelpUrl; }
     public void setYelpUrl(String yelpUrl) { this.yelpUrl = yelpUrl; }
+    public String getYelpId() { return yelpId; }
+    public void setYelpId(String yelpId) { this.yelpId = yelpId; }
     public String getYelpPhone() { return yelpPhone; }
     public void setYelpPhone(String yelpPhone) { this.yelpPhone = yelpPhone; }
     public String getYelpPrice() { return yelpPrice; }

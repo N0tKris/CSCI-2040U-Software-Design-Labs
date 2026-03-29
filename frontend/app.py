@@ -1053,6 +1053,10 @@ def reviews_url() -> str:
     return f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews"
 
 
+def yelp_reviews_url() -> str:
+    return f"{BACKEND_BASE_URL.rstrip('/')}/api/yelp/reviews"
+
+
 @app.get("/api/reviews/restaurant/<int:restaurant_id>")
 def get_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]:
     headers: dict[str, str] = {}
@@ -1074,6 +1078,24 @@ def get_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]
         }, response.status_code
     except requests.RequestException as exc:
         return _error_payload("Couldn't reach backend to load reviews", str(exc)), 502
+
+
+@app.get("/api/yelp/reviews/restaurant/<int:restaurant_id>")
+def get_yelp_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]:
+    try:
+        response = requests.get(
+            f"{yelp_reviews_url()}/restaurant/{restaurant_id}",
+            timeout=8,
+        )
+        body = response.json() if response.content else []
+        if response.ok:
+            return {"ok": True, "data": body}, 200
+        # Yelp review-text can be unavailable for some business references.
+        # Return an empty list so the UI can fall back to Yelp summary metadata.
+        return {"ok": True, "data": [], "yelpUnavailable": True}, 200
+    except requests.RequestException as exc:
+        # Degrade gracefully to keep restaurant detail panel usable.
+        return {"ok": True, "data": [], "yelpUnavailable": True}, 200
 
 
 @app.post("/api/reviews")
