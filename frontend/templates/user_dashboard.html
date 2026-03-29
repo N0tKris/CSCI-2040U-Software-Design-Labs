@@ -8,7 +8,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f5f0eb;
+            background: #f7f4f1;
             color: #333;
             min-height: 100vh;
         }
@@ -17,46 +17,69 @@
         .topbar {
             background: #fff;
             border-bottom: 1px solid #e0d8d0;
-            padding: 0 32px;
-            height: 60px;
+            padding: 0 28px;
+            height: 68px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
+            position: fixed;
+            left: 0;
+            right: 0;
             top: 0;
-            z-index: 50;
+            z-index: 80;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
         }
         .topbar .brand {
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 23px;
+            font-weight: 800;
             color: #b85c38;
             letter-spacing: -0.3px;
+            text-decoration: none;
         }
         .topbar .user-info {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 10px;
             font-size: 14px;
             color: #555;
         }
-        .topbar .user-info span { font-weight: 600; color: #333; }
-        .btn-logout {
-            padding: 7px 18px;
-            background: transparent;
-            border: 1px solid #d5cfc9;
-            border-radius: 20px;
-            font-size: 13px;
-            color: #666;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
+        .topbar .user-info span {
+            font-weight: 600;
+            color: #333;
+            margin-right: 4px;
         }
-        .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
+        .nav-btn {
+            padding: 9px 16px;
+            border: 1px solid #d6cec7;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6a635d;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+            background: #fff;
+        }
+        .nav-btn:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+            background: #fcf5f1;
+        }
+        .nav-btn-primary {
+            background: #b85c38;
+            border-color: #b85c38;
+            color: #fff;
+        }
+        .nav-btn-primary:hover {
+            background: #a04e2e;
+            border-color: #a04e2e;
+            color: #fff;
+        }
 
         /* ── Hero / Search bar ── */
         .hero {
             background: linear-gradient(135deg, #b85c38 0%, #d4845a 100%);
-            padding: 48px 32px 44px;
+            padding: 124px 32px 44px;
             text-align: center;
             color: #fff;
         }
@@ -146,16 +169,26 @@
             border-color: #b85c38;
             color: #b85c38;
         }
+        .content-layout {
+            display: grid;
+            grid-template-columns: minmax(240px, 28%) minmax(0, 72%);
+            gap: 24px;
+            align-items: start;
+        }
+        .filters-sidebar {
+            position: sticky;
+            top: 92px;
+            align-self: start;
+        }
         .filter-panel {
             background: #fff;
             border-radius: 12px;
             border: 1px solid #e0d8d0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             padding: 24px;
-            margin-bottom: 28px;
             display: flex;
-            gap: 24px;
-            align-items: flex-end;
+            flex-direction: column;
+            gap: 22px;
         }
         .filter-panel.collapsed {
             display: none;
@@ -164,14 +197,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            flex: 1;
-            min-width: 180px;
-        }
-        .filter-group:first-child {
-            flex: 0 1 240px;
-        }
-        .filter-group:nth-child(2) {
-            flex: 2;
+            min-width: 0;
         }
         .filter-group label {
             font-size: 13px;
@@ -449,7 +475,7 @@
             accent-color: #b85c38;
         }
         .btn-clear-filters {
-            padding: 11px 20px;
+            padding: 12px 20px;
             background: transparent;
             border: 1.5px solid #d5cfc9;
             border-radius: 8px;
@@ -459,8 +485,7 @@
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
-            align-self: flex-end;
-            height: fit-content;
+            width: 100%;
         }
         .btn-clear-filters:hover {
             border-color: #b85c38;
@@ -470,9 +495,12 @@
 
         /* ── Page wrapper ── */
         .page {
-            max-width: 1080px;
+            max-width: 1220px;
             margin: 0 auto;
             padding: 32px 24px 60px;
+        }
+        .results-content {
+            min-width: 0;
         }
         .results-header {
             display: flex;
@@ -944,7 +972,7 @@
         }
 
         @media (max-width: 700px) {
-            .topbar { padding: 0 16px; }
+            .topbar { padding: 0 14px; height: 64px; }
             .hero { padding: 32px 16px 28px; }
             .hero h1 { font-size: 24px; }
             .search-bar { padding: 4px 4px 4px 14px; }
@@ -953,25 +981,22 @@
             .restaurant-grid { grid-template-columns: 1fr; }
             .detail-panel { width: 100vw; }
             .filter-toggle { display: block; }
-            .filter-panel {
-                flex-direction: column;
-                align-items: stretch;
+            .hero { padding-top: 98px; }
+            .topbar .user-info span { display: none; }
+            .content-layout {
+                grid-template-columns: 1fr;
                 gap: 16px;
-                padding: 20px;
-                margin-bottom: 24px;
             }
-            .filter-panel.collapsed {
+            .filters-sidebar {
+                position: static;
+            }
+            .filter-panel {
                 display: none;
             }
+            .filter-panel.open { display: flex; }
             .filter-group {
                 min-width: auto;
                 gap: 8px;
-            }
-            .filter-group:first-child {
-                flex: none;
-            }
-            .filter-group:nth-child(2) {
-                flex: none;
             }
             .dietary-tags-list {
                 gap: 12px;
@@ -987,13 +1012,14 @@
 
 <!-- Top bar -->
 <div class="topbar">
-    <div class="brand">PlateRate</div>
+    <a href="{{ url_for('index') }}" class="brand">🍽 PlateRate</a>
     <div class="user-info">
+        <a href="{{ url_for('owner_view') }}" class="nav-btn">For Business</a>
         {% if is_guest %}
-        <a href="{{ url_for('login_selector') }}" class="btn-logout">Login</a>
+        <a href="{{ url_for('user_view') }}" class="nav-btn nav-btn-primary">Sign In</a>
         {% else %}
-        Welcome, <span>{{ username }}</span>
-        <a href="{{ url_for('user_logout') }}" class="btn-logout">Sign out</a>
+        <span>{{ username }}</span>
+        <a href="{{ url_for('user_logout') }}" class="nav-btn">Sign Out</a>
         {% endif %}
     </div>
 </div>
@@ -1021,43 +1047,49 @@
 <div class="page">
     <button class="filter-toggle" id="filter-toggle-btn">🔍 Filters</button>
 
-    <div class="filter-panel" id="filter-panel">
-        <div class="filter-group">
-            <label for="cuisine-dropdown-trigger">Cuisine</label>
-            <div class="custom-dropdown" id="cuisine-dropdown">
-                <button type="button" class="dropdown-trigger" id="cuisine-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-                    <span id="cuisine-dropdown-value">All Cuisines</span>
-                    <span class="dropdown-arrow">▼</span>
-                </button>
-                <div class="dropdown-menu" id="cuisine-dropdown-menu">
-                    <div class="dropdown-search">
-                        <input type="text" id="cuisine-search" placeholder="Search cuisines…" autocomplete="off" />
-                        <button type="button" class="dropdown-clear" id="cuisine-clear-btn">Clear</button>
+    <div class="content-layout">
+        <aside class="filters-sidebar">
+            <div class="filter-panel" id="filter-panel">
+                <div class="filter-group">
+                    <label for="cuisine-dropdown-trigger">Cuisine</label>
+                    <div class="custom-dropdown" id="cuisine-dropdown">
+                        <button type="button" class="dropdown-trigger" id="cuisine-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                            <span id="cuisine-dropdown-value">All Cuisines</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu" id="cuisine-dropdown-menu">
+                            <div class="dropdown-search">
+                                <input type="text" id="cuisine-search" placeholder="Search cuisines…" autocomplete="off" />
+                                <button type="button" class="dropdown-clear" id="cuisine-clear-btn">Clear</button>
+                            </div>
+                            <div id="cuisine-options-container"></div>
+                        </div>
                     </div>
-                    <div id="cuisine-options-container"></div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Dietary Preferences</label>
+                    <div class="dietary-tags-list" id="dietary-tags-container"></div>
+                </div>
+
+                <button class="btn-clear-filters" id="clear-filters-btn">Clear Filters</button>
+            </div>
+        </aside>
+
+        <main class="results-content">
+            <div class="results-header">
+                <h2>Restaurants near you</h2>
+                <span id="status-bar">Loading…</span>
+            </div>
+
+            <div class="restaurant-grid" id="restaurant-grid">
+                <div class="empty-state">
+                    <div class="empty-icon">🍽</div>
+                    Loading restaurants…
                 </div>
             </div>
-        </div>
-
-        <div class="filter-group">
-            <label>Dietary Tags</label>
-            <div class="dietary-tags-list" id="dietary-tags-container"></div>
-        </div>
-
-        <button class="btn-clear-filters" id="clear-filters-btn">Clear Filters</button>
-    </div>
-
-    <div class="results-header">
-        <h2>Restaurants near you</h2>
-        <span id="status-bar">Loading…</span>
-    </div>
-
-    <div class="restaurant-grid" id="restaurant-grid">
-        <div class="empty-state">
-            <div class="empty-icon">🍽</div>
-            Loading restaurants…
-        </div>
-    </div>
+        </main>
+</div>
 </div>
 
 <!-- Review Modal -->
@@ -1454,7 +1486,7 @@
     // ── Filter panel toggle for mobile ──
     document.getElementById('filter-toggle-btn').addEventListener('click', () => {
         const panel = document.getElementById('filter-panel');
-        panel.classList.toggle('collapsed');
+        panel.classList.toggle('open');
     });
 
     // ── Custom Dropdown Event Handlers ──
