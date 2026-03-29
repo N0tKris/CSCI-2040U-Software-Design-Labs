@@ -4,6 +4,7 @@ import com.lab2.backend.model.Restaurant;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class RestaurantDtoTest {
 
@@ -39,5 +40,16 @@ class RestaurantDtoTest {
         RestaurantDto dto = RestaurantDto.fromEntity(restaurant);
 
         assertEquals(4.3, dto.getStars());
+    }
+
+    @Test
+    void fromEntity_keepsImageUrlNullWhenNoLocalOrYelpImage() {
+        Restaurant restaurant = new Restaurant();
+        restaurant.setImageUrl(null);
+        restaurant.setYelpImageUrl(null);
+
+        RestaurantDto dto = RestaurantDto.fromEntity(restaurant);
+
+        assertNull(dto.getImageUrl());
     }
 }

@@ -1260,6 +1260,15 @@
         return value.startsWith('/') ? (backendUrl + value) : (backendUrl + '/' + value);
     }
 
+    function safeExternalUrl(rawUrl) {
+        if (!rawUrl) return '';
+        const value = String(rawUrl).trim();
+        if (!/^https?:\/\//i.test(value)) {
+            return '';
+        }
+        return value;
+    }
+
     function setStatus(msg) {
         document.getElementById('status-bar').textContent = msg;
     }
@@ -1680,7 +1689,7 @@
         if (yelpReviews != null && yelpReviews !== '') {
             yelpMetaParts.push(`${Number(yelpReviews)} Yelp reviews`);
         }
-        const yelpUrl = r.yelpUrl || r.yelp_url;
+        const yelpUrl = safeExternalUrl(r.yelpUrl || r.yelp_url);
         if (yelpUrl) {
             yelpMetaParts.push(`<a href="${escHtml(yelpUrl)}" target="_blank" rel="noopener noreferrer">View on Yelp ↗</a>`);
         }

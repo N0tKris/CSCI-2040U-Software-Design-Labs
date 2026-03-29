@@ -113,8 +113,10 @@ public class YelpService {
         if (location == null || location.isBlank()) return null;
 
         // Rating → stored in description for now (the entity has no rating column)
-        double rating = biz.path("rating").asDouble(0);
-        int reviewCount = biz.path("review_count").asInt(0);
+        JsonNode ratingNode = biz.path("rating");
+        JsonNode reviewCountNode = biz.path("review_count");
+        double rating = ratingNode.asDouble(0);
+        int reviewCount = reviewCountNode.asInt(0);
 
         // Build a quick description from Yelp data
         String description = String.format("%.1f stars (%d reviews on Yelp)", rating, reviewCount);
@@ -131,8 +133,8 @@ public class YelpService {
                 textOrNull(biz, "phone")
         ), 64));
         r.setYelpPrice(truncate(textOrNull(biz, "price"), 16));
-        r.setYelpRating(rating > 0 ? rating : null);
-        r.setYelpReviewCount(reviewCount > 0 ? reviewCount : null);
+        r.setYelpRating(isPresentValueNode(ratingNode) ? rating : null);
+        r.setYelpReviewCount(isPresentValueNode(reviewCountNode) ? reviewCount : null);
         r.setYelpIsClosed(parseBooleanOrNull(biz.path("is_closed")));
         return r;
     }
@@ -173,5 +175,9 @@ public class YelpService {
             return null;
         }
         return node.asBoolean();
+    }
+
+    private static boolean isPresentValueNode(JsonNode node) {
+        return node != null && !node.isMissingNode() && !node.isNull();
     }
 }
