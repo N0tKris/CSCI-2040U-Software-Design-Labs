@@ -164,10 +164,10 @@
             z-index: 3;
         }
         .cuisine-chip-row-inner {
-            background: #fff;
-            border: 1px solid #e6ddd5;
+            background: transparent;
+            border: none;
             border-radius: 14px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            box-shadow: none;
             padding: 12px;
             display: flex;
             align-items: center;
@@ -183,8 +183,8 @@
             min-width: 0;
         }
         .cuisine-chip {
-            border: 1px solid #e0d6cd;
-            background: #fff;
+            border: 1px solid #dfd5ca;
+            background: #ebe5db;
             border-radius: 999px;
             padding: 8px 14px;
             font-size: 13px;
@@ -192,56 +192,59 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease-in-out;
         }
         .cuisine-chip:hover {
             border-color: #b85c38;
-            color: #9f4f32;
-            background: #fcf4ef;
+            color: #b85c38;
+            background: #f3e5d8;
+            transform: scale(1.02);
         }
         .cuisine-chip.active {
             border-color: #b85c38;
             background: #b85c38;
             color: #fff;
-            box-shadow: 0 4px 10px rgba(184, 92, 56, 0.28);
+            box-shadow: 0 4px 12px rgba(184, 92, 56, 0.32);
         }
         .cuisine-chip:focus-visible {
             outline: none;
             box-shadow: 0 0 0 3px rgba(184, 92, 56, 0.2);
         }
         .cuisine-show-more {
-            border: 1px solid #e0d6cd;
-            background: #fff;
+            border: 1px solid #dfd5ca;
+            background: #ebe5db;
             border-radius: 999px;
             padding: 8px 14px;
             font-size: 12px;
             font-weight: 700;
             color: #7d6658;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease-in-out;
             flex-shrink: 0;
         }
         .cuisine-show-more:hover {
             border-color: #b85c38;
-            color: #9f4f32;
-            background: #fcf4ef;
+            color: #b85c38;
+            background: #f3e5d8;
+            transform: scale(1.02);
         }
         .filter-toggle {
             display: none;
             padding: 12px 18px;
-            background: #fff;
-            border: 1.5px solid #d5cfc9;
+            background: #ebe5db;
+            border: 1.5px solid #dfd5ca;
             border-radius: 10px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             color: #555;
             margin-bottom: 18px;
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
         }
         .filter-toggle:hover {
             border-color: #b85c38;
             color: #b85c38;
+            background: #dcd3c5;
         }
         .content-layout {
             display: grid;
@@ -255,10 +258,10 @@
             align-self: start;
         }
         .filter-panel {
-            background: #fff;
+            background: transparent;
             border-radius: 12px;
-            border: 1px solid #e0d8d0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: none;
+            box-shadow: none;
             padding: 24px;
             display: flex;
             flex-direction: column;
@@ -284,12 +287,12 @@
         .filter-group select,
         .filter-group input {
             padding: 11px 14px;
-            border: 1.5px solid #d5cfc9;
+            border: 1.5px solid #dfd5ca;
             border-radius: 8px;
             font-size: 14px;
-            background: #faf8f6;
+            background: #ebe5db;
             font-family: inherit;
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
         }
         .filter-group select {
             cursor: pointer;
@@ -305,7 +308,7 @@
         .filter-group input:focus {
             outline: none;
             border-color: #b85c38;
-            background-color: #fff;
+            background-color: #f9f5f0;
         }
         .dietary-tags-list {
             display: flex;
@@ -323,28 +326,30 @@
             font-size: 13px;
             white-space: nowrap;
             width: 100%;
-            border: 1px solid #e5dbd2;
+            border: 1px solid #dfd5ca;
             border-radius: 10px;
-            padding: 8px 10px;
-            background: #fff;
-            transition: all 0.2s ease;
+            padding: 10px 12px;
+            background: #ebe5db;
+            transition: all 0.2s ease-in-out;
             user-select: none;
         }
         .dietary-tags-list label:hover {
-            border-color: #cfa892;
-            background: #fcf5ef;
+            border-color: #b85c38;
+            background: #dcd3c5;
+            transform: translateX(2px);
         }
         .dietary-tags-list label.active {
             border-color: #b85c38;
-            background: #f8ece4;
-            color: #8f4127;
-            box-shadow: 0 2px 8px rgba(184, 92, 56, 0.12);
+            background: #b85c38;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(184, 92, 56, 0.24);
         }
         .dietary-icon {
             width: 18px;
             text-align: center;
             font-size: 14px;
             line-height: 1;
+            font-weight: 700;
         }
         .dietary-tags-list input[type="checkbox"] {
             width: 16px;
@@ -354,21 +359,22 @@
         }
         .btn-clear-filters {
             padding: 12px 20px;
-            background: transparent;
-            border: 1.5px solid #d5cfc9;
+            background: #ebe5db;
+            border: 1.5px solid #dfd5ca;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
-            color: #666;
+            color: #555;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease-in-out;
             white-space: nowrap;
             width: 100%;
         }
         .btn-clear-filters:hover {
             border-color: #b85c38;
             color: #b85c38;
-            background: rgba(184, 92, 56, 0.03);
+            background: #dcd3c5;
+            transform: translateY(-1px);
         }
 
         /* ── Page wrapper ── */
