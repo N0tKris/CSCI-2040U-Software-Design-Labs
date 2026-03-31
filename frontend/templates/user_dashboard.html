@@ -6,6 +6,7 @@
     <title>Dashboard — PlateRate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #f7f4f1;
@@ -86,6 +87,7 @@
             padding: calc(var(--topbar-height) + 56px) 32px 44px;
             text-align: center;
             color: #fff;
+            animation: headerFadeIn 0.3s ease-out;
         }
         .hero h1 {
             font-size: 30px;
@@ -147,12 +149,13 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
         }
         .search-bar button:hover {
             background: #a04e2e;
-            transform: scale(1.03);
+            transform: scale(1.04);
+            box-shadow: 0 4px 12px rgba(184, 92, 56, 0.3);
         }
 
         /* ── Filter Panel ── */
@@ -272,6 +275,9 @@
             position: sticky;
             top: calc(var(--topbar-height) + var(--topbar-gap));
             align-self: start;
+            animation: sidebarFadeSlideIn 0.35s ease-out forwards;
+            opacity: 0;
+            transform: translateX(-20px);
         }
         .filter-panel {
             background: transparent;
@@ -382,7 +388,7 @@
             font-weight: 600;
             color: #555;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             width: 100%;
         }
@@ -390,7 +396,8 @@
             border-color: #b85c38;
             color: #b85c38;
             background: #dcd3c5;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         /* ── Page wrapper ── */
@@ -421,21 +428,25 @@
         /* ── Restaurant cards grid ── */
         .restaurant-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
+            transition: opacity 0.3s ease;
         }
         .restaurant-card {
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
             overflow: hidden;
-            transition: box-shadow 0.25s, transform 0.25s;
+            transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            animation: cardFadeSlideUp 0.4s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
         }
         .restaurant-card:hover {
-            box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+            transform: translateY(-6px);
         }
         .card-img {
             height: 160px;
@@ -463,6 +474,34 @@
             0% { opacity: 0.6; }
             50% { opacity: 1; }
             100% { opacity: 0.6; }
+        }
+        @keyframes cardFadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes sidebarFadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes headerFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
         .restaurant-card:hover .card-img img {
             transform: scale(1.05);
@@ -577,10 +616,14 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
         }
-        .btn-review:hover { background: #a04e2e; }
+        .btn-review:hover {
+            background: #a04e2e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(184, 92, 56, 0.3);
+        }
         .btn-details {
             padding: 10px 18px;
             background: #fff;
@@ -590,9 +633,14 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .btn-details:hover { border-color: #b85c38; color: #b85c38; }
+        .btn-details:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+            background: #fcf8f4;
+            transform: translateY(-2px);
+        }
 
         .empty-state {
             grid-column: 1 / -1;
@@ -871,6 +919,45 @@
             font-size: 11px; color: #bbb; margin-top: 6px;
         }
 
+        /* ── Skeleton Loader ── */
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-card {
+            background: linear-gradient(90deg, #f0ebe5 0%, #faf8f6 50%, #f0ebe5 100%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.5s infinite;
+            pointer-events: none;
+        }
+        .skeleton-card .card-img {
+            background: #ebe5db !important;
+        }
+        .skeleton-element {
+            background: #dfd5ca;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            animation: skeletonShimmer 1.5s infinite;
+        }
+        #loading-indicator {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 14px;
+            color: #999;
+        }
+        #end-of-list {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #bbb;
+            font-size: 15px;
+        }
+        #end-of-list-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
         @media (max-width: 700px) {
             .topbar { padding: 0 14px; height: var(--mobile-topbar-height); }
             .hero { padding: calc(var(--mobile-topbar-height) + var(--mobile-topbar-gap)) 16px 28px; }
@@ -892,6 +979,9 @@
             }
             .filters-sidebar {
                 position: static;
+                animation: none;
+                opacity: 1;
+                transform: none;
             }
             .filter-panel {
                 display: none;
@@ -908,6 +998,9 @@
                 width: 100%;
                 align-self: auto;
             }
+        }
+        @media (max-width: 1024px) {
+            .restaurant-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -987,6 +1080,14 @@
                     Loading restaurants…
                 </div>
             </div>
+
+            <!-- Infinite Scroll Sentinel & Loading States -->
+            <div id="loading-sentinel" style="width: 100%; height: 200px; visibility: hidden;"></div>
+            <div id="loading-indicator" style="display: none;">Loading more restaurants…</div>
+            <div id="end-of-list" style="display: none;">
+                <div id="end-of-list-icon">🎉</div>
+                <div>You've seen all our restaurants!</div>
+            </div>
         </main>
 </div>
 </div>
@@ -1047,6 +1148,15 @@
     let currentSearchQuery = '';
     let selectedCuisine = '';
     let selectedDietaryTags = [];
+    // ── Infinite Scroll ──
+    let filteredRestaurants = [];
+    let displayedRestaurants = [];
+    let batchSize = 9;
+    let currentBatchIndex = 0;
+    let isLoadingMore = false;
+    let hasMoreRestaurants = true;
+    let sentinelElement = null;
+    const INITIAL_DISPLAY = 9;
     const CANONICAL_DIETARY_OPTIONS = [
         'Vegan',
         'Vegetarian',
@@ -1164,10 +1274,246 @@
         });
     }
 
+    // ── Infinite Scroll Helpers ──
+    function createSkeletons(count = 3) {
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+            const card = document.createElement('div');
+            card.className = 'restaurant-card skeleton-card';
+            card.innerHTML = `
+                <div class="card-img" style="height: 160px;"></div>
+                <div class="card-body">
+                    <div class="skeleton-element" style="height: 20px; width: 70%;"></div>
+                    <div class="skeleton-element" style="height: 14px; width: 60%;"></div>
+                    <div class="skeleton-element" style="height: 14px; width: 50%;"></div>
+                    <div class="skeleton-element" style="height: 50px; margin-top: 14px;"></div>
+                </div>
+            `;
+            fragment.appendChild(card);
+        }
+        return fragment;
+    }
+
+    function renderNewCards(restaurants, startIndex) {
+        const grid = document.getElementById('restaurant-grid');
+        restaurants.forEach((r, index) => {
+            const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
+            const card = document.createElement('div');
+            card.className = 'restaurant-card';
+            const imageUrl = resolveImageUrl(r.imageUrl || r.image_url);
+
+            // Apply animation delay: (startIndex + index) * 50ms
+            card.style.animationDelay = ((startIndex + index) % 9) * 50 + 'ms';
+
+            card.innerHTML = `
+                <div class="card-img">
+                    ${imageUrl ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" class="loading" />` : ''}
+                    <div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>
+                    <span class="cuisine-badge">${escHtml(r.cuisine || 'Restaurant')}</span>
+                </div>
+                <div class="card-body">
+                    <h3>${escHtml(r.name || '')}</h3>
+                    <div class="card-meta">
+                        <span class="location-text">📍 ${escHtml(r.location || '—')}</span>
+                    </div>
+                    <div class="card-stars">${stars(r.stars || 0)}</div>
+                    ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+                    <div class="card-desc">${escHtml(r.description || 'A great dining experience awaits.')}</div>
+                    <div class="card-actions">
+                    <button class="btn-review review-btn"
+                            data-restaurant-id="${Number(r.id)}"
+                            data-restaurant-name="${escHtml(r.name || '')}">
+                        {{ 'Login to Review' if is_guest else '⭐ Leave Review' }}
+                    </button>
+                        <button class="btn-details detail-btn"
+                                data-restaurant-id="${Number(r.id)}">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+
+            if (imageUrl) {
+                const img = card.querySelector('.card-img img');
+                const placeholder = card.querySelector('.card-img-placeholder');
+                if (img) {
+                    img.addEventListener('load', () => {
+                        img.classList.remove('loading');
+                        placeholder.style.display = 'none';
+                    });
+                    img.addEventListener('error', () => {
+                        img.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                    });
+                }
+            }
+        });
+    }
+
+    function renderPaginatedCards(restaurants) {
+        const grid = document.getElementById('restaurant-grid');
+        grid.innerHTML = '';
+
+        if (!restaurants || !restaurants.length) {
+            grid.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    No restaurants found. Try a different search.
+                </div>`;
+            return;
+        }
+
+        restaurants.forEach((r, index) => {
+            const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
+            const card = document.createElement('div');
+            card.className = 'restaurant-card';
+            const imageUrl = resolveImageUrl(r.imageUrl || r.image_url);
+
+            card.style.animationDelay = index * 50 + 'ms';
+
+            card.innerHTML = `
+                <div class="card-img">
+                    ${imageUrl ? `<img src="${escHtml(imageUrl)}" alt="${escHtml(r.name || 'Restaurant image')}" loading="lazy" class="loading" />` : ''}
+                    <div class="card-img-placeholder">${cuisineEmoji(r.cuisine)}</div>
+                    <span class="cuisine-badge">${escHtml(r.cuisine || 'Restaurant')}</span>
+                </div>
+                <div class="card-body">
+                    <h3>${escHtml(r.name || '')}</h3>
+                    <div class="card-meta">
+                        <span class="location-text">📍 ${escHtml(r.location || '—')}</span>
+                    </div>
+                    <div class="card-stars">${stars(r.stars || 0)}</div>
+                    ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+                    <div class="card-desc">${escHtml(r.description || 'A great dining experience awaits.')}</div>
+                    <div class="card-actions">
+                    <button class="btn-review review-btn"
+                            data-restaurant-id="${Number(r.id)}"
+                            data-restaurant-name="${escHtml(r.name || '')}">
+                        {{ 'Login to Review' if is_guest else '⭐ Leave Review' }}
+                    </button>
+                        <button class="btn-details detail-btn"
+                                data-restaurant-id="${Number(r.id)}">
+                            View Details
+                        </button>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+
+            if (imageUrl) {
+                const img = card.querySelector('.card-img img');
+                const placeholder = card.querySelector('.card-img-placeholder');
+                if (img) {
+                    img.addEventListener('load', () => {
+                        img.classList.remove('loading');
+                        placeholder.style.display = 'none';
+                    });
+                    img.addEventListener('error', () => {
+                        img.style.display = 'none';
+                        placeholder.style.display = 'flex';
+                    });
+                }
+            }
+        });
+    }
+
+    function setupInfiniteScroll() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && !isLoadingMore && hasMoreRestaurants) {
+                    loadMoreRestaurants();
+                }
+            });
+        }, {
+            rootMargin: '200px',
+            threshold: 0
+        });
+
+        sentinelElement = document.getElementById('loading-sentinel');
+        if (sentinelElement) {
+            observer.observe(sentinelElement);
+        }
+    }
+
+    function loadMoreRestaurants() {
+        if (isLoadingMore || !hasMoreRestaurants) return;
+
+        isLoadingMore = true;
+
+        const grid = document.getElementById('restaurant-grid');
+        const skeletons = createSkeletons(3);
+        grid.appendChild(skeletons);
+
+        setTimeout(() => {
+            const nextBatchStart = displayedRestaurants.length;
+            const nextBatchEnd = Math.min(nextBatchStart + batchSize, filteredRestaurants.length);
+
+            if (nextBatchStart >= filteredRestaurants.length) {
+                hasMoreRestaurants = false;
+                grid.removeChild(skeletons);
+                showEndOfList();
+                isLoadingMore = false;
+                return;
+            }
+
+            const newCards = filteredRestaurants.slice(nextBatchStart, nextBatchEnd);
+            renderNewCards(newCards, nextBatchStart);
+
+            displayedRestaurants = filteredRestaurants.slice(0, nextBatchEnd);
+            updateStatusBar();
+
+            grid.removeChild(skeletons);
+            isLoadingMore = false;
+        }, 300);
+    }
+
+    function updateStatusBar() {
+        const totalCount = allRestaurants.length;
+        const shownCount = displayedRestaurants.length;
+        const statusText = `Showing ${shownCount} of ${totalCount}`;
+        document.getElementById('status-bar').textContent = statusText;
+    }
+
+    function showEndOfList() {
+        const endMsg = document.getElementById('end-of-list');
+        if (endMsg) {
+            endMsg.style.display = 'grid';
+        }
+    }
+
+    function hideEndOfList() {
+        const endMsg = document.getElementById('end-of-list');
+        if (endMsg) {
+            endMsg.style.display = 'none';
+        }
+    }
+
+    function initializePaginatedView() {
+        if (!filteredRestaurants.length) {
+            renderPaginatedCards([]);
+            setStatus('No restaurants available');
+            return;
+        }
+
+        currentBatchIndex = 0;
+        displayedRestaurants = [];
+        hasMoreRestaurants = filteredRestaurants.length > batchSize;
+        isLoadingMore = false;
+
+        const initialBatch = filteredRestaurants.slice(0, Math.min(batchSize, filteredRestaurants.length));
+        displayedRestaurants = initialBatch;
+        hideEndOfList();
+
+        renderPaginatedCards(initialBatch);
+        updateStatusBar();
+        setupInfiniteScroll();
+    }
+
     // ── Combined filtering logic ──
     function applyFilters() {
         if (!allRestaurants.length) {
-            renderCards([]);
+            renderPaginatedCards([]);
             setStatus('No restaurants available');
             return;
         }
@@ -1201,8 +1547,18 @@
             return true;
         });
 
-        renderCards(filtered);
-        setStatus(filtered.length + ' restaurant(s) found');
+        // Update filtered set and reinitialize pagination
+        filteredRestaurants = filtered;
+
+        // Fade transition when re-rendering
+        const grid = document.getElementById('restaurant-grid');
+        grid.style.opacity = '0.7';
+        grid.style.transition = 'opacity 0.15s ease';
+
+        setTimeout(() => {
+            initializePaginatedView();
+            grid.style.opacity = '1';
+        }, 150);
     }
 
     function stars(n) {
@@ -1276,12 +1632,15 @@
             return;
         }
 
-        restaurants.forEach(r => {
+        restaurants.forEach((r, index) => {
             const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
             const card = document.createElement('div');
             card.className = 'restaurant-card';
             const imageUrl = resolveImageUrl(r.imageUrl || r.image_url);
-            
+
+            // Apply staggered animation delay
+            card.style.animationDelay = index * 50 + 'ms';
+
             // Create card HTML structure
             card.innerHTML = `
                 <div class="card-img">
@@ -1311,7 +1670,7 @@
                 </div>
             `;
             grid.appendChild(card);
-            
+
             // Handle image load/error states
             if (imageUrl) {
                 const img = card.querySelector('.card-img img');
@@ -1336,13 +1695,18 @@
         try {
             const res = await fetch('/api/restaurants');
             const data = await res.json();
-            if (!data.ok) {
+
+            // Backend returns raw list, not wrapped response
+            allRestaurants = Array.isArray(data) ? data : (data.data || []);
+
+            if (!allRestaurants.length) {
                 setStatus('Could not load restaurants.');
                 return;
             }
-            allRestaurants = data.data || [];
+
+            filteredRestaurants = allRestaurants;
             renderFilterPanel();
-            applyFilters();
+            initializePaginatedView();
         } catch (e) {
             setStatus('Network error: ' + e);
         }
