@@ -51,6 +51,20 @@
             font-size: 14px;
             color: #555;
         }
+        .topbar .user-info .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid #cde7cf;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
         .topbar .user-info span {
             font-weight: 600;
             color: #333;
@@ -82,6 +96,44 @@
             background: #a04e2e;
             border-color: #a04e2e;
             color: #fff;
+        }
+        .admin-view-banner {
+            margin-top: var(--topbar-height);
+            background: #fff7ec;
+            border-bottom: 1px solid #eddcc8;
+        }
+        body.admin-user-view .hero {
+            padding-top: 56px;
+        }
+        .admin-view-banner-inner {
+            max-width: 1220px;
+            margin: 0 auto;
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: #7d5d46;
+            font-size: 13px;
+        }
+        .admin-view-banner-inner strong {
+            color: #b85c38;
+        }
+        .admin-view-exit {
+            padding: 6px 12px;
+            border: 1px solid #d9c6b6;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            color: #8a6146;
+            background: #fff;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+        .admin-view-exit:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+            background: #fcf5f1;
         }
 
         /* ── Hero / Search bar ── */
@@ -994,6 +1046,17 @@
             .search-bar { padding: 4px 4px 4px 14px; }
             .search-bar button { padding: 10px 20px; font-size: 13px; }
             .page { padding: 20px 14px 40px; }
+            .admin-view-banner {
+                margin-top: var(--mobile-topbar-height);
+            }
+            body.admin-user-view .hero {
+                padding-top: 28px;
+            }
+            .admin-view-banner-inner {
+                padding: 10px 14px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
             .cuisine-chip-row {
                 margin: 0 auto;
                 padding: 16px 14px 14px;
@@ -1033,7 +1096,7 @@
         }
     </style>
 </head>
-<body>
+<body{% if admin_view_as_user %} class="admin-user-view"{% endif %}>
 
 <!-- Top bar -->
 <div class="topbar">
@@ -1043,12 +1106,25 @@
         <a href="{{ url_for('user_login') }}" class="nav-btn nav-btn-primary">Sign In</a>
         <a href="{{ url_for('owner_view') }}" class="nav-btn">For Businesses</a>
         <a href="{{ url_for('admin_login') }}" class="nav-btn">Admin Login</a>
+        {% elif admin_view_as_user %}
+        <span class="mode-badge">User View Mode</span>
+        <span>Browsing as <span>{{ admin_username or username }}</span></span>
+        <a href="{{ url_for('admin_exit_user_view') }}" class="nav-btn">Back to Admin</a>
         {% else %}
         <span>Logged in as <span>{{ username }}</span></span>
         <a href="{{ url_for('user_logout') }}" class="nav-btn">Sign Out</a>
         {% endif %}
     </div>
 </div>
+
+{% if admin_view_as_user %}
+<div class="admin-view-banner">
+    <div class="admin-view-banner-inner">
+        <div><strong>View as User Mode:</strong> You can browse and submit reviews like a regular user.</div>
+        <a href="{{ url_for('admin_exit_user_view') }}" class="admin-view-exit">Return to Admin Dashboard</a>
+    </div>
+</div>
+{% endif %}
 
 <!-- Hero section with search -->
 <div class="hero">

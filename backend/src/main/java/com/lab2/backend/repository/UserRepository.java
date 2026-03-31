@@ -19,4 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /** Check whether a user with the given username already exists. */
     boolean existsByUsername(String username);
 
+    /** Find the first user account by role. */
+    Optional<User> findFirstByRole(User.Role role);
+
 }

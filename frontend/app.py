@@ -246,6 +246,35 @@ ADMIN_DASHBOARD_TEMPLATE = """
             color: var(--text);
             font-weight: 600;
         }
+        .mode-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2e7d32;
+            background: #e8f5e9;
+            border: 1px solid #cde7cf;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .btn-view-user {
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #f7f2ed;
+            color: var(--brand);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .btn-view-user:hover {
+            border-color: var(--brand);
+            background: var(--brand-light);
+        }
         .btn-logout {
             padding: 7px 16px;
             background: transparent;
@@ -657,6 +686,12 @@ ADMIN_DASHBOARD_TEMPLATE = """
         <div class="topbar-right">
             <div class="admin-avatar">{{ (admin_username or 'A')[0]|upper }}</div>
             <span class="user-label">Logged in as <strong>{{ admin_username }}</strong></span>
+            {% if admin_user_view_active %}
+            <span class="mode-pill">User View Active</span>
+            <a href="{{ url_for('admin_exit_user_view') }}" class="btn-view-user">Resume Admin View</a>
+            {% else %}
+            <a href="{{ url_for('admin_view_as_user') }}" class="btn-view-user">View as User</a>
+            {% endif %}
             <a href="{{ url_for('admin_logout') }}" class="btn-logout">Logout</a>
         </div>
     </div>
@@ -1453,6 +1488,8 @@ def index() -> str:
         restaurants=restaurants,
         backend_url=BACKEND_BASE_URL,
         is_guest=not bool(session.get("user_token")),
+        admin_view_as_user=bool(session.get("admin_view_as_user")),
+        admin_username=session.get("admin_username", ""),
     )
 
 @app.get("/login")
@@ -1544,6 +1581,10 @@ def yelp_reviews_url() -> str:
     return f"{BACKEND_BASE_URL.rstrip('/')}/api/yelp/reviews"
 
 
+def admin_user_view_reviews_url() -> str:
+    return f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/admin/user-view"
+
+
 @app.get("/api/reviews/restaurant/<int:restaurant_id>")
 def get_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]:
     headers: dict[str, str] = {}
@@ -1589,13 +1630,25 @@ def get_yelp_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any],
 def create_review() -> tuple[dict[str, Any], int]:
     payload = request.get_json(silent=True) or {}
     headers: dict[str, str] = {"Content-Type": "application/json"}
-    # Prefer the server-side session token so the client never needs to
-    # handle the raw token value.
-    token = session.get("user_token") or request.headers.get("Authorization")
+
+    in_admin_user_view_mode = bool(session.get("admin_view_as_user"))
+    target_url = reviews_url()
+
+    # In admin "view as user" mode, use a dedicated backend endpoint that
+    # verifies admin privileges and safely impersonates a regular user account.
+    if in_admin_user_view_mode:
+        token = session.get("admin_token")
+        target_url = admin_user_view_reviews_url()
+    else:
+        # Prefer the server-side session token so the client never needs to
+        # handle the raw token value.
+        token = session.get("user_token") or request.headers.get("Authorization")
+
     if token:
         headers["Authorization"] = token
+
     try:
-        response = requests.post(reviews_url(), json=payload, headers=headers, timeout=5)
+        response = requests.post(target_url, json=payload, headers=headers, timeout=5)
         body = response.json() if response.content else {}
         return {"ok": response.ok, "data": body}, response.status_code
     except requests.RequestException as exc:
@@ -1758,7 +1811,8 @@ def user_logout():
 @app.get("/user/dashboard")
 def user_dashboard():
     """User dashboard - restaurant list + review submission."""
-    if not session.get("user_token"):
+    in_admin_user_view_mode = bool(session.get("admin_view_as_user"))
+    if not session.get("user_token") and not in_admin_user_view_mode:
         return redirect(url_for("user_login"))
 
     restaurants: list[Any] = []
@@ -1772,10 +1826,16 @@ def user_dashboard():
 
     return render_template(
         "user_dashboard.html",
-        username=session.get("user_username", "User"),
+        username=(
+            session.get("user_username")
+            or (session.get("admin_username") if in_admin_user_view_mode else None)
+            or "User"
+        ),
         restaurants=restaurants,
         backend_url=BACKEND_BASE_URL,
         is_guest=False,
+        admin_view_as_user=in_admin_user_view_mode,
+        admin_username=session.get("admin_username", ""),
     )
 
 # ---------------------------------------------------------------------------
@@ -1945,7 +2005,66 @@ def admin_dashboard():
         restaurants=restaurants,
         menu_items=menu_items,
         reviews=reviews,
+        admin_user_view_active=bool(session.get("admin_view_as_user")),
     )
+
+
+@app.get("/admin/view-as-user")
+def admin_view_as_user():
+    """Temporarily switch an admin into user-view mode for review testing."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    if not session.get("admin_view_as_user"):
+        had_user_session = bool(session.get("user_token"))
+        session["admin_had_user_session"] = had_user_session
+        if had_user_session:
+            session["admin_prev_user_token"] = session.get("user_token", "")
+            session["admin_prev_user_username"] = session.get("user_username", "")
+            session["admin_prev_user_role"] = session.get("user_role", "USER")
+
+    session["admin_view_as_user"] = True
+
+    return redirect(url_for("user_dashboard"))
+
+
+@app.get("/admin/exit-user-view")
+def admin_exit_user_view():
+    """Exit admin user-view mode and return to the admin dashboard."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    was_user_view = bool(session.pop("admin_view_as_user", False))
+    had_user_session = bool(session.pop("admin_had_user_session", False))
+
+    if was_user_view and had_user_session:
+        previous_token = session.pop("admin_prev_user_token", "")
+        previous_username = session.pop("admin_prev_user_username", "")
+        previous_role = session.pop("admin_prev_user_role", "USER")
+
+        if previous_token:
+            session["user_token"] = previous_token
+        else:
+            session.pop("user_token", None)
+
+        if previous_username:
+            session["user_username"] = previous_username
+        else:
+            session.pop("user_username", None)
+
+        if previous_role:
+            session["user_role"] = previous_role
+        else:
+            session.pop("user_role", None)
+    else:
+        session.pop("admin_prev_user_token", None)
+        session.pop("admin_prev_user_username", None)
+        session.pop("admin_prev_user_role", None)
+        session.pop("user_token", None)
+        session.pop("user_username", None)
+        session.pop("user_role", None)
+
+    return redirect(url_for("admin_dashboard"))
 
 
 @app.post("/admin/restaurants")
@@ -2018,6 +2137,7 @@ def admin_add_restaurant():
         restaurants=restaurants,
         reviews=reviews,
         error=msg,
+        admin_user_view_active=bool(session.get("admin_view_as_user")),
     )
 
 
@@ -2143,6 +2263,11 @@ def admin_logout():
     session.pop("admin_token", None)
     session.pop("admin_username", None)
     session.pop("admin_role", None)
+    session.pop("admin_view_as_user", None)
+    session.pop("admin_had_user_session", None)
+    session.pop("admin_prev_user_token", None)
+    session.pop("admin_prev_user_username", None)
+    session.pop("admin_prev_user_role", None)
     return redirect(url_for("admin_login"))
 
 
