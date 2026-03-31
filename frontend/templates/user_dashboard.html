@@ -6,7 +6,10 @@
     <title>Dashboard — PlateRate</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; zoom: 0.9; }
+        @media (max-width: 768px) {
+            html { zoom: 1; }
+        }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #f7f4f1;
