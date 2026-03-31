@@ -158,8 +158,8 @@
         /* ── Filter Panel ── */
         .cuisine-chip-row {
             max-width: 1220px;
-            margin: -24px auto 0;
-            padding: 0 24px 16px;
+            margin: 0 auto;
+            padding: 24px 24px 16px;
             position: relative;
             z-index: 3;
         }
@@ -182,6 +182,19 @@
             flex: 1;
             min-width: 0;
         }
+        #cuisine-chip-list::-webkit-scrollbar {
+            height: 6px;
+        }
+        #cuisine-chip-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #cuisine-chip-list::-webkit-scrollbar-thumb {
+            background: #dfd5ca;
+            border-radius: 3px;
+        }
+        #cuisine-chip-list::-webkit-scrollbar-thumb:hover {
+            background: #b85c38;
+        }
         .cuisine-chip {
             border: 1px solid #dfd5ca;
             background: #ebe5db;
@@ -192,13 +205,14 @@
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
-            transition: all 0.25s ease-in-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .cuisine-chip:hover {
             border-color: #b85c38;
             color: #b85c38;
             background: #f3e5d8;
             transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .cuisine-chip.active {
             border-color: #b85c38;
@@ -219,14 +233,16 @@
             font-weight: 700;
             color: #7d6658;
             cursor: pointer;
-            transition: all 0.25s ease-in-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             flex-shrink: 0;
+            margin-left: auto;
         }
         .cuisine-show-more:hover {
             border-color: #b85c38;
             color: #b85c38;
             background: #f3e5d8;
             transform: scale(1.02);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .filter-toggle {
             display: none;
@@ -863,8 +879,8 @@
             .search-bar button { padding: 10px 20px; font-size: 13px; }
             .page { padding: 20px 14px 40px; }
             .cuisine-chip-row {
-                margin-top: -18px;
-                padding: 0 14px 14px;
+                margin: 0 auto;
+                padding: 16px 14px 14px;
             }
             .restaurant-grid { grid-template-columns: 1fr; }
             .detail-panel { width: 100vw; }
