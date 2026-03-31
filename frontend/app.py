@@ -170,140 +170,556 @@ ADMIN_DASHBOARD_TEMPLATE = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard - PlateRate</title>
     <style>
+        :root {
+            --brand: #b85c38;
+            --brand-dark: #a04e2e;
+            --brand-light: #faf6f3;
+            --border: #e0d8d0;
+            --text: #333;
+            --text-muted: #888;
+            --bg: #f2ede8;
+            --card-bg: #fff;
+            --shadow: 0 2px 16px rgba(0,0,0,0.07);
+            --radius: 12px;
+            --transition: 0.2s ease;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f5f0eb;
-            color: #333;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
+
+        /* ── Top bar ── */
         .topbar {
-            background: #fff;
-            border-bottom: 1px solid #e0d8d0;
-            padding: 14px 28px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 60px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.06);
         }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
         .topbar .brand {
             font-size: 20px;
             font-weight: 700;
-            color: #b85c38;
+            color: var(--brand);
+            letter-spacing: 0.3px;
         }
-        .topbar .user-info {
+        .topbar .brand-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+            padding-left: 12px;
+            border-left: 1px solid var(--border);
+            margin-left: 4px;
+        }
+        .topbar-right {
             display: flex;
             align-items: center;
-            gap: 16px;
-            font-size: 14px;
-            color: #555;
+            gap: 14px;
         }
-        .topbar .user-info span { font-weight: 600; color: #333; }
+        .admin-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .topbar .user-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .topbar .user-label strong {
+            color: var(--text);
+            font-weight: 600;
+        }
         .btn-logout {
-            padding: 6px 16px;
+            padding: 7px 16px;
             background: transparent;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             font-size: 13px;
             color: #666;
             cursor: pointer;
             text-decoration: none;
-            transition: border-color 0.2s, color 0.2s;
+            transition: border-color var(--transition), color var(--transition), background var(--transition);
+            white-space: nowrap;
         }
-        .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
+        .btn-logout:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+            background: var(--brand-light);
+        }
+
+        /* ── Dashboard wrapper ── */
         .dashboard {
-            max-width: 1100px;
-            margin: 28px auto;
-            padding: 0 20px;
+            max-width: 1200px;
+            margin: 32px auto;
+            padding: 0 24px 40px;
         }
-        .dashboard h2 {
+        .dashboard-title {
             font-size: 22px;
             font-weight: 700;
-            margin-bottom: 20px;
-            color: #333;
+            color: var(--text);
+            margin-bottom: 6px;
         }
-        .section {
-            background: #fff;
+        .dashboard-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        /* ── Stats row ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+            animation: fadeSlideIn 0.4s ease both;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform var(--transition), box-shadow var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .stat-icon {
+            font-size: 26px;
+            width: 48px;
+            height: 48px;
             border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        .section-header {
-            padding: 14px 22px;
-            background: #faf8f6;
-            border-bottom: 1px solid #ece5de;
-            font-size: 16px;
+        .stat-icon.users  { background: #e8f5e9; }
+        .stat-icon.rests  { background: #fff3e0; }
+        .stat-icon.menu   { background: #e3f2fd; }
+        .stat-icon.revs   { background: #fce4ec; }
+        .stat-count {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             font-weight: 600;
-            color: #b85c38;
         }
+
+        /* ── Section cards ── */
+        .section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 28px;
+            overflow: hidden;
+            animation: fadeSlideIn 0.4s ease both;
+        }
+        .section:nth-child(1) { animation-delay: 0.05s; }
+        .section:nth-child(2) { animation-delay: 0.10s; }
+        .section:nth-child(3) { animation-delay: 0.15s; }
+        .section:nth-child(4) { animation-delay: 0.20s; }
+
+        .section-header {
+            padding: 16px 24px;
+            background: var(--brand-light);
+            border-bottom: 1px solid #ece5de;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .section-header-left { display: flex; align-items: center; gap: 10px; }
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--brand);
+        }
+        .section-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .section-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn-secondary {
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--brand);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition);
+            white-space: nowrap;
+        }
+        .btn-secondary:hover { background: var(--brand-light); border-color: var(--brand); }
+        .btn-primary {
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: none;
+            background: var(--brand);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background var(--transition);
+            white-space: nowrap;
+        }
+        .btn-primary:hover { background: var(--brand-dark); }
+
+        /* ── Tables ── */
         table {
             width: 100%;
             border-collapse: collapse;
         }
         th {
             text-align: left;
-            padding: 10px 22px;
-            font-size: 12px;
+            padding: 11px 24px;
+            font-size: 11px;
             text-transform: uppercase;
-            color: #999;
-            font-weight: 600;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            font-weight: 700;
             border-bottom: 1px solid #ece5de;
+            background: #fdfdfc;
         }
         td {
-            padding: 12px 22px;
+            padding: 13px 24px;
             font-size: 14px;
-            border-bottom: 1px solid #f2eeea;
+            border-bottom: 1px solid #f5f0eb;
             color: #444;
+            vertical-align: middle;
         }
-        tr:last-child td { border-bottom: none; }
+        tbody tr:nth-child(even) td { background: #fdf9f6; }
+        tbody tr:hover td { background: #faf4f0; }
+        tbody tr:last-child td { border-bottom: none; }
         .empty-row td {
             text-align: center;
-            color: #aaa;
-            padding: 24px;
+            color: #bbb;
+            padding: 36px;
             font-style: italic;
+            font-size: 14px;
         }
+
+        /* hidden rows for "show more" */
+        tr.extra-row { display: none; }
+        tr.extra-row.visible { display: table-row; }
+
+        /* ── Show More footer ── */
+        .section-footer {
+            padding: 12px 24px;
+            border-top: 1px solid #f0ebe5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .row-count-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .btn-show-more {
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--brand);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition);
+        }
+        .btn-show-more:hover { background: var(--brand-light); border-color: var(--brand); }
+
+        /* ── Badges ── */
         .badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 10px;
             border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
         }
         .badge-admin { background: #fce4ec; color: #c62828; }
         .badge-user  { background: #e8f5e9; color: #2e7d32; }
         .badge-owner { background: #fff3e0; color: #e65100; }
-        .stars { color: #f5a623; letter-spacing: 1px; }
+
+        /* ── Stars ── */
+        .stars { color: #f5a623; letter-spacing: 2px; }
+
+        /* ── Icon action buttons ── */
+        .action-btns { display: flex; gap: 6px; align-items: center; }
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: #555;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+            position: relative;
+        }
+        .icon-btn:hover { background: var(--brand-light); border-color: var(--brand); color: var(--brand); }
+        .icon-btn.danger:hover { background: #fdecea; border-color: #e57373; color: #c62828; }
+
+        /* ── Tooltip ── */
+        .icon-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 5px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* ── Modal ── */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 200;
+            animation: modalFadeIn 0.2s ease;
+        }
+        .modal-backdrop.open { display: flex; }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .modal-box {
+            width: 100%;
+            max-width: 560px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+            padding: 28px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlideIn 0.25s ease;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to   { transform: translateY(0);     opacity: 1; }
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand);
+            margin-bottom: 4px;
+        }
+        .modal-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .modal-section-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            margin-top: 20px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .form-full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #d0c9c2;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: #faf8f6;
+            transition: border-color var(--transition), background var(--transition);
+            outline: none;
+        }
+        .form-input:focus, .form-textarea:focus {
+            border-color: var(--brand);
+            background: #fff;
+        }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .modal-image-box {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            background: var(--brand-light);
+        }
+        .modal-image-box .img-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+        .drop-zone {
+            border: 2px dashed #d5cfc9;
+            border-radius: 8px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color var(--transition), background var(--transition);
+            position: relative;
+        }
+        .drop-zone:hover { border-color: var(--brand); background: #fff8f5; }
+        .drop-zone .dz-icon { font-size: 26px; margin-bottom: 6px; }
+        .drop-zone .dz-title { font-size: 13px; color: #555; }
+        .drop-zone .dz-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+        .modal-actions {
+            margin-top: 22px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .form-grid  { grid-template-columns: 1fr; }
+            .form-full  { grid-column: 1; }
+        }
+        @media (max-width: 600px) {
+            .topbar { padding: 0 16px; }
+            .dashboard { padding: 0 12px 40px; }
+            .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .topbar .brand-sub { display: none; }
+        }
     </style>
 </head>
 <body>
+    <!-- Top bar -->
     <div class="topbar">
-        <div class="brand">PlateRate - Admin Dashboard</div>
-        <div class="user-info">
-            Logged in as <span>{{ admin_username }}</span>
+        <div class="topbar-left">
+            <div class="brand">PlateRate</div>
+            <span class="brand-sub">Admin Dashboard</span>
+        </div>
+        <div class="topbar-right">
+            <div class="admin-avatar">{{ (admin_username or 'A')[0]|upper }}</div>
+            <span class="user-label">Logged in as <strong>{{ admin_username }}</strong></span>
             <a href="{{ url_for('admin_logout') }}" class="btn-logout">Logout</a>
         </div>
     </div>
 
     <div class="dashboard">
-        <h2>Database Management</h2>
+        <div class="dashboard-title">Database Management</div>
+        <div class="dashboard-subtitle">Manage all platform data from one place.</div>
+
+        <!-- Summary Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon users">👥</div>
+                <div>
+                    <div class="stat-count">{{ users|length }}</div>
+                    <div class="stat-label">Users</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon rests">🍽️</div>
+                <div>
+                    <div class="stat-count">{{ restaurants|length }}</div>
+                    <div class="stat-label">Restaurants</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon menu">📋</div>
+                <div>
+                    <div class="stat-count">{{ menu_items|length }}</div>
+                    <div class="stat-label">Menu Items</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon revs">⭐</div>
+                <div>
+                    <div class="stat-count">{{ reviews|length }}</div>
+                    <div class="stat-label">Reviews</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Users Table -->
-        <div class="section">
-            <div class="section-header">Users</div>
+        <div class="section" id="section-users">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <div>
+                        <div class="section-title">👥 Users</div>
+                        <div class="section-desc">All registered platform accounts</div>
+                    </div>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr><th>ID</th><th>Username</th><th>Role</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="users-tbody">
                 {% if users %}
                     {% for u in users %}
-                    <tr>
+                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="users">
                         <td>{{ u.id }}</td>
                         <td>{{ u.username }}</td>
                         <td>
                             {% set role_class = {'ADMIN': 'badge-admin', 'OWNER': 'badge-owner'}.get(u.role, 'badge-user') %}
-                            <span class="badge {{ role_class }}">
-                                {{ u.role }}
-                            </span>
+                            <span class="badge {{ role_class }}">{{ u.role }}</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -312,40 +728,56 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 {% endif %}
                 </tbody>
             </table>
+            {% if users|length > 5 %}
+            <div class="section-footer">
+                <span class="row-count-label">Showing 5 of {{ users|length }}</span>
+                <button class="btn-show-more" data-section="users" data-total="{{ users|length }}">Show all {{ users|length }} →</button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Restaurants Table -->
-        <div class="section">
-            <div class="section-header">Restaurants
-                <span style="float:right;display:flex;gap:8px;">
-                    <button id="open-yelp-modal" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">🔍 Import from Yelp</button>
-                    <button id="open-add-modal" style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#b85c38;cursor:pointer;">+ Add restaurant</button>
-                </span>
+        <div class="section" id="section-restaurants">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <div>
+                        <div class="section-title">🍽️ Restaurants</div>
+                        <div class="section-desc">Manage all listed restaurants</div>
+                    </div>
+                </div>
+                <div class="section-actions">
+                    <button id="open-yelp-modal" class="btn-secondary">🔍 Import from Yelp</button>
+                    <button id="open-add-modal" class="btn-primary">+ Add Restaurant</button>
+                </div>
             </div>
             <table>
                 <thead>
                     <tr><th>ID</th><th>Name</th><th>Cuisine</th><th>Location</th><th>Dietary Tags</th><th>Actions</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="restaurants-tbody">
                 {% if restaurants %}
                     {% for r in restaurants %}
-                    <tr>
+                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="restaurants">
                         <td>{{ r.id }}</td>
                         <td>{{ r.name }}</td>
                         <td>{{ r.cuisine }}</td>
                         <td>{{ r.location }}</td>
                         <td>{{ r.dietaryTags or r.dietary_tags or '-' }}</td>
                         <td>
-                            <button class="admin-edit"
-                                data-id="{{ r.id }}"
-                                data-name="{{ r.name|e }}"
-                                data-cuisine="{{ r.cuisine|e }}"
-                                data-location="{{ r.location|e }}"
-                                data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
-                                data-description="{{ (r.description or '')|e }}"
-                                data-image="{{ (r.imageUrl or r.image_url)|default('')|e }}"
-                                style="padding:6px 10px;border-radius:6px;border:1px solid #d6c2b7;background:#fff;color:#4a4a4a;cursor:pointer;margin-right:6px;">Edit</button>
-                            <button class="admin-delete" data-id="{{ r.id }}" style="padding:6px 10px;border-radius:6px;border:1px solid #e2bdb0;background:#fff;color:#b85c38;cursor:pointer;">Delete</button>
+                            <div class="action-btns">
+                                <button class="icon-btn admin-edit" title="Edit" aria-label="Edit restaurant"
+                                    data-id="{{ r.id }}"
+                                    data-name="{{ r.name|e }}"
+                                    data-cuisine="{{ r.cuisine|e }}"
+                                    data-location="{{ r.location|e }}"
+                                    data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
+                                    data-description="{{ (r.description or '')|e }}"
+                                    data-image="{{ (r.imageUrl or r.image_url)|default('')|e }}">✏️</button>
+                                <button class="icon-btn admin-upload-img" title="Upload Image" aria-label="Upload image"
+                                    data-id="{{ r.id }}"
+                                    data-name="{{ r.name|e }}">📷</button>
+                                <button class="icon-btn danger admin-delete" title="Delete" aria-label="Delete restaurant" data-id="{{ r.id }}">🗑️</button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -354,19 +786,32 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 {% endif %}
                 </tbody>
             </table>
+            {% if restaurants|length > 5 %}
+            <div class="section-footer">
+                <span class="row-count-label">Showing 5 of {{ restaurants|length }}</span>
+                <button class="btn-show-more" data-section="restaurants" data-total="{{ restaurants|length }}">Show all {{ restaurants|length }} →</button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Menu Items Table -->
-        <div class="section">
-            <div class="section-header">Menu Items</div>
+        <div class="section" id="section-menu">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <div>
+                        <div class="section-title">📋 Menu Items</div>
+                        <div class="section-desc">All menu items across restaurants</div>
+                    </div>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr><th>Restaurant</th><th>Name</th><th>Price</th><th>Description</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="menu-tbody">
                 {% if menu_items %}
                     {% for m in menu_items %}
-                    <tr>
+                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="menu">
                         <td>{{ m.restaurant_name }}</td>
                         <td>{{ m.name }}</td>
                         <td>{{ m.price }}</td>
@@ -378,25 +823,38 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 {% endif %}
                 </tbody>
             </table>
+            {% if menu_items|length > 5 %}
+            <div class="section-footer">
+                <span class="row-count-label">Showing 5 of {{ menu_items|length }}</span>
+                <button class="btn-show-more" data-section="menu" data-total="{{ menu_items|length }}">Show all {{ menu_items|length }} →</button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Reviews Table -->
-        <div class="section">
-            <div class="section-header">Reviews</div>
+        <div class="section" id="section-reviews">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <div>
+                        <div class="section-title">⭐ Reviews</div>
+                        <div class="section-desc">User reviews and ratings</div>
+                    </div>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr><th>ID</th><th>User</th><th>Restaurant</th><th>Rating</th><th>Comment</th></tr>
                 </thead>
-                <tbody>
+                <tbody id="reviews-tbody">
                 {% if reviews %}
                     {% for rv in reviews %}
-                    <tr>
+                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="reviews">
                         <td>{{ rv.id }}</td>
                         <td>{{ rv.username or rv.userId or rv.user_id or '-' }}</td>
                         <td>{{ rv.restaurantId or rv.restaurant_id or '-' }}</td>
                         {% set rating_value = (rv.rating or 0)|float %}
                         {% set star_count = rating_value|round(0, 'common')|int %}
-                        <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} ({{ '%.1f'|format(rating_value) }})</td>
+                        <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} <span style="color:#666;font-size:12px;">({{ '%.1f'|format(rating_value) }})</span></td>
                         <td>{{ rv.comment or '-' }}</td>
                     </tr>
                     {% endfor %}
@@ -405,146 +863,175 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 {% endif %}
                 </tbody>
             </table>
+            {% if reviews|length > 5 %}
+            <div class="section-footer">
+                <span class="row-count-label">Showing 5 of {{ reviews|length }}</span>
+                <button class="btn-show-more" data-section="reviews" data-total="{{ reviews|length }}">Show all {{ reviews|length }} →</button>
+            </div>
+            {% endif %}
         </div>
     </div>
-    
+
     {% if error %}
-    <div style="max-width:1100px;margin:12px auto 0;padding:0 20px;color:#b71c1c">{{ error }}</div>
+    <div style="max-width:1200px;margin:-12px auto 20px;padding:0 24px;">
+        <div style="background:#fdecea;color:#b71c1c;padding:12px 16px;border-radius:8px;font-size:13px;">{{ error }}</div>
+    </div>
     {% endif %}
 
     <!-- Yelp Import modal -->
-    <div id="yelp-import-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;z-index:200;">
-        <div style="width:100%;max-width:420px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;">
-            <h3 style="margin:0 0 6px 0;color:#b85c38;">Import from Yelp</h3>
-            <p style="margin:0 0 16px;color:#666;font-size:13px;">Fetch restaurants from Yelp Fusion API and add them to the database. Duplicates are automatically skipped.</p>
-            <div style="display:grid;gap:12px;margin-bottom:16px;">
-                <div>
-                    <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">Location</label>
-                    <input id="yelp_location" value="Toronto" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;" />
+    <div id="yelp-import-backdrop" class="modal-backdrop" style="z-index:200;">
+        <div class="modal-box">
+            <div class="modal-title">🔍 Import from Yelp</div>
+            <div class="modal-subtitle">Fetch restaurants from Yelp Fusion API and add them to the database. Duplicates are automatically skipped.</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input id="yelp_location" class="form-input" value="Toronto" />
                 </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;display:block;margin-bottom:4px;">Max results (1-50)</label>
-                    <input id="yelp_limit" type="number" value="20" min="1" max="50" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:14px;" />
-                </div>
-            </div>
-            <div id="yelp_msg" style="font-size:13px;min-height:18px;margin-bottom:12px;"></div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button id="yelp_import_btn" style="padding:8px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Import</button>
-                <button id="yelp_cancel_btn" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Restaurant modal (admin dashboard) -->
-    <div class="modal-backdrop" id="admin-add-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
-        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:20px;border-radius:8px;">
-            <h3 style="margin:0 0 8px 0;color:#b85c38;">Add Restaurant</h3>
-            <p style="margin:0 0 12px;color:#666">Enter the restaurant details below.</p>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Name</label>
-                    <input id="admin_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
-                </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Cuisine</label>
-                    <input id="admin_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
-                </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Dietary Tags</label>
-                    <input id="admin_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
-                </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Location</label>
-                    <input id="admin_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc" />
-                </div>
-                <div style="grid-column:1/ -1;">
-                    <label style="font-weight:600;font-size:13px;">Description</label>
-                    <textarea id="admin_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;min-height:80px"></textarea>
+                <div class="form-group">
+                    <label class="form-label">Max results (1–50)</label>
+                    <input id="yelp_limit" class="form-input" type="number" value="20" min="1" max="50" />
                 </div>
             </div>
-
-            <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-                <button id="admin_add_save" style="padding:8px 12px;background:#b85c38;color:#fff;border:none;border-radius:6px;">Save</button>
-                <button id="admin_add_cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;">Cancel</button>
+            <div id="yelp_msg" style="font-size:13px;min-height:18px;margin-top:14px;"></div>
+            <div class="modal-actions">
+                <button id="yelp_import_btn" class="btn-primary">Import</button>
+                <button id="yelp_cancel_btn" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit Restaurant modal (admin dashboard) -->
-    <div class="modal-backdrop" id="admin-edit-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;">
-        <div style="width:100%;max-width:600px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;max-height:90vh;overflow-y:auto;">
-            <h3 style="margin:0 0 8px 0;color:#b85c38;">Edit Restaurant</h3>
-            <p style="margin:0 0 16px;color:#666;font-size:13px;">Update restaurant details and image below.</p>
+    <!-- Add Restaurant modal -->
+    <div class="modal-backdrop" id="admin-add-backdrop">
+        <div class="modal-box">
+            <div class="modal-title">+ Add Restaurant</div>
+            <div class="modal-subtitle">Enter the restaurant details below.</div>
+            <div class="modal-section-label">Basic Info</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input id="admin_name" class="form-input" placeholder="Restaurant name" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cuisine</label>
+                    <input id="admin_cuisine" class="form-input" placeholder="e.g. Italian" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input id="admin_location" class="form-input" placeholder="City, Province" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dietary Tags</label>
+                    <input id="admin_dietary" class="form-input" placeholder="comma-separated" />
+                </div>
+                <div class="form-group form-full">
+                    <label class="form-label">Description</label>
+                    <textarea id="admin_description" class="form-textarea"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="admin_add_save" class="btn-primary">Save Restaurant</button>
+                <button id="admin_add_cancel" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-            <!-- Image Section -->
-            <div style="margin-bottom:20px;border:1px solid #e0d8d0;border-radius:8px;padding:16px;background:#faf8f6;">
-                <p style="margin:0 0 12px 0;font-weight:600;font-size:13px;color:#333;">Restaurant Image</p>
-                <img id="admin_edit_image_preview" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:6px;margin-bottom:12px;" src="#" alt="Current image" />
-                <div id="admin_edit_no_image" style="display:none;width:100%;height:120px;background:#fff;border:1px dashed #d5cfc9;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px;margin-bottom:12px;">No image uploaded</div>
-                <div id="admin_edit_drop_zone" style="border:2px dashed #d5cfc9;border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;">
+    <!-- Edit Restaurant modal -->
+    <div class="modal-backdrop" id="admin-edit-backdrop">
+        <div class="modal-box">
+            <div class="modal-title">✏️ Edit Restaurant</div>
+            <div class="modal-subtitle">Update restaurant details and image below.</div>
+
+            <div class="modal-section-label">Restaurant Image</div>
+            <div class="modal-image-box">
+                <img id="admin_edit_image_preview" style="display:none;width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:12px;" src="#" alt="Current image" />
+                <div id="admin_edit_no_image" style="display:none;width:100%;height:100px;background:#fff;border:1px dashed #d5cfc9;border-radius:8px;align-items:center;justify-content:center;color:#bbb;font-size:13px;margin-bottom:12px;">No image uploaded</div>
+                <div id="admin_edit_drop_zone" class="drop-zone">
                     <input type="file" id="admin_edit_image_file" accept="image/jpeg,image/png,image/gif,image/webp" style="position:absolute;opacity:0;width:0;height:0;" />
-                    <div style="font-size:28px;margin-bottom:6px;">📷</div>
-                    <div style="font-size:13px;color:#555;"><strong>Click or drag image</strong> to upload</div>
-                    <div style="font-size:11px;color:#999;margin-top:4px;">JPG, PNG, GIF or WebP · Max 5 MB</div>
+                    <div class="dz-icon">📷</div>
+                    <div class="dz-title"><strong>Click or drag image</strong> to upload</div>
+                    <div class="dz-hint">JPG, PNG, GIF or WebP · Max 5 MB</div>
                 </div>
                 <div id="admin_edit_image_msg" style="font-size:12px;margin-top:8px;min-height:16px;"></div>
             </div>
 
-            <!-- Details Section -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Name</label>
-                    <input id="admin_edit_name" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
+            <div class="modal-section-label">Details</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input id="admin_edit_name" class="form-input" />
                 </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Cuisine</label>
-                    <input id="admin_edit_cuisine" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
+                <div class="form-group">
+                    <label class="form-label">Cuisine</label>
+                    <input id="admin_edit_cuisine" class="form-input" />
                 </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Dietary Tags</label>
-                    <input id="admin_edit_dietary" placeholder="comma-separated" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input id="admin_edit_location" class="form-input" />
                 </div>
-                <div>
-                    <label style="font-weight:600;font-size:13px;">Location</label>
-                    <input id="admin_edit_location" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;" />
+                <div class="form-group">
+                    <label class="form-label">Dietary Tags</label>
+                    <input id="admin_edit_dietary" class="form-input" placeholder="comma-separated" />
                 </div>
-                <div style="grid-column:1/ -1;">
-                    <label style="font-weight:600;font-size:13px;">Description</label>
-                    <textarea id="admin_edit_description" style="width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px;font-size:13px;min-height:80px;font-family:inherit;"></textarea>
+                <div class="form-group form-full">
+                    <label class="form-label">Description</label>
+                    <textarea id="admin_edit_description" class="form-textarea"></textarea>
                 </div>
             </div>
-
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button id="admin_edit_save" style="padding:9px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;">Save Changes</button>
-                <button id="admin_edit_cancel" style="padding:9px 16px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;font-size:13px;color:#555;">Cancel</button>
+            <div class="modal-actions">
+                <button id="admin_edit_save" class="btn-primary">Save Changes</button>
+                <button id="admin_edit_cancel" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- Upload Image modal (admin dashboard) -->
-    <div class="modal-backdrop" id="admin-upload-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);align-items:center;justify-content:center;padding:20px;z-index:200;">
-        <div style="width:100%;max-width:480px;background:#fff;border:1px solid #e6ddd6;padding:24px;border-radius:8px;">
-            <h3 style="margin:0 0 6px 0;color:#b85c38;">Upload Restaurant Image</h3>
-            <p id="admin-upload-subtitle" style="margin:0 0 16px;color:#666;font-size:13px;"></p>
+    <!-- Upload Image modal -->
+    <div class="modal-backdrop" id="admin-upload-backdrop" style="z-index:200;">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-title">📷 Upload Restaurant Image</div>
+            <p id="admin-upload-subtitle" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></p>
             <form id="admin-upload-form" enctype="multipart/form-data">
                 <img id="admin-upload-preview" style="display:none;width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-bottom:12px;" src="#" alt="Preview" />
-                <div id="admin-upload-drop-zone" style="border:2px dashed #d5cfc9;border-radius:8px;padding:28px 16px;text-align:center;cursor:pointer;position:relative;transition:border-color 0.2s,background 0.2s;">
+                <div id="admin-upload-drop-zone" class="drop-zone" style="padding:32px 16px;position:relative;">
                     <input type="file" id="admin-upload-file" name="file" accept="image/jpeg,image/png,image/gif,image/webp" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;" />
-                    <div style="font-size:32px;margin-bottom:8px;">📷</div>
-                    <div style="font-size:14px;"><strong>Click or drag &amp; drop</strong> an image</div>
-                    <div style="font-size:12px;color:#888;margin-top:4px;">JPG, PNG, GIF or WebP · Max 5 MB</div>
+                    <div class="dz-icon" style="font-size:32px;">📷</div>
+                    <div class="dz-title"><strong>Click or drag &amp; drop</strong> an image</div>
+                    <div class="dz-hint">JPG, PNG, GIF or WebP · Max 5 MB</div>
                 </div>
                 <div id="admin-upload-msg" style="font-size:13px;min-height:18px;margin-top:10px;"></div>
-                <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
-                    <button type="button" id="admin-upload-save" disabled style="padding:8px 16px;background:#b85c38;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Upload</button>
-                    <button type="button" id="admin-upload-cancel" style="padding:8px 12px;background:#fff;border:1px solid #ccc;border-radius:6px;cursor:pointer;">Cancel</button>
+                <div class="modal-actions">
+                    <button type="button" id="admin-upload-save" disabled class="btn-primary">Upload</button>
+                    <button type="button" id="admin-upload-cancel" class="btn-secondary">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
+        // ── Show More / Show Less ──
+        document.querySelectorAll('.btn-show-more').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const section = btn.getAttribute('data-section');
+                const total = parseInt(btn.getAttribute('data-total'), 10);
+                const extraRows = document.querySelectorAll('tr.extra-row[data-section="' + section + '"]');
+                const expanded = btn.getAttribute('data-expanded') === 'true';
+                const footer = btn.closest('.section-footer');
+                const label = footer ? footer.querySelector('.row-count-label') : null;
+
+                if (expanded) {
+                    extraRows.forEach(r => r.classList.remove('visible'));
+                    btn.textContent = 'Show all ' + total + ' \u2192';
+                    btn.setAttribute('data-expanded', 'false');
+                    if (label) label.textContent = 'Showing 5 of ' + total;
+                } else {
+                    extraRows.forEach(r => r.classList.add('visible'));
+                    btn.textContent = 'Show less \u2191';
+                    btn.setAttribute('data-expanded', 'true');
+                    if (label) label.textContent = 'Showing all ' + total;
+                }
+            });
+        });
+
         // ── Yelp Import modal ──
         const yelpBackdrop = document.getElementById('yelp-import-backdrop');
         document.getElementById('open-yelp-modal').addEventListener('click', () => {
