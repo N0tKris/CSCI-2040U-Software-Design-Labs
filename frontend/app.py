@@ -730,6 +730,13 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     <div class="stat-label">Reviews</div>
                 </div>
             </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background:#fff3e0;color:#e65100;">⏳</div>
+                <div>
+                    <div class="stat-count">{{ pending_reviews|length }}</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
         </div>
 
         <!-- Users Table -->
@@ -862,6 +869,51 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ menu_items|length }}</span>
                 <button class="btn-show-more" data-section="menu" data-total="{{ menu_items|length }}">Show all {{ menu_items|length }} →</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pending Reviews Moderation Table -->
+        <div class="section" id="section-pending-reviews">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <div>
+                        <div class="section-title">⏳ Pending Reviews</div>
+                        <div class="section-desc">Approve or reject user-submitted reviews before they go live</div>
+                    </div>
+                </div>
+            </div>
+            <div id="pending-reviews-feedback" style="display:none;margin-bottom:8px;padding:10px 14px;border-radius:6px;font-size:13px;"></div>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>User</th><th>Restaurant</th><th>Rating</th><th>Comment</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="pending-reviews-tbody">
+                {% if pending_reviews %}
+                    {% for rv in pending_reviews %}
+                    <tr id="pending-row-{{ rv.id }}" class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="pending-reviews">
+                        <td>{{ rv.id }}</td>
+                        <td>{{ rv.username or rv.userId or '-' }}</td>
+                        <td>{{ rv.restaurantName or rv.restaurantId or '-' }}</td>
+                        {% set rating_value = (rv.rating or 0)|float %}
+                        {% set star_count = rating_value|round(0, 'common')|int %}
+                        <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} <span style="color:#666;font-size:12px;">({{ '%.1f'|format(rating_value) }})</span></td>
+                        <td>{{ rv.comment or '-' }}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="admin-action-btn approve-btn" data-id="{{ rv.id }}" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;">✅ Approve</button>
+                            <button class="admin-action-btn reject-btn" data-id="{{ rv.id }}" style="background:#fdecea;color:#b71c1c;border:1px solid #ef9a9a;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">❌ Reject</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="empty-row" id="pending-reviews-empty"><td colspan="6">No pending reviews</td></tr>
+                {% endif %}
+                </tbody>
+            </table>
+            {% if pending_reviews|length > 5 %}
+            <div class="section-footer">
+                <span class="row-count-label">Showing 5 of {{ pending_reviews|length }}</span>
+                <button class="btn-show-more" data-section="pending-reviews" data-total="{{ pending_reviews|length }}">Show all {{ pending_reviews|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -1063,6 +1115,74 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     btn.textContent = 'Show less \u2191';
                     btn.setAttribute('data-expanded', 'true');
                     if (label) label.textContent = 'Showing all ' + total;
+                }
+            });
+        });
+
+        // ── Pending Reviews: Approve / Reject ──
+        function showModerationFeedback(message, isSuccess) {
+            const fb = document.getElementById('pending-reviews-feedback');
+            if (!fb) return;
+            fb.textContent = message;
+            fb.style.background = isSuccess ? '#e8f5e9' : '#fdecea';
+            fb.style.color = isSuccess ? '#1b5e20' : '#b71c1c';
+            fb.style.display = 'block';
+            setTimeout(() => { fb.style.display = 'none'; }, 4000);
+        }
+
+        function removeReviewRowAndCheckEmpty(id) {
+            const row = document.getElementById('pending-row-' + id);
+            if (row) row.remove();
+            const tbody = document.getElementById('pending-reviews-tbody');
+            if (tbody && tbody.querySelectorAll('tr:not(.empty-row)').length === 0) {
+                if (!document.getElementById('pending-reviews-empty')) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'empty-row';
+                    tr.id = 'pending-reviews-empty';
+                    tr.innerHTML = '<td colspan="6">No pending reviews</td>';
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                btn.disabled = true;
+                try {
+                    const resp = await fetch('/admin/reviews/' + id + '/approve', { method: 'PUT' });
+                    if (resp.ok) {
+                        removeReviewRowAndCheckEmpty(id);
+                        showModerationFeedback('Review #' + id + ' approved and published.', true);
+                    } else {
+                        const body = await resp.json().catch(() => ({}));
+                        showModerationFeedback('Error: ' + (body.error || 'Could not approve review.'), false);
+                        btn.disabled = false;
+                    }
+                } catch (e) {
+                    showModerationFeedback('Network error approving review.', false);
+                    btn.disabled = false;
+                }
+            });
+        });
+
+        document.querySelectorAll('.reject-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.getAttribute('data-id');
+                btn.disabled = true;
+                try {
+                    const resp = await fetch('/admin/reviews/' + id + '/reject', { method: 'PUT' });
+                    if (resp.ok) {
+                        removeReviewRowAndCheckEmpty(id);
+                        showModerationFeedback('Review #' + id + ' rejected.', true);
+                    } else {
+                        const body = await resp.json().catch(() => ({}));
+                        showModerationFeedback('Error: ' + (body.error || 'Could not reject review.'), false);
+                        btn.disabled = false;
+                    }
+                } catch (e) {
+                    showModerationFeedback('Network error rejecting review.', false);
+                    btn.disabled = false;
                 }
             });
         });
@@ -1585,6 +1705,50 @@ def admin_user_view_reviews_url() -> str:
     return f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/admin/user-view"
 
 
+def admin_reviews_url() -> str:
+    return f"{BACKEND_BASE_URL.rstrip('/')}/api/admin/reviews"
+
+
+@app.put("/admin/reviews/<int:review_id>/approve")
+def admin_approve_review(review_id: int):
+    """Approve a pending review (admin only)."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+    token = session["admin_token"]
+    headers = {"Authorization": token}
+    try:
+        resp = requests.put(
+            f"{admin_reviews_url()}/{review_id}/approve", headers=headers, timeout=5
+        )
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+        return jsonify(body), resp.status_code
+    except requests.RequestException:
+        return jsonify({"error": "Could not reach backend to approve review."}), 502
+
+
+@app.put("/admin/reviews/<int:review_id>/reject")
+def admin_reject_review(review_id: int):
+    """Reject a pending review (admin only)."""
+    if not session.get("admin_token"):
+        return {"error": "Not authenticated"}, 401
+    token = session["admin_token"]
+    headers = {"Authorization": token}
+    try:
+        resp = requests.put(
+            f"{admin_reviews_url()}/{review_id}/reject", headers=headers, timeout=5
+        )
+        try:
+            body = resp.json() if resp.content else {}
+        except ValueError:
+            body = {"message": resp.text}
+        return jsonify(body), resp.status_code
+    except requests.RequestException:
+        return jsonify({"error": "Could not reach backend to reject review."}), 502
+
+
 @app.get("/api/reviews/restaurant/<int:restaurant_id>")
 def get_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any], int]:
     headers: dict[str, str] = {}
@@ -1923,6 +2087,7 @@ def admin_dashboard():
     users = []
     restaurants = []
     reviews = []
+    pending_reviews = []
     menu_items = []
 
     try:
@@ -1950,6 +2115,16 @@ def admin_dashboard():
         if resp.ok:
             data = resp.json()
             reviews = data if isinstance(data, list) else data.get("data", [])
+    except (requests.RequestException, ValueError):
+        pass
+
+    try:
+        resp = requests.get(
+            f"{admin_reviews_url()}/pending", headers=headers, timeout=5
+        )
+        if resp.ok:
+            data = resp.json()
+            pending_reviews = data if isinstance(data, list) else data.get("data", [])
     except (requests.RequestException, ValueError):
         pass
 
@@ -2005,6 +2180,7 @@ def admin_dashboard():
         restaurants=restaurants,
         menu_items=menu_items,
         reviews=reviews,
+        pending_reviews=pending_reviews,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
     )
 
@@ -2136,6 +2312,7 @@ def admin_add_restaurant():
         users=users,
         restaurants=restaurants,
         reviews=reviews,
+        pending_reviews=[],
         error=msg,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
     )

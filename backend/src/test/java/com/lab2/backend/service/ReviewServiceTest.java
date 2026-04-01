@@ -119,8 +119,9 @@ class ReviewServiceTest {
         // Arrange
         Long restaurantId = 1L;
         List<Review> reviews = new ArrayList<>();
+        testReview.setStatus("PUBLISHED");
         reviews.add(testReview);
-        when(reviewRepository.findByRestaurantId(restaurantId)).thenReturn(reviews);
+        when(reviewRepository.findByRestaurantIdAndStatus(restaurantId, "PUBLISHED")).thenReturn(reviews);
 
         // Act
         List<Review> result = reviewService.getReviewsByRestaurant(restaurantId);
@@ -128,21 +129,21 @@ class ReviewServiceTest {
         // Assert
         assertEquals(1, result.size());
         assertEquals(testReview.getId(), result.get(0).getId());
-        verify(reviewRepository, times(1)).findByRestaurantId(restaurantId);
+        verify(reviewRepository, times(1)).findByRestaurantIdAndStatus(restaurantId, "PUBLISHED");
     }
 
     @Test
     void testGetReviewsByRestaurantEmpty() {
         // Arrange
         Long restaurantId = 99L;
-        when(reviewRepository.findByRestaurantId(restaurantId)).thenReturn(new ArrayList<>());
+        when(reviewRepository.findByRestaurantIdAndStatus(restaurantId, "PUBLISHED")).thenReturn(new ArrayList<>());
 
         // Act
         List<Review> result = reviewService.getReviewsByRestaurant(restaurantId);
 
         // Assert
         assertTrue(result.isEmpty());
-        verify(reviewRepository, times(1)).findByRestaurantId(restaurantId);
+        verify(reviewRepository, times(1)).findByRestaurantIdAndStatus(restaurantId, "PUBLISHED");
     }
 
     @Test
@@ -153,17 +154,19 @@ class ReviewServiceTest {
         review2.setId(2L);
         review2.setRestaurant(testRestaurant);
         review2.setUser(testUser);
+        review2.setStatus("PUBLISHED");
+        testReview.setStatus("PUBLISHED");
         List<Review> reviews = new ArrayList<>();
         reviews.add(testReview);
         reviews.add(review2);
-        when(reviewRepository.findByRestaurantId(restaurantId)).thenReturn(reviews);
+        when(reviewRepository.findByRestaurantIdAndStatus(restaurantId, "PUBLISHED")).thenReturn(reviews);
 
         // Act
         List<Review> result = reviewService.getReviewsByRestaurant(restaurantId);
 
         // Assert
         assertEquals(2, result.size());
-        verify(reviewRepository, times(1)).findByRestaurantId(restaurantId);
+        verify(reviewRepository, times(1)).findByRestaurantIdAndStatus(restaurantId, "PUBLISHED");
     }
 
     // ============ createReview() Tests - Success Cases ============
@@ -363,5 +366,141 @@ class ReviewServiceTest {
                 reviewService.createReview(userId, restaurantId, 2.7, "comment")
         );
         assertEquals("Rating must be in 0.5 increments", exception.getMessage());
+    }
+
+    // ============ getPendingReviews() Tests ============
+
+    @Test
+    void testGetPendingReviewsSuccess() {
+        // Arrange
+        testReview.setStatus("PENDING");
+        List<Review> pending = new ArrayList<>();
+        pending.add(testReview);
+        when(reviewRepository.findByStatus("PENDING")).thenReturn(pending);
+
+        // Act
+        List<Review> result = reviewService.getPendingReviews();
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals("PENDING", result.get(0).getStatus());
+        verify(reviewRepository, times(1)).findByStatus("PENDING");
+    }
+
+    @Test
+    void testGetPendingReviewsEmpty() {
+        // Arrange
+        when(reviewRepository.findByStatus("PENDING")).thenReturn(new ArrayList<>());
+
+        // Act
+        List<Review> result = reviewService.getPendingReviews();
+
+        // Assert
+        assertTrue(result.isEmpty());
+        verify(reviewRepository, times(1)).findByStatus("PENDING");
+    }
+
+    // ============ approveReview() Tests ============
+
+    @Test
+    void testApproveReviewSuccess() {
+        // Arrange
+        testReview.setStatus("PENDING");
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(testReview));
+        when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Review result = reviewService.approveReview(1L);
+
+        // Assert
+        assertEquals("PUBLISHED", result.getStatus());
+        verify(reviewRepository, times(1)).save(testReview);
+    }
+
+    @Test
+    void testApproveReviewNotFound() {
+        // Arrange
+        when(reviewRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                reviewService.approveReview(99L)
+        );
+        assertEquals("Review not found", exception.getMessage());
+    }
+
+    @Test
+    void testApproveReviewAlreadyProcessed() {
+        // Arrange
+        testReview.setStatus("PUBLISHED");
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(testReview));
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                reviewService.approveReview(1L)
+        );
+        assertTrue(exception.getMessage().contains("PUBLISHED"));
+        assertTrue(exception.getMessage().contains("PENDING"));
+    }
+
+    // ============ rejectReview() Tests ============
+
+    @Test
+    void testRejectReviewSuccess() {
+        // Arrange
+        testReview.setStatus("PENDING");
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(testReview));
+        when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Review result = reviewService.rejectReview(1L);
+
+        // Assert
+        assertEquals("REJECTED", result.getStatus());
+        verify(reviewRepository, times(1)).save(testReview);
+    }
+
+    @Test
+    void testRejectReviewNotFound() {
+        // Arrange
+        when(reviewRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                reviewService.rejectReview(99L)
+        );
+        assertEquals("Review not found", exception.getMessage());
+    }
+
+    @Test
+    void testRejectReviewAlreadyProcessed() {
+        // Arrange
+        testReview.setStatus("REJECTED");
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(testReview));
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                reviewService.rejectReview(1L)
+        );
+        assertTrue(exception.getMessage().contains("REJECTED"));
+        assertTrue(exception.getMessage().contains("PENDING"));
+    }
+
+    // ============ createReview() - Verify PENDING Status ============
+
+    @Test
+    void testCreateReviewHasPendingStatus() {
+        // Arrange
+        Long userId = 1L;
+        Long restaurantId = 1L;
+        when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
+        when(restaurantRepository.findById(restaurantId)).thenReturn(Optional.of(testRestaurant));
+        when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        Review result = reviewService.createReview(userId, restaurantId, 4.0, "Good");
+
+        // Assert
+        assertEquals("PENDING", result.getStatus());
     }
 }
