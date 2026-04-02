@@ -733,7 +733,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <div class="stat-card">
                 <div class="stat-icon" style="background:#fff3e0;color:#e65100;">⏳</div>
                 <div>
-                    <div class="stat-count">{{ pending_reviews|length }}</div>
+                    <div class="stat-count" id="pending-reviews-count">{{ pending_reviews|length }}</div>
                     <div class="stat-label">Pending</div>
                 </div>
             </div>
@@ -1130,9 +1130,44 @@ ADMIN_DASHBOARD_TEMPLATE = """
             setTimeout(() => { fb.style.display = 'none'; }, 4000);
         }
 
+        function updatePendingReviewCount(delta) {
+            const countEl = document.getElementById('pending-reviews-count');
+            if (!countEl) return;
+
+            const current = parseInt(countEl.textContent || '0', 10);
+            const next = Math.max(0, (Number.isNaN(current) ? 0 : current) + delta);
+            countEl.textContent = String(next);
+
+            const section = document.getElementById('section-pending-reviews');
+            if (!section) return;
+
+            const footer = section.querySelector('.section-footer');
+            if (!footer) return;
+
+            const label = footer.querySelector('.row-count-label');
+            const btn = footer.querySelector('.btn-show-more[data-section="pending-reviews"]');
+
+            if (btn) {
+                btn.setAttribute('data-total', String(next));
+                const expanded = btn.getAttribute('data-expanded') === 'true';
+
+                if (next <= 5) {
+                    btn.style.display = 'none';
+                    if (label) label.textContent = 'Showing ' + next + ' of ' + next;
+                } else {
+                    btn.style.display = '';
+                    btn.textContent = expanded ? 'Show less \u2191' : 'Show all ' + next + ' \u2192';
+                    if (label) label.textContent = expanded ? 'Showing all ' + next : 'Showing 5 of ' + next;
+                }
+            }
+        }
+
         function removeReviewRowAndCheckEmpty(id) {
             const row = document.getElementById('pending-row-' + id);
-            if (row) row.remove();
+            if (row) {
+                row.remove();
+                updatePendingReviewCount(-1);
+            }
             const tbody = document.getElementById('pending-reviews-tbody');
             if (tbody && tbody.querySelectorAll('tr:not(.empty-row)').length === 0) {
                 if (!document.getElementById('pending-reviews-empty')) {
