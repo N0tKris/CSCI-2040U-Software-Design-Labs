@@ -37,6 +37,12 @@
             z-index: 80;
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
         }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
         .topbar .brand {
             font-size: 23px;
             font-weight: 800;
@@ -44,12 +50,61 @@
             letter-spacing: -0.3px;
             text-decoration: none;
         }
-        .topbar .user-info {
+        .topbar .brand-sub {
+            font-size: 13px;
+            color: #9a8b80;
+            padding-left: 14px;
+            border-left: 1px solid #e0d8d0;
+            white-space: nowrap;
+        }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .topbar-identity {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .topbar-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #b85c38, #d4845a);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            box-shadow: 0 8px 20px rgba(184, 92, 56, 0.24);
+            flex: 0 0 auto;
+        }
+        .topbar-user-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+        .topbar-user-meta .label {
+            font-size: 12px;
+            color: #9a8b80;
+        }
+        .topbar-user-meta strong {
+            font-size: 14px;
+            color: #3f2a1d;
+            white-space: nowrap;
+        }
+        .topbar-actions {
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 14px;
-            color: #555;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
         .topbar .user-info .mode-badge {
             display: inline-flex;
@@ -64,11 +119,6 @@
             letter-spacing: 0.3px;
             text-transform: uppercase;
             white-space: nowrap;
-        }
-        .topbar .user-info span {
-            font-weight: 600;
-            color: #333;
-            margin-right: 4px;
         }
         .nav-btn {
             padding: 9px 16px;
@@ -96,6 +146,24 @@
             background: #a04e2e;
             border-color: #a04e2e;
             color: #fff;
+        }
+        .nav-btn-profile {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 12px;
+        }
+        .nav-btn-profile .mini-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(184, 92, 56, 0.14);
+            color: #b85c38;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
         }
         .admin-view-banner {
             margin-top: var(--topbar-height);
@@ -707,36 +775,42 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.32);
+            background: rgba(17, 12, 8, 0.42);
+            backdrop-filter: blur(6px);
             align-items: center;
             justify-content: center;
             padding: 20px;
             z-index: 100;
+            opacity: 0;
+            transition: opacity 0.22s ease;
         }
-        .modal-backdrop.show { display: flex; }
+        .modal-backdrop.show { display: flex; opacity: 1; }
         .modal-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 40px rgba(0,0,0,0.15);
-            padding: 32px 30px 28px;
+            background: linear-gradient(160deg, #fff 0%, #fffaf5 100%);
+            border-radius: 22px;
+            border: 1px solid #efdfd1;
+            box-shadow: 0 24px 65px rgba(25, 14, 7, 0.24);
+            padding: 30px 28px 24px;
             width: 100%;
-            max-width: 480px;
-            animation: modalSlideIn 0.25s ease;
+            max-width: 560px;
+            transform: scale(0.96) translateY(10px);
+            opacity: 0;
+            transition: transform 0.24s ease, opacity 0.24s ease;
         }
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
+        .modal-backdrop.show .modal-card {
+            transform: scale(1) translateY(0);
+            opacity: 1;
         }
         .modal-card h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
+            font-size: 20px;
+            font-weight: 800;
+            color: #3a261a;
             margin-bottom: 4px;
         }
         .modal-card .modal-sub {
             font-size: 13px;
-            color: #888;
-            margin-bottom: 22px;
+            color: #8a6d5b;
+            margin-bottom: 18px;
         }
         .modal-label {
             font-size: 13px;
@@ -748,7 +822,7 @@
         .star-rating {
             display: inline-flex;
             gap: 4px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
         .star-rating input { display: none; }
         .star-rating .star-btn {
@@ -773,7 +847,7 @@
             width: 100%;
             text-align: center;
             color: #ddd;
-            transition: color 0.15s;
+            transition: color 0.15s, transform 0.15s;
         }
         .star-rating .star-btn:focus-visible {
             outline: 2px solid #b85c38;
@@ -781,6 +855,7 @@
         }
         .star-rating .star-btn.selected::before {
             color: #f5a623;
+            transform: translateY(-1px) scale(1.04);
         }
         .modal-textarea {
             width: 100%;
@@ -792,9 +867,86 @@
             font-family: inherit;
             background: #faf8f6;
             resize: vertical;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
-        .modal-textarea:focus { outline: none; border-color: #b85c38; background: #fff; }
+        .modal-textarea:focus {
+            outline: none;
+            border-color: #b85c38;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(184, 92, 56, 0.12);
+        }
+        .review-upload-zone {
+            display: block;
+            width: 100%;
+            border: 1.5px dashed #d7b9a4;
+            border-radius: 14px;
+            background: #fffdfb;
+            padding: 14px;
+            min-height: 86px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .review-upload-zone:hover,
+        .review-upload-zone.dragover {
+            border-color: #b85c38;
+            background: #fff7f1;
+        }
+        .review-upload-zone input { display: none; }
+        .review-upload-copy {
+            font-size: 13px;
+            color: #7c6456;
+            text-align: center;
+        }
+        .review-upload-copy strong {
+            color: #b85c38;
+            font-weight: 800;
+        }
+        .review-upload-count {
+            margin-top: 8px;
+            font-size: 12px;
+            text-align: center;
+            color: #9d7d69;
+            font-weight: 700;
+        }
+        .review-image-preview-list {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .review-preview-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 82px;
+            background: #efe4da;
+            animation: fadeImageIn 0.22s ease;
+        }
+        .review-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .review-preview-remove {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(24, 15, 9, 0.76);
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        @keyframes fadeImageIn {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
         .modal-msg {
             font-size: 13px;
             min-height: 18px;
@@ -814,9 +966,13 @@
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
         }
-        .btn-submit:hover { background: #a04e2e; }
+        .btn-submit:hover {
+            background: #a04e2e;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(184, 92, 56, 0.32);
+        }
         .btn-cancel {
             padding: 11px 20px;
             background: transparent;
@@ -828,6 +984,19 @@
             transition: all 0.2s;
         }
         .btn-cancel:hover { border-color: #b85c38; color: #b85c38; }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-top-color: #fff;
+            animation: spin 0.75s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
         .plr-btn {
             display: inline-flex;
@@ -1354,6 +1523,12 @@
         }
         .detail-review-card {
             padding: 16px 18px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .detail-review-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(71, 44, 26, 0.12);
         }
         .detail-review-card .review-topline {
             display: flex;
@@ -1390,6 +1565,35 @@
             color: #68594f;
             line-height: 1.6;
         }
+        .detail-review-thumbs {
+            display: flex;
+            gap: 7px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .detail-review-thumb {
+            width: 54px;
+            height: 54px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f0e4d9;
+            flex: 0 0 auto;
+        }
+        .detail-review-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .detail-review-thumb.more {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f5f4d;
+            font-weight: 800;
+            font-size: 12px;
+            background: #f9efe6;
+            border: 1px solid #e5d3c4;
+        }
         .detail-review-card .review-meta {
             display: flex;
             align-items: center;
@@ -1414,6 +1618,137 @@
         }
         body.detail-open {
             overflow: hidden;
+        }
+
+        .review-detail-backdrop,
+        .lightbox-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(13, 8, 5, 0.62);
+            backdrop-filter: blur(6px);
+            z-index: 210;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.24s ease;
+        }
+        .review-detail-backdrop.show,
+        .lightbox-backdrop.show {
+            display: flex;
+            opacity: 1;
+        }
+        .review-detail-modal {
+            width: 100%;
+            max-width: 840px;
+            max-height: 88vh;
+            overflow: auto;
+            border-radius: 22px;
+            border: 1px solid #efddce;
+            background: #fff;
+            box-shadow: 0 30px 72px rgba(24, 14, 8, 0.4);
+            padding: 22px;
+            transform: scale(0.96) translateY(8px);
+            transition: transform 0.24s ease;
+        }
+        .review-detail-backdrop.show .review-detail-modal {
+            transform: scale(1) translateY(0);
+        }
+        .review-detail-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .review-detail-title {
+            color: #3f2a1d;
+            font-size: 21px;
+            font-weight: 800;
+        }
+        .review-detail-close {
+            border: 1px solid #e1cdbd;
+            background: #fff7f0;
+            color: #91583b;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+        }
+        .review-detail-stars {
+            margin: 6px 0 12px;
+            font-size: 18px;
+        }
+        .review-detail-meta {
+            color: #8a7568;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .review-detail-text {
+            color: #57483f;
+            line-height: 1.72;
+            margin-bottom: 14px;
+            white-space: pre-wrap;
+        }
+        .review-detail-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        .review-detail-gallery button {
+            border: none;
+            padding: 0;
+            background: #efe2d7;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 140px;
+            cursor: pointer;
+        }
+        .review-detail-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .lightbox-modal {
+            width: min(980px, 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .lightbox-image-wrap {
+            flex: 1;
+            max-height: 86vh;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #000;
+        }
+        .lightbox-image-wrap img {
+            width: 100%;
+            max-height: 86vh;
+            object-fit: contain;
+            display: block;
+        }
+        .lightbox-nav,
+        .lightbox-close {
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .lightbox-close {
+            position: absolute;
+            top: -52px;
+            right: 0;
         }
 
         /* ── Skeleton Loader ── */
@@ -1526,6 +1861,21 @@
             }
             .filter-toggle { display: block; }
             .topbar .user-info span { display: none; }
+                .topbar-left {
+                    gap: 10px;
+                }
+                .topbar .brand-sub {
+                    display: none;
+                }
+                .topbar-identity {
+                    gap: 10px;
+                }
+                .topbar-user-meta {
+                    display: none;
+                }
+                .topbar-actions {
+                    gap: 8px;
+                }
             .content-layout {
                 grid-template-columns: 1fr;
                 gap: 16px;
@@ -1561,19 +1911,50 @@
 
 <!-- Top bar -->
 <div class="topbar">
-    <a href="{{ url_for('index') }}" class="brand"><span aria-hidden="true">🍽</span> PlateRate</a>
-    <div class="user-info">
+    <div class="topbar-left">
+        <a href="{{ url_for('index') }}" class="brand"><span aria-hidden="true">🍽</span> PlateRate</a>
+        <div class="brand-sub">Restaurant Reviews</div>
+    </div>
+    <div class="topbar-right">
         {% if is_guest %}
-        <a href="{{ url_for('user_login') }}" class="nav-btn nav-btn-primary">Sign In</a>
-        <a href="{{ url_for('owner_view') }}" class="nav-btn">For Businesses</a>
-        <a href="{{ url_for('admin_login') }}" class="nav-btn">Admin Login</a>
+        <div class="topbar-identity">
+            <div class="topbar-avatar">G</div>
+            <div class="topbar-user-meta">
+                <span class="label">Browsing as</span>
+                <strong>Guest</strong>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="{{ url_for('user_login') }}" class="nav-btn nav-btn-primary">Sign In</a>
+            <a href="{{ url_for('owner_view') }}" class="nav-btn">For Businesses</a>
+            <a href="{{ url_for('admin_login') }}" class="nav-btn">Admin Login</a>
+        </div>
         {% elif admin_view_as_user %}
-        <span class="mode-badge">User View Mode</span>
-        <span>Browsing as <span>{{ admin_username or username }}</span></span>
-        <a href="{{ url_for('admin_exit_user_view') }}" class="nav-btn">Back to Admin</a>
+        {% set display_name = admin_username or username or 'User' %}
+        <div class="topbar-identity">
+            <div class="topbar-avatar">{{ display_name[:1] | upper }}</div>
+            <div class="topbar-user-meta">
+                <span class="label">Mode</span>
+                <strong>{{ display_name }}</strong>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <span class="mode-badge">User View Mode</span>
+            <a href="{{ url_for('admin_exit_user_view') }}" class="nav-btn">Back to Admin</a>
+        </div>
         {% else %}
-        <span>Logged in as <span>{{ username }}</span></span>
-        <a href="{{ url_for('user_logout') }}" class="nav-btn">Sign Out</a>
+        {% set display_name = username or 'User' %}
+        <div class="topbar-identity">
+            <div class="topbar-avatar">{{ display_name[:1] | upper }}</div>
+            <div class="topbar-user-meta">
+                <span class="label">Logged in as</span>
+                <strong>{{ display_name }}</strong>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="{{ url_for('owner_view') }}" class="nav-btn">For Businesses</a>
+            <a href="{{ url_for('user_logout') }}" class="nav-btn">Sign Out</a>
+        </div>
         {% endif %}
     </div>
 </div>
@@ -1680,6 +2061,14 @@
         <span class="modal-label">Your Review</span>
         <textarea id="modal-review-text" class="modal-textarea" placeholder="Tell us about your visit…"></textarea>
 
+        <span class="modal-label">Review Images (optional)</span>
+        <label class="review-upload-zone" id="review-upload-zone">
+            <input id="review-image-input" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple />
+            <div class="review-upload-copy"><strong>Click to upload</strong> or drag and drop up to 3 images</div>
+            <div class="review-upload-count" id="review-upload-count">0/3 images selected</div>
+        </label>
+        <div class="review-image-preview-list" id="review-image-preview-list"></div>
+
         <div id="modal-msg" class="modal-msg"></div>
 
         <div class="modal-btns">
@@ -1730,6 +2119,32 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="review-detail-backdrop" id="review-detail-backdrop">
+    <div class="review-detail-modal">
+        <div class="review-detail-head">
+            <div>
+                <div class="review-detail-title" id="review-detail-title">Review Details</div>
+                <div class="review-detail-meta" id="review-detail-meta"></div>
+            </div>
+            <button class="review-detail-close" id="review-detail-close" aria-label="Close review detail">&times;</button>
+        </div>
+        <div class="review-detail-stars" id="review-detail-stars"></div>
+        <div class="review-detail-text" id="review-detail-text"></div>
+        <div class="review-detail-gallery" id="review-detail-gallery"></div>
+    </div>
+</div>
+
+<div class="lightbox-backdrop" id="review-lightbox-backdrop">
+    <div class="lightbox-modal">
+        <button class="lightbox-close" id="review-lightbox-close" aria-label="Close image preview">&times;</button>
+        <button class="lightbox-nav" id="review-lightbox-prev" aria-label="Previous image">&#8249;</button>
+        <div class="lightbox-image-wrap">
+            <img id="review-lightbox-image" alt="Review image preview" loading="lazy" />
+        </div>
+        <button class="lightbox-nav" id="review-lightbox-next" aria-label="Next image">&#8250;</button>
     </div>
 </div>
 
@@ -2535,6 +2950,13 @@
     document.getElementById('load-more-btn').addEventListener('click', loadMoreRestaurants);
 
     // ── Review modal ──
+    const MAX_REVIEW_IMAGES = 3;
+    const MAX_REVIEW_IMAGE_SIZE = 5 * 1024 * 1024;
+    const REVIEW_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    let selectedReviewFiles = [];
+    let activeReviewImageUrls = [];
+    let activeReviewImageIndex = 0;
+
     function openReviewModal(restaurantId, restaurantName) {
         activeRestaurantId = restaurantId;
         document.getElementById('modal-restaurant-name').textContent = 'Review — ' + restaurantName;
@@ -2542,14 +2964,76 @@
         document.getElementById('modal-msg').textContent = '';
         document.getElementById('modal-msg').style.color = '';
         document.getElementById('modal-rating-hidden').value = '0';
+        selectedReviewFiles = [];
         selectedModalRating = 0;
         renderModalStarRating(0);
+        updateReviewUploadUI();
         document.getElementById('review-modal-backdrop').classList.add('show');
     }
 
     function closeReviewModal() {
         document.getElementById('review-modal-backdrop').classList.remove('show');
+        document.getElementById('review-image-input').value = '';
+        selectedReviewFiles = [];
+        updateReviewUploadUI();
         activeRestaurantId = null;
+    }
+
+    function validateReviewFile(file) {
+        if (!REVIEW_ALLOWED_TYPES.includes(file.type)) {
+            return 'Only JPG, JPEG, PNG, and WEBP images are allowed.';
+        }
+        if (file.size > MAX_REVIEW_IMAGE_SIZE) {
+            return 'Each image must be 5MB or smaller.';
+        }
+        return '';
+    }
+
+    function addReviewFiles(files) {
+        const msgEl = document.getElementById('modal-msg');
+        const incoming = Array.from(files || []);
+        for (const file of incoming) {
+            if (selectedReviewFiles.length >= MAX_REVIEW_IMAGES) {
+                msgEl.textContent = 'You can upload up to 3 images.';
+                msgEl.style.color = '#b71c1c';
+                break;
+            }
+            const err = validateReviewFile(file);
+            if (err) {
+                msgEl.textContent = err;
+                msgEl.style.color = '#b71c1c';
+                continue;
+            }
+            selectedReviewFiles.push(file);
+        }
+        updateReviewUploadUI();
+    }
+
+    function removeReviewImage(index) {
+        selectedReviewFiles = selectedReviewFiles.filter((_, i) => i !== index);
+        updateReviewUploadUI();
+    }
+
+    function updateReviewUploadUI() {
+        const previewList = document.getElementById('review-image-preview-list');
+        const countEl = document.getElementById('review-upload-count');
+        countEl.textContent = `${selectedReviewFiles.length}/3 images selected`;
+        previewList.innerHTML = selectedReviewFiles.map((file, index) => {
+            const url = URL.createObjectURL(file);
+            return `
+                <div class="review-preview-item">
+                    <img src="${url}" alt="Selected review image ${index + 1}" loading="lazy" />
+                    <button type="button" class="review-preview-remove" data-index="${index}" aria-label="Remove image">&times;</button>
+                </div>
+            `;
+        }).join('');
+
+        previewList.querySelectorAll('.review-preview-remove').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = Number(btn.getAttribute('data-index') || '-1');
+                if (idx >= 0) removeReviewImage(idx);
+            });
+        });
     }
 
     async function submitModalReview() {
@@ -2564,22 +3048,27 @@
             return;
         }
 
-        const payload = {
-            restaurantId: activeRestaurantId,
-            rating,
-            comment: comment
-        };
+        if (selectedReviewFiles.length > MAX_REVIEW_IMAGES) {
+            msgEl.textContent = 'You can upload up to 3 images.';
+            msgEl.style.color = '#b71c1c';
+            return;
+        }
 
         const btn = document.getElementById('modal-submit-btn');
         btn.disabled = true;
-        btn.textContent = 'Submitting…';
+        btn.innerHTML = '<span class="spinner" aria-hidden="true"></span> Submitting…';
         msgEl.textContent = '';
 
         try {
+            const formData = new FormData();
+            formData.append('restaurantId', String(activeRestaurantId));
+            formData.append('rating', String(rating));
+            formData.append('comment', comment);
+            selectedReviewFiles.forEach((file) => formData.append('images', file));
+
             const res = await fetch('/api/reviews', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: formData
             });
 
             let data = {};
@@ -2588,6 +3077,11 @@
             if (res.ok) {
                 msgEl.textContent = '✓ Review submitted!';
                 msgEl.style.color = '#2e7d32';
+                selectedReviewFiles = [];
+                updateReviewUploadUI();
+                if (activeDetailRestaurant && activeDetailRestaurant.id) {
+                    loadDetailReviews(activeDetailRestaurant.id);
+                }
                 setTimeout(closeReviewModal, 1000);
             } else {
                 const errMsg = data.error || data.message || ('Server responded ' + res.status);
@@ -2608,6 +3102,23 @@
     document.getElementById('review-modal-backdrop').addEventListener('click', function(e) {
         if (e.target === this) closeReviewModal();
     });
+
+    const uploadZone = document.getElementById('review-upload-zone');
+    const uploadInput = document.getElementById('review-image-input');
+
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        addReviewFiles(e.dataTransfer.files);
+    });
+    uploadInput.addEventListener('change', (e) => addReviewFiles(e.target.files));
 
     // ── Star rating buttons ──
     const modalRatingInput = document.getElementById('modal-rating-hidden');
@@ -2648,6 +3159,7 @@
     });
 
     renderModalStarRating(0);
+    updateReviewUploadUI();
 
     // ── Detail panel ──
     function updateDetailReviewCount(reviewCount) {
@@ -2913,14 +3425,31 @@
                 const ts = rv.createdAt || rv.time_created || rv.timestamp || '';
                 const dateText = ts ? escHtml(String(ts).slice(0, 10)) : '';
                 const sourceLabel = rv.__source === 'yelp' ? 'Yelp' : 'PlateRate';
+                const imageUrls = Array.isArray(rv.imageUrls) ? rv.imageUrls : [];
+                const preview = imageUrls.slice(0, 3).map((url, idx) => {
+                    const safeUrl = resolveImageUrl(url);
+                    return `
+                        <div class="detail-review-thumb">
+                            <img src="${escHtml(safeUrl)}" alt="Review image ${idx + 1}" loading="lazy" />
+                        </div>`;
+                }).join('');
+                const moreCount = imageUrls.length - 3;
+                const moreBadge = moreCount > 0 ? `<div class="detail-review-thumb more">+${moreCount}</div>` : '';
+                const reviewPayload = encodeURIComponent(JSON.stringify({
+                    ...rv,
+                    _reviewer: rv.username || 'Anonymous',
+                    _sourceLabel: sourceLabel,
+                    _dateText: ts ? String(ts).slice(0, 19).replace('T', ' ') : ''
+                }));
                 return `
-                    <div class="detail-review-card">
+                    <div class="detail-review-card" data-review="${reviewPayload}">
                         <div class="review-topline">
                             <div class="reviewer">${reviewer}</div>
                             <span class="review-source-tag">${sourceLabel}</span>
                         </div>
                         <div class="review-stars">${stars(rating)}</div>
                         <div class="review-text">${comment || 'No comment provided.'}</div>
+                        ${imageUrls.length ? `<div class="detail-review-thumbs">${preview}${moreBadge}</div>` : ''}
                         <div class="review-meta">
                             <span class="review-date">${dateText}</span>
                         </div>
@@ -2929,6 +3458,17 @@
             }).join('');
 
             container.innerHTML = `${summaryCard}${reviewCards}`;
+
+            container.querySelectorAll('.detail-review-card[data-review]').forEach(card => {
+                card.addEventListener('click', () => {
+                    try {
+                        const parsed = JSON.parse(decodeURIComponent(card.getAttribute('data-review') || ''));
+                        openReviewDetailModal(parsed);
+                    } catch (_) {
+                        // Ignore malformed payloads from dynamic card rendering.
+                    }
+                });
+            });
         } catch (e) {
             container.innerHTML = `
                 <div class="detail-empty-state">
@@ -2948,11 +3488,102 @@
         activeDetailRestaurant = null;
     }
 
+    function openReviewDetailModal(review) {
+        const backdrop = document.getElementById('review-detail-backdrop');
+        const titleEl = document.getElementById('review-detail-title');
+        const metaEl = document.getElementById('review-detail-meta');
+        const starsEl = document.getElementById('review-detail-stars');
+        const textEl = document.getElementById('review-detail-text');
+        const galleryEl = document.getElementById('review-detail-gallery');
+
+        const rating = Math.max(0, Math.min(5, Number(review.rating) || 0));
+        const reviewer = review._reviewer || review.username || 'Anonymous';
+        const sourceLabel = review._sourceLabel || (review.__source === 'yelp' ? 'Yelp' : 'PlateRate');
+        const dateText = review._dateText || '';
+        const images = Array.isArray(review.imageUrls) ? review.imageUrls : [];
+
+        titleEl.textContent = `${sourceLabel} Review`;
+        metaEl.textContent = `${reviewer}${dateText ? ' • ' + dateText : ''}`;
+        starsEl.innerHTML = stars(rating);
+        textEl.textContent = review.comment || 'No review text provided.';
+
+        galleryEl.innerHTML = images.map((url, idx) => {
+            const safeUrl = resolveImageUrl(url);
+            return `
+                <button type="button" data-index="${idx}" aria-label="Open review image ${idx + 1}">
+                    <img src="${escHtml(safeUrl)}" alt="Review image ${idx + 1}" loading="lazy" />
+                </button>
+            `;
+        }).join('');
+
+        galleryEl.querySelectorAll('button[data-index]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = Number(btn.getAttribute('data-index') || '0');
+                openReviewLightbox(images.map(resolveImageUrl), idx);
+            });
+        });
+
+        backdrop.classList.add('show');
+    }
+
+    function closeReviewDetailModal() {
+        document.getElementById('review-detail-backdrop').classList.remove('show');
+    }
+
+    function openReviewLightbox(imageUrls, startIndex) {
+        if (!Array.isArray(imageUrls) || imageUrls.length === 0) return;
+        activeReviewImageUrls = imageUrls;
+        activeReviewImageIndex = Math.max(0, Math.min(imageUrls.length - 1, startIndex || 0));
+        renderReviewLightboxImage();
+        document.getElementById('review-lightbox-backdrop').classList.add('show');
+    }
+
+    function renderReviewLightboxImage() {
+        const imageEl = document.getElementById('review-lightbox-image');
+        imageEl.src = activeReviewImageUrls[activeReviewImageIndex] || '';
+    }
+
+    function closeReviewLightbox() {
+        document.getElementById('review-lightbox-backdrop').classList.remove('show');
+    }
+
+    function showPrevReviewLightbox() {
+        if (!activeReviewImageUrls.length) return;
+        activeReviewImageIndex = (activeReviewImageIndex - 1 + activeReviewImageUrls.length) % activeReviewImageUrls.length;
+        renderReviewLightboxImage();
+    }
+
+    function showNextReviewLightbox() {
+        if (!activeReviewImageUrls.length) return;
+        activeReviewImageIndex = (activeReviewImageIndex + 1) % activeReviewImageUrls.length;
+        renderReviewLightboxImage();
+    }
+
+    document.getElementById('review-detail-close').addEventListener('click', closeReviewDetailModal);
+    document.getElementById('review-detail-backdrop').addEventListener('click', function(e) {
+        if (e.target === this) closeReviewDetailModal();
+    });
+    document.getElementById('review-lightbox-close').addEventListener('click', closeReviewLightbox);
+    document.getElementById('review-lightbox-prev').addEventListener('click', showPrevReviewLightbox);
+    document.getElementById('review-lightbox-next').addEventListener('click', showNextReviewLightbox);
+    document.getElementById('review-lightbox-backdrop').addEventListener('click', function(e) {
+        if (e.target === this) closeReviewLightbox();
+    });
+
     document.getElementById('detail-close').addEventListener('click', closeDetail);
     document.getElementById('detail-backdrop').addEventListener('click', closeDetail);
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            closeReviewLightbox();
+            closeReviewDetailModal();
             closeDetail();
+        }
+        if (e.key === 'ArrowLeft') {
+            showPrevReviewLightbox();
+        }
+        if (e.key === 'ArrowRight') {
+            showNextReviewLightbox();
         }
     });
 

@@ -886,7 +886,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             <div id="pending-reviews-feedback" style="display:none;margin-bottom:8px;padding:10px 14px;border-radius:6px;font-size:13px;"></div>
             <table>
                 <thead>
-                    <tr><th>ID</th><th>User</th><th>Restaurant</th><th>Rating</th><th>Comment</th><th>Actions</th></tr>
+                    <tr><th>ID</th><th>User</th><th>Restaurant</th><th>Rating</th><th>Comment</th><th>Images</th><th>Actions</th></tr>
                 </thead>
                 <tbody id="pending-reviews-tbody">
                 {% if pending_reviews %}
@@ -899,6 +899,21 @@ ADMIN_DASHBOARD_TEMPLATE = """
                         {% set star_count = rating_value|round(0, 'common')|int %}
                         <td class="stars">{{ '★' * star_count }}{{ '☆' * (5 - star_count) }} <span style="color:#666;font-size:12px;">({{ '%.1f'|format(rating_value) }})</span></td>
                         <td>{{ rv.comment or '-' }}</td>
+                        <td>
+                            {% set rv_images = rv.imageUrls or [] %}
+                            {% if rv_images %}
+                            <div style="display:flex;gap:6px;align-items:center;overflow-x:auto;padding:2px 0;max-width:200px;">
+                                {% for img in rv_images[:3] %}
+                                <img src="{{ img if (img.startswith('http://') or img.startswith('https://')) else (backend_url.rstrip('/') + img) }}" alt="Review image" class="pending-review-thumb" style="width:42px;height:42px;object-fit:cover;border-radius:8px;border:1px solid #e0d8d0;cursor:pointer;" />
+                                {% endfor %}
+                                {% if rv_images|length > 3 %}
+                                <span style="font-size:11px;font-weight:700;color:#8a6e5c;white-space:nowrap;">+{{ rv_images|length - 3 }}</span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span style="color:#a89b92;font-size:12px;">-</span>
+                            {% endif %}
+                        </td>
                         <td style="white-space:nowrap;">
                             <button class="admin-action-btn approve-btn" data-id="{{ rv.id }}" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;">✅ Approve</button>
                             <button class="admin-action-btn reject-btn" data-id="{{ rv.id }}" style="background:#fdecea;color:#b71c1c;border:1px solid #ef9a9a;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">❌ Reject</button>
@@ -906,7 +921,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <tr class="empty-row" id="pending-reviews-empty"><td colspan="6">No pending reviews</td></tr>
+                    <tr class="empty-row" id="pending-reviews-empty"><td colspan="7">No pending reviews</td></tr>
                 {% endif %}
                 </tbody>
             </table>
@@ -1119,6 +1134,40 @@ ADMIN_DASHBOARD_TEMPLATE = """
             });
         });
 
+        function openAdminImagePreview(src) {
+            const existing = document.getElementById('admin-image-preview-overlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'admin-image-preview-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.inset = '0';
+            overlay.style.background = 'rgba(10, 8, 6, 0.72)';
+            overlay.style.backdropFilter = 'blur(4px)';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+            overlay.style.padding = '20px';
+            overlay.style.zIndex = '250';
+            overlay.innerHTML = `
+                <div style="position:relative;width:min(92vw, 1280px);max-height:92vh;display:flex;align-items:center;justify-content:center;">
+                    <button type="button" id="admin-image-preview-close" style="position:absolute;top:-52px;right:0;width:42px;height:42px;border:none;border-radius:50%;background:rgba(255,255,255,0.22);color:#fff;font-size:22px;cursor:pointer;">&times;</button>
+                    <img src="${src}" alt="Review image preview" style="width:100%;max-height:92vh;display:block;object-fit:contain;border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,0.42);background:#111;" />
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const closePreview = () => overlay.remove();
+            overlay.addEventListener('click', (evt) => {
+                if (evt.target === overlay) closePreview();
+            });
+            overlay.querySelector('#admin-image-preview-close').addEventListener('click', closePreview);
+        }
+
+        document.querySelectorAll('.pending-review-thumb').forEach((img) => {
+            img.addEventListener('click', () => openAdminImagePreview(img.src));
+        });
+
         // ── Pending Reviews: Approve / Reject ──
         function showModerationFeedback(message, isSuccess) {
             const fb = document.getElementById('pending-reviews-feedback');
@@ -1174,7 +1223,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     const tr = document.createElement('tr');
                     tr.className = 'empty-row';
                     tr.id = 'pending-reviews-empty';
-                    tr.innerHTML = '<td colspan="6">No pending reviews</td>';
+                    tr.innerHTML = '<td colspan="7">No pending reviews</td>';
                     tbody.appendChild(tr);
                 }
             }
@@ -1828,7 +1877,7 @@ def get_yelp_reviews_for_restaurant(restaurant_id: int) -> tuple[dict[str, Any],
 @app.post("/api/reviews")
 def create_review() -> tuple[dict[str, Any], int]:
     payload = request.get_json(silent=True) or {}
-    headers: dict[str, str] = {"Content-Type": "application/json"}
+    headers: dict[str, str] = {}
 
     in_admin_user_view_mode = bool(session.get("admin_view_as_user"))
     target_url = reviews_url()
@@ -1847,7 +1896,38 @@ def create_review() -> tuple[dict[str, Any], int]:
         headers["Authorization"] = token
 
     try:
-        response = requests.post(target_url, json=payload, headers=headers, timeout=5)
+        uploaded_images = request.files.getlist("images")
+
+        has_form_payload = bool(request.form.get("restaurantId") or request.form.get("rating") or request.form.get("comment"))
+
+        if uploaded_images or has_form_payload:
+            form_data = {
+                "restaurantId": request.form.get("restaurantId", ""),
+                "rating": request.form.get("rating", ""),
+                "comment": request.form.get("comment", ""),
+            }
+            files = [
+                (
+                    "images",
+                    (
+                        image.filename,
+                        image.stream,
+                        image.content_type or "application/octet-stream",
+                    ),
+                )
+                for image in uploaded_images
+                if image and image.filename
+            ]
+            response = requests.post(
+                target_url,
+                data=form_data,
+                files=files,
+                headers=headers,
+                timeout=15,
+            )
+        else:
+            headers["Content-Type"] = "application/json"
+            response = requests.post(target_url, json=payload, headers=headers, timeout=5)
         body = response.json() if response.content else {}
         return {"ok": response.ok, "data": body}, response.status_code
     except requests.RequestException as exc:
@@ -2216,6 +2296,7 @@ def admin_dashboard():
         menu_items=menu_items,
         reviews=reviews,
         pending_reviews=pending_reviews,
+        backend_url=BACKEND_BASE_URL,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
     )
 
@@ -2349,6 +2430,7 @@ def admin_add_restaurant():
         reviews=reviews,
         pending_reviews=[],
         error=msg,
+        backend_url=BACKEND_BASE_URL,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
     )
 

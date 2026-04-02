@@ -4,13 +4,17 @@ import com.lab2.backend.model.Review;
 import com.lab2.backend.model.User;
 import com.lab2.backend.dto.ReviewDto;
 import com.lab2.backend.repository.UserRepository;
+import org.springframework.http.MediaType;
 import java.util.stream.Collectors;
 import com.lab2.backend.service.AuthService;
 import com.lab2.backend.service.ReviewService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +73,7 @@ public class ReviewController {
      * Body: { restaurantId, rating, comment }
      * Requires a valid user token (USER role).
      */
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> create(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody Map<String, Object> body) {
@@ -88,30 +92,60 @@ public class ReviewController {
                     .body(Map.of("error", "Only users may leave reviews"));
         }
 
-        Long restaurantId;
-        double rating;
-        try {
-            Object ridObj = body.get("restaurantId");
-            Object ratingObj = body.get("rating");
-            if (ridObj == null || ratingObj == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "restaurantId and rating are required"));
-            }
-            restaurantId = Long.valueOf(ridObj.toString());
-            rating = Double.parseDouble(ratingObj.toString());
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "restaurantId and rating must be valid numbers"));
+        ParsedReviewInput parsed = parseReviewInput(body.get("restaurantId"), body.get("rating"), body.get("comment"));
+        if (parsed.error != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", parsed.error));
         }
-        String comment = body.containsKey("comment") ? String.valueOf(body.get("comment")) : null;
 
         try {
-            Review review = reviewService.createReview(user.getId(), restaurantId, rating, comment);
+            Review review = reviewService.createReview(user.getId(), parsed.restaurantId, parsed.rating, parsed.comment);
             return ResponseEntity.status(HttpStatus.CREATED).body(ReviewDto.fromEntity(review));
         } catch (IllegalArgumentException e) {
             Map<String, String> err = new HashMap<>();
             err.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(err);
+        }
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createMultipart(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestParam("restaurantId") String restaurantId,
+            @RequestParam("rating") String rating,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Authentication required"));
+        }
+        User user = authService.getUserByToken(token).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid token"));
+        }
+        if (user.getRole() != User.Role.USER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Only users may leave reviews"));
+        }
+
+        ParsedReviewInput parsed = parseReviewInput(restaurantId, rating, comment);
+        if (parsed.error != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", parsed.error));
+        }
+
+        try {
+            Path uploadRoot = Paths.get(System.getProperty("user.dir"), "uploads", "reviews");
+            Review review = reviewService.createReview(
+                    user.getId(),
+                    parsed.restaurantId,
+                    parsed.rating,
+                    parsed.comment,
+                    images,
+                    uploadRoot
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(ReviewDto.fromEntity(review));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -123,7 +157,7 @@ public class ReviewController {
      * This endpoint allows admins to simulate user review submission without
      * reusing an admin token as a normal USER token.
      */
-    @PostMapping("/admin/user-view")
+    @PostMapping(value = "/admin/user-view", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> createFromAdminUserView(
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestBody Map<String, Object> body) {
@@ -148,25 +182,13 @@ public class ReviewController {
                     .body(Map.of("error", "No regular USER account exists for admin view-as-user mode"));
         }
 
-        Long restaurantId;
-        double rating;
-        try {
-            Object ridObj = body.get("restaurantId");
-            Object ratingObj = body.get("rating");
-            if (ridObj == null || ratingObj == null) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "restaurantId and rating are required"));
-            }
-            restaurantId = Long.valueOf(ridObj.toString());
-            rating = Double.parseDouble(ratingObj.toString());
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "restaurantId and rating must be valid numbers"));
+        ParsedReviewInput parsed = parseReviewInput(body.get("restaurantId"), body.get("rating"), body.get("comment"));
+        if (parsed.error != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", parsed.error));
         }
-        String comment = body.containsKey("comment") ? String.valueOf(body.get("comment")) : null;
 
         try {
-            Review review = reviewService.createReview(actingUser.getId(), restaurantId, rating, comment);
+            Review review = reviewService.createReview(actingUser.getId(), parsed.restaurantId, parsed.rating, parsed.comment);
             Map<String, Object> out = new HashMap<>();
             out.put("review", ReviewDto.fromEntity(review));
             out.put("mode", "ADMIN_USER_VIEW");
@@ -177,6 +199,98 @@ public class ReviewController {
             Map<String, String> err = new HashMap<>();
             err.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(err);
+        }
+    }
+
+    @PostMapping(value = "/admin/user-view", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createFromAdminUserViewMultipart(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestParam("restaurantId") String restaurantId,
+            @RequestParam("rating") String rating,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images) {
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Authentication required"));
+        }
+
+        User adminUser = authService.getUserByToken(token).orElse(null);
+        if (adminUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid token"));
+        }
+        if (adminUser.getRole() != User.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Admin privileges required"));
+        }
+
+        User actingUser = userRepository.findFirstByRole(User.Role.USER).orElse(null);
+        if (actingUser == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "No regular USER account exists for admin view-as-user mode"));
+        }
+
+        ParsedReviewInput parsed = parseReviewInput(restaurantId, rating, comment);
+        if (parsed.error != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", parsed.error));
+        }
+
+        try {
+            Path uploadRoot = Paths.get(System.getProperty("user.dir"), "uploads", "reviews");
+            Review review = reviewService.createReview(
+                    actingUser.getId(),
+                    parsed.restaurantId,
+                    parsed.rating,
+                    parsed.comment,
+                    images,
+                    uploadRoot
+            );
+
+            Map<String, Object> out = new HashMap<>();
+            out.put("review", ReviewDto.fromEntity(review));
+            out.put("mode", "ADMIN_USER_VIEW");
+            out.put("actingUser", actingUser.getUsername());
+            out.put("impersonatedBy", adminUser.getUsername());
+            return ResponseEntity.status(HttpStatus.CREATED).body(out);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    private ParsedReviewInput parseReviewInput(Object restaurantIdRaw, Object ratingRaw, Object commentRaw) {
+        if (restaurantIdRaw == null || ratingRaw == null) {
+            return ParsedReviewInput.error("restaurantId and rating are required");
+        }
+
+        try {
+            Long restaurantId = Long.valueOf(restaurantIdRaw.toString());
+            double rating = Double.parseDouble(ratingRaw.toString());
+            String comment = commentRaw != null ? String.valueOf(commentRaw) : null;
+            return ParsedReviewInput.ok(restaurantId, rating, comment);
+        } catch (NumberFormatException e) {
+            return ParsedReviewInput.error("restaurantId and rating must be valid numbers");
+        }
+    }
+
+    private static class ParsedReviewInput {
+        private final Long restaurantId;
+        private final double rating;
+        private final String comment;
+        private final String error;
+
+        private ParsedReviewInput(Long restaurantId, double rating, String comment, String error) {
+            this.restaurantId = restaurantId;
+            this.rating = rating;
+            this.comment = comment;
+            this.error = error;
+        }
+
+        private static ParsedReviewInput ok(Long restaurantId, double rating, String comment) {
+            return new ParsedReviewInput(restaurantId, rating, comment, null);
+        }
+
+        private static ParsedReviewInput error(String error) {
+            return new ParsedReviewInput(null, 0, null, error);
         }
     }
 

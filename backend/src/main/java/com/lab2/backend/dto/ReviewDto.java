@@ -2,6 +2,8 @@ package com.lab2.backend.dto;
 
 import com.lab2.backend.model.Review;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReviewDto {
     private Long id;
@@ -13,6 +15,7 @@ public class ReviewDto {
     private String restaurantName;
     private LocalDateTime createdAt;
     private String status;
+    private List<String> imageUrls = new ArrayList<>();
 
     public ReviewDto() {}
 
@@ -30,6 +33,7 @@ public class ReviewDto {
         }
         dto.createdAt = r.getTimestamp();
         dto.status = r.getStatus();
+        dto.imageUrls = r.getImageUrls() != null ? new ArrayList<>(r.getImageUrls()) : new ArrayList<>();
         return dto;
     }
 
@@ -51,4 +55,6 @@ public class ReviewDto {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) { this.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>(); }
 }

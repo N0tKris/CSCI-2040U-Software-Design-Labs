@@ -5,6 +5,7 @@
 -- ============================================================
 
 -- Drop tables in reverse dependency order if they exist
+DROP TABLE IF EXISTS review_images CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS menus CASCADE;
 DROP TABLE IF EXISTS restaurants CASCADE;
@@ -89,3 +90,19 @@ CREATE TABLE reviews (
 -- Indexes for common query patterns
 CREATE INDEX idx_reviews_restaurant_id ON reviews (restaurant_id);
 CREATE INDEX idx_reviews_user_id       ON reviews (user_id);
+
+-- ============================================================
+-- REVIEW IMAGES TABLE
+-- Stores up to 3 image URLs per review.
+-- ============================================================
+CREATE TABLE review_images (
+    review_id    INT          NOT NULL,
+    image_url    VARCHAR(512) NOT NULL,
+
+    CONSTRAINT fk_review_images_review
+        FOREIGN KEY (review_id)
+        REFERENCES reviews (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_review_images_review_id ON review_images (review_id);

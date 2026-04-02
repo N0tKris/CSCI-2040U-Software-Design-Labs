@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a user's review of a restaurant.
@@ -54,6 +56,11 @@ public class Review {
     @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PUBLISHED'")
     private String status = STATUS_PENDING;
 
+    @ElementCollection
+    @CollectionTable(name = "review_images", joinColumns = @JoinColumn(name = "review_id"))
+    @Column(name = "image_url", nullable = false, length = 512)
+    private List<String> imageUrls = new ArrayList<>();
+
     @PrePersist
     protected void onCreate() {
         if (timestamp == null) {
@@ -90,4 +97,9 @@ public class Review {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public List<String> getImageUrls() { return imageUrls; }
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
+    }
 }
