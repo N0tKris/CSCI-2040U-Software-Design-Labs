@@ -10,7 +10,9 @@ public class ReviewDto {
     private String comment;
     private double rating;
     private Long restaurantId;
+    private String restaurantName;
     private LocalDateTime createdAt;
+    private String status;
 
     public ReviewDto() {}
 
@@ -21,11 +23,13 @@ public class ReviewDto {
         dto.comment = r.getComment();
         dto.rating = r.getRating();
         dto.restaurantId = r.getRestaurant() != null ? r.getRestaurant().getId() : null;
+        dto.restaurantName = r.getRestaurant() != null ? r.getRestaurant().getName() : null;
         if (r.getUser() != null) {
             dto.userId = r.getUser().getId();
             dto.username = r.getUser().getUsername();
         }
         dto.createdAt = r.getTimestamp();
+        dto.status = r.getStatus();
         return dto;
     }
 
@@ -41,6 +45,10 @@ public class ReviewDto {
     public void setRating(double rating) { this.rating = rating; }
     public Long getRestaurantId() { return restaurantId; }
     public void setRestaurantId(Long restaurantId) { this.restaurantId = restaurantId; }
+    public String getRestaurantName() { return restaurantName; }
+    public void setRestaurantName(String restaurantName) { this.restaurantName = restaurantName; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

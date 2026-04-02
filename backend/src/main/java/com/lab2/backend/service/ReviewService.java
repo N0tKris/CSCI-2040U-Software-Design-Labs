@@ -37,15 +37,60 @@ public class ReviewService {
         return reviews;
     }
 
-    /** Return all reviews for a given restaurant. */
+    /** Return all reviews with PENDING status. */
     @Transactional(readOnly = true)
-    public List<Review> getReviewsByRestaurant(Long restaurantId) {
-        List<Review> reviews = reviewRepository.findByRestaurantId(restaurantId);
+    public List<Review> getPendingReviews() {
+        List<Review> reviews = reviewRepository.findByStatus(Review.STATUS_PENDING);
         for (Review r : reviews) {
             if (r.getUser() != null) r.getUser().getUsername();
             if (r.getRestaurant() != null) r.getRestaurant().getId();
         }
         return reviews;
+    }
+
+    /** Return only PUBLISHED reviews for a given restaurant. */
+    @Transactional(readOnly = true)
+    public List<Review> getReviewsByRestaurant(Long restaurantId) {
+        List<Review> reviews = reviewRepository.findByRestaurantIdAndStatus(restaurantId, Review.STATUS_PUBLISHED);
+        for (Review r : reviews) {
+            if (r.getUser() != null) r.getUser().getUsername();
+            if (r.getRestaurant() != null) r.getRestaurant().getId();
+        }
+        return reviews;
+    }
+
+    /**
+     * Approve a pending review (set status to PUBLISHED).
+     *
+     * @throws IllegalArgumentException if review not found or already processed
+     */
+    @Transactional
+    public Review approveReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        if (!Review.STATUS_PENDING.equals(review.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Review cannot be approved because its current status is " + review.getStatus() + ", expected PENDING");
+        }
+        review.setStatus(Review.STATUS_PUBLISHED);
+        return reviewRepository.save(review);
+    }
+
+    /**
+     * Reject a pending review (set status to REJECTED).
+     *
+     * @throws IllegalArgumentException if review not found or already processed
+     */
+    @Transactional
+    public Review rejectReview(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        if (!Review.STATUS_PENDING.equals(review.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Review cannot be rejected because its current status is " + review.getStatus() + ", expected PENDING");
+        }
+        review.setStatus(Review.STATUS_REJECTED);
+        return reviewRepository.save(review);
     }
 
     /**

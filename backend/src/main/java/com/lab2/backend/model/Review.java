@@ -14,6 +14,11 @@ import java.time.LocalDateTime;
 @Table(name = "reviews")
 public class Review {
 
+    /** Moderation status constants. */
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_PUBLISHED = "PUBLISHED";
+    public static final String STATUS_REJECTED = "REJECTED";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,6 +45,14 @@ public class Review {
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
+
+    /**
+     * Moderation status of the review.
+     * New reviews start as PENDING; admins can approve (PUBLISHED) or reject (REJECTED).
+     * Existing rows default to PUBLISHED for backward compatibility via the SQL column default.
+     */
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PUBLISHED'")
+    private String status = STATUS_PENDING;
 
     @PrePersist
     protected void onCreate() {
@@ -74,4 +87,7 @@ public class Review {
 
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }
