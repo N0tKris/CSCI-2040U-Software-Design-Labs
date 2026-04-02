@@ -655,6 +655,101 @@ ADMIN_DASHBOARD_TEMPLATE = """
             gap: 10px;
             justify-content: flex-end;
         }
+        .admin-detail-modal {
+            max-width: 920px;
+        }
+        .admin-detail-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .admin-detail-close {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: #f4ece6;
+            color: #8d4b2f;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .admin-detail-close:hover { background: #ebddd3; }
+        .admin-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .admin-detail-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            background: #faf7f4;
+        }
+        .admin-detail-card.full { grid-column: 1 / -1; }
+        .admin-detail-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .admin-detail-value {
+            font-size: 14px;
+            color: #3f2a1d;
+            line-height: 1.55;
+            white-space: pre-line;
+        }
+        .admin-detail-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .admin-detail-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #e1d8d0;
+            color: #6b5141;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .admin-detail-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+        }
+        .admin-detail-gallery-item {
+            border: 1px solid #e1d8d0;
+            border-radius: 14px;
+            overflow: hidden;
+            padding: 0;
+            background: #fff;
+            cursor: pointer;
+            text-align: left;
+        }
+        .admin-detail-gallery-item img {
+            display: block;
+            width: 100%;
+            height: 132px;
+            object-fit: cover;
+        }
+        .admin-detail-empty {
+            color: #9a8b80;
+            font-size: 13px;
+        }
+        tr.admin-detail-row {
+            cursor: pointer;
+        }
+        tr.admin-detail-row:hover td {
+            background: #fcf5f1;
+        }
 
         /* ── Animations ── */
         @keyframes fadeSlideIn {
@@ -756,7 +851,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="users-tbody">
                 {% if users %}
                     {% for u in users %}
-                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="users">
+                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="users" data-detail='{{ {"type": "user", "id": (u.id or ''), "username": u.username, "role": u.role}|tojson }}'>
                         <td>{{ u.id }}</td>
                         <td>{{ u.username }}</td>
                         <td>
@@ -799,7 +894,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="restaurants-tbody">
                 {% if restaurants %}
                     {% for r in restaurants %}
-                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="restaurants">
+                    {% set restaurant_image = r.imageUrl or r.image_url or '' %}
+                    {% set restaurant_image_src = restaurant_image if (not restaurant_image or restaurant_image.startswith('http://') or restaurant_image.startswith('https://')) else (backend_url.rstrip('/') + restaurant_image) %}
+                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="restaurants" data-detail='{{ {"type": "restaurant", "id": (r.id or ''), "name": r.name, "cuisine": r.cuisine, "location": r.location, "dietaryTags": (r.dietaryTags or r.dietary_tags or ''), "description": (r.description or ''), "imageUrl": restaurant_image_src}|tojson }}'>
                         <td>{{ r.id }}</td>
                         <td>{{ r.name }}</td>
                         <td>{{ r.cuisine }}</td>
@@ -853,7 +950,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="menu-tbody">
                 {% if menu_items %}
                     {% for m in menu_items %}
-                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="menu">
+                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="menu" data-detail='{{ {"type": "menu", "id": (m.id or ''), "restaurantName": m.restaurant_name, "restaurantId": (m.restaurant_id or m.restaurantId or ''), "name": m.name, "price": m.price, "description": (m.description or '')}|tojson }}'>
                         <td>{{ m.restaurant_name }}</td>
                         <td>{{ m.name }}</td>
                         <td>{{ m.price }}</td>
@@ -891,7 +988,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="pending-reviews-tbody">
                 {% if pending_reviews %}
                     {% for rv in pending_reviews %}
-                    <tr id="pending-row-{{ rv.id }}" class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="pending-reviews">
+                    <tr id="pending-row-{{ rv.id }}" class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="pending-reviews" data-detail='{{ {"type": "pending", "id": (rv.id or ''), "username": (rv.username or rv.userId or ''), "userId": (rv.userId or rv.user_id or ''), "restaurantName": (rv.restaurantName or ''), "restaurantId": (rv.restaurantId or ''), "rating": (rv.rating or 0), "comment": (rv.comment or ''), "imageUrls": (rv.imageUrls or []), "status": "Pending moderation"}|tojson }}'>
                         <td>{{ rv.id }}</td>
                         <td>{{ rv.username or rv.userId or '-' }}</td>
                         <td>{{ rv.restaurantName or rv.restaurantId or '-' }}</td>
@@ -950,7 +1047,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="reviews-tbody">
                 {% if reviews %}
                     {% for rv in reviews %}
-                    <tr class="{% if loop.index > 5 %}extra-row{% endif %}" data-section="reviews">
+                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="reviews" data-detail='{{ {"type": "review", "id": (rv.id or ''), "username": (rv.username or rv.userId or rv.user_id or ''), "userId": (rv.userId or rv.user_id or ''), "restaurantName": (rv.restaurantName or ''), "restaurantId": (rv.restaurantId or rv.restaurant_id or ''), "rating": (rv.rating or 0), "comment": (rv.comment or ''), "imageUrls": (rv.imageUrls or []), "status": "Published"}|tojson }}'>
                         <td>{{ rv.id }}</td>
                         <td>{{ rv.username or rv.userId or rv.user_id or '-' }}</td>
                         <td>{{ rv.restaurantId or rv.restaurant_id or '-' }}</td>
@@ -1109,6 +1206,20 @@ ADMIN_DASHBOARD_TEMPLATE = """
         </div>
     </div>
 
+    <!-- Row Details modal -->
+    <div class="modal-backdrop" id="admin-detail-backdrop" style="z-index:240;">
+        <div class="modal-box admin-detail-modal">
+            <div class="admin-detail-header">
+                <div>
+                    <div id="admin-detail-title" class="modal-title">Details</div>
+                    <div id="admin-detail-subtitle" class="modal-subtitle">Inspect the selected row in more detail.</div>
+                </div>
+                <button type="button" id="admin-detail-close" class="admin-detail-close" aria-label="Close detail view">&times;</button>
+            </div>
+            <div id="admin-detail-body"></div>
+        </div>
+    </div>
+
     <script>
         // ── Show More / Show Less ──
         document.querySelectorAll('.btn-show-more').forEach(btn => {
@@ -1132,6 +1243,164 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     if (label) label.textContent = 'Showing all ' + total;
                 }
             });
+        });
+
+        const backendUrl = {{ backend_url | tojson }}.replace(/\/$/, '');
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
+        function normalizeAdminImageUrl(url) {
+            if (!url) return '';
+            if (/^https?:\/\//i.test(url)) return url;
+            return backendUrl + url;
+        }
+
+        function getDetailFieldValue(value, fallback = '-') {
+            if (value === undefined || value === null || value === '') {
+                return fallback;
+            }
+            return escapeHtml(value);
+        }
+
+        function getDetailBadgeMarkup(values) {
+            if (!values || !values.length) {
+                return '<span class="admin-detail-empty">None</span>';
+            }
+            return '<div class="admin-detail-badges">' + values.map(value => '<span class="admin-detail-badge">' + escapeHtml(value) + '</span>').join('') + '</div>';
+        }
+
+        function getGalleryMarkup(images) {
+            if (!images || !images.length) {
+                return '<div class="admin-detail-empty">No images attached.</div>';
+            }
+            return '<div class="admin-detail-gallery">' + images.map((src, index) => {
+                const safeSrc = escapeHtml(src);
+                return '<button type="button" class="admin-detail-gallery-item" data-src="' + safeSrc + '" aria-label="View image ' + (index + 1) + '"><img src="' + safeSrc + '" alt="Attached image ' + (index + 1) + '" /></button>';
+            }).join('') + '</div>';
+        }
+
+        function closeAdminDetailModal() {
+            const backdrop = document.getElementById('admin-detail-backdrop');
+            if (backdrop) backdrop.style.display = 'none';
+        }
+
+        function renderDetailCards(items) {
+            return items.filter(Boolean).map(item => {
+                const fullClass = item.full ? ' full' : '';
+                return '<div class="admin-detail-card' + fullClass + '"><div class="admin-detail-label">' + escapeHtml(item.label) + '</div><div class="admin-detail-value">' + item.value + '</div></div>';
+            }).join('');
+        }
+
+        function openAdminDetailModal(rawDetail) {
+            let detail = rawDetail;
+            if (typeof rawDetail === 'string') {
+                try {
+                    detail = JSON.parse(rawDetail);
+                } catch (error) {
+                    console.error('Could not parse admin row detail payload', error);
+                    return;
+                }
+            }
+
+            const titleEl = document.getElementById('admin-detail-title');
+            const subtitleEl = document.getElementById('admin-detail-subtitle');
+            const bodyEl = document.getElementById('admin-detail-body');
+            const backdrop = document.getElementById('admin-detail-backdrop');
+            if (!titleEl || !subtitleEl || !bodyEl || !backdrop) return;
+
+            const typeLabel = {
+                user: 'User details',
+                restaurant: 'Restaurant details',
+                menu: 'Menu item details',
+                pending: 'Pending review details',
+                review: 'Review details'
+            }[detail.type] || 'Row details';
+
+            const heading = {
+                user: detail.username ? detail.username : 'User #' + (detail.id || ''),
+                restaurant: detail.name ? detail.name : 'Restaurant #' + (detail.id || ''),
+                menu: detail.name ? detail.name : 'Menu item #' + (detail.id || ''),
+                pending: detail.restaurantName ? 'Pending review for ' + detail.restaurantName : 'Pending review #' + (detail.id || ''),
+                review: detail.restaurantName ? 'Review for ' + detail.restaurantName : 'Review #' + (detail.id || '')
+            }[detail.type] || 'Details';
+
+            titleEl.textContent = heading;
+            subtitleEl.textContent = typeLabel;
+
+            const images = (detail.imageUrls || []).map(normalizeAdminImageUrl).filter(Boolean);
+            if (detail.imageUrl) images.unshift(normalizeAdminImageUrl(detail.imageUrl));
+
+            const sections = [];
+            if (detail.type === 'user') {
+                sections.push(renderDetailCards([
+                    { label: 'ID', value: getDetailFieldValue(detail.id) },
+                    { label: 'Username', value: getDetailFieldValue(detail.username) },
+                    { label: 'Role', value: getDetailFieldValue(detail.role) },
+                ]));
+            } else if (detail.type === 'restaurant') {
+                sections.push(renderDetailCards([
+                    { label: 'ID', value: getDetailFieldValue(detail.id) },
+                    { label: 'Name', value: getDetailFieldValue(detail.name) },
+                    { label: 'Cuisine', value: getDetailFieldValue(detail.cuisine) },
+                    { label: 'Location', value: getDetailFieldValue(detail.location) },
+                    { label: 'Image', value: getDetailFieldValue(detail.imageUrl ? 'Attached' : 'Not uploaded') },
+                    { label: 'Description', value: getDetailFieldValue(detail.description), full: true },
+                ]));
+                sections.push('<div class="admin-detail-card full"><div class="admin-detail-label">Dietary Tags</div>' + getDetailBadgeMarkup(String(detail.dietaryTags || '').split(',').map(item => item.trim()).filter(Boolean)) + '</div>');
+            } else if (detail.type === 'menu') {
+                sections.push(renderDetailCards([
+                    { label: 'ID', value: getDetailFieldValue(detail.id) },
+                    { label: 'Restaurant', value: getDetailFieldValue(detail.restaurantName || detail.restaurantId) },
+                    { label: 'Item Name', value: getDetailFieldValue(detail.name) },
+                    { label: 'Price', value: getDetailFieldValue(detail.price) },
+                    { label: 'Description', value: getDetailFieldValue(detail.description), full: true },
+                ]));
+            } else {
+                sections.push(renderDetailCards([
+                    { label: 'ID', value: getDetailFieldValue(detail.id) },
+                    { label: 'User', value: getDetailFieldValue(detail.username || detail.userId) },
+                    { label: 'Restaurant', value: getDetailFieldValue(detail.restaurantName || detail.restaurantId) },
+                    { label: 'Rating', value: getDetailFieldValue(detail.rating) },
+                    { label: 'Status', value: getDetailFieldValue(detail.status) },
+                    { label: 'Comment', value: getDetailFieldValue(detail.comment), full: true },
+                ]));
+            }
+
+            if (images.length) {
+                sections.push('<div class="admin-detail-card full"><div class="admin-detail-label">Images</div>' + getGalleryMarkup(images) + '</div>');
+            }
+
+            bodyEl.innerHTML = sections.join('');
+            bodyEl.querySelectorAll('.admin-detail-gallery-item').forEach(btn => {
+                btn.addEventListener('click', () => openAdminImagePreview(btn.getAttribute('data-src')));
+            });
+
+            backdrop.style.display = 'flex';
+        }
+
+        document.querySelectorAll('tr[data-detail]').forEach(row => {
+            row.addEventListener('click', (event) => {
+                if (event.target.closest('button, a, input, label, .pending-review-thumb')) {
+                    return;
+                }
+                openAdminDetailModal(row.getAttribute('data-detail'));
+            });
+            row.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openAdminDetailModal(row.getAttribute('data-detail'));
+                }
+            });
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
         });
 
         function openAdminImagePreview(src) {
@@ -1165,7 +1434,28 @@ ADMIN_DASHBOARD_TEMPLATE = """
         }
 
         document.querySelectorAll('.pending-review-thumb').forEach((img) => {
-            img.addEventListener('click', () => openAdminImagePreview(img.src));
+            img.addEventListener('click', (event) => {
+                event.stopPropagation();
+                openAdminImagePreview(img.src);
+            });
+        });
+
+        const adminDetailBackdrop = document.getElementById('admin-detail-backdrop');
+        const adminDetailClose = document.getElementById('admin-detail-close');
+        if (adminDetailBackdrop) {
+            adminDetailBackdrop.addEventListener('click', (event) => {
+                if (event.target === adminDetailBackdrop) {
+                    closeAdminDetailModal();
+                }
+            });
+        }
+        if (adminDetailClose) {
+            adminDetailClose.addEventListener('click', closeAdminDetailModal);
+        }
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeAdminDetailModal();
+            }
         });
 
         // ── Pending Reviews: Approve / Reject ──
