@@ -611,14 +611,6 @@
             font-size: 15px;
             margin-bottom: 8px;
         }
-        .card-stars .star,
-        .detail-stars .star,
-        .review-stars .star {
-            display: inline-block;
-            margin-right: 2px;
-            line-height: 1;
-            font-size: 18px;
-        }
         .star.full { color: #f5a623; }
         .star.empty { color: #ddd; }
         .star.half {
@@ -837,142 +829,591 @@
         }
         .btn-cancel:hover { border-color: #b85c38; color: #b85c38; }
 
+        .plr-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 11px 16px;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+            cursor: pointer;
+        }
+        .plr-btn:hover {
+            transform: translateY(-1px);
+        }
+        .plr-btn:focus-visible {
+            outline: 2px solid #b85c38;
+            outline-offset: 3px;
+        }
+        .plr-btn-primary {
+            background: linear-gradient(135deg, #c56d47, #b85c38);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(184, 92, 56, 0.24);
+        }
+        .plr-btn-primary:hover {
+            background: linear-gradient(135deg, #bb623e, #a94f2f);
+            color: #fff;
+            box-shadow: 0 14px 28px rgba(184, 92, 56, 0.28);
+        }
+        .plr-btn-outline {
+            background: #fff;
+            border-color: #d9c7b8;
+            color: #8a5d45;
+            box-shadow: 0 8px 20px rgba(75, 45, 26, 0.06);
+        }
+        .plr-btn-outline:hover {
+            border-color: #b85c38;
+            color: #b85c38;
+            background: #fcf4ef;
+        }
+        .plr-btn-ghost {
+            background: transparent;
+            border-color: transparent;
+            color: #8a5d45;
+        }
+        .plr-btn-ghost:hover {
+            background: #f6ece3;
+            color: #b85c38;
+        }
+        .plr-btn-sm {
+            min-height: 38px;
+            padding: 9px 14px;
+            font-size: 13px;
+            border-radius: 12px;
+        }
+
+        .stars {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            vertical-align: middle;
+            color: #dca24f;
+        }
+        .star {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            position: relative;
+            color: inherit;
+            flex: 0 0 auto;
+        }
+        .star svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .star.full,
+        .star.half {
+            color: #dca24f;
+        }
+        .star.empty {
+            color: #eadfce;
+        }
+        .star.half .star-fill {
+            position: absolute;
+            inset: 0;
+            clip-path: inset(0 50% 0 0);
+        }
+        .card-stars .stars,
+        .detail-rating-line .stars,
+        .review-stars .stars {
+            transform: translateY(1px);
+        }
+        .detail-rating-line {
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 18px;
+            color: #6b5a51;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .detail-rating-score,
+        .detail-rating-count {
+            white-space: nowrap;
+        }
+        .detail-rating-separator {
+            color: #b79a86;
+            font-weight: 700;
+        }
+        .detail-rating-score {
+            color: #5b463b;
+            font-weight: 800;
+        }
+        .detail-rating-count {
+            color: #8a7a70;
+            font-weight: 600;
+        }
+
         /* ── Detail Panel (slide-in) ── */
         .detail-backdrop {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.28);
+            background: rgba(31, 18, 11, 0.38);
+            backdrop-filter: blur(3px);
             z-index: 90;
         }
         .detail-backdrop.show { display: block; }
         .detail-panel {
             position: fixed;
-            top: 0; right: -480px; bottom: 0;
-            width: 460px;
-            max-width: 100vw;
-            background: #fff;
-            box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+            top: 20px;
+            right: 20px;
+            bottom: 20px;
+            width: min(600px, calc(100vw - 40px));
+            max-width: calc(100vw - 40px);
+            background: linear-gradient(180deg, #fffdf9 0%, #fffaf5 100%);
+            border: 1px solid rgba(184, 92, 56, 0.08);
+            border-radius: 28px;
+            box-shadow: 0 24px 70px rgba(58, 35, 20, 0.24);
             z-index: 91;
-            transition: right 0.3s ease;
-            overflow-y: auto;
-            padding: 28px 26px 40px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateX(24px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.28s ease, opacity 0.28s ease;
         }
-        .detail-panel.open { right: 0; }
+        .detail-panel.open {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
         .detail-panel .close-btn {
             position: absolute;
             top: 16px;
-            right: 18px;
-            background: none;
-            border: none;
-            font-size: 22px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            background: rgba(255, 251, 247, 0.96);
+            border: 1px solid rgba(184, 92, 56, 0.14);
+            box-shadow: 0 10px 24px rgba(54, 31, 18, 0.12);
+            font-size: 24px;
             cursor: pointer;
-            color: #999;
-            transition: color 0.2s;
+            color: #7d5d49;
+            transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+            z-index: 3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        .detail-panel .close-btn:hover { color: #333; }
-        .detail-panel h2 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 6px;
-            padding-right: 36px;
-        }
-        .detail-panel .detail-meta {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 4px;
-        }
-        .detail-panel .detail-img {
-            width: 100%;
-            height: 180px;
-            border-radius: 10px;
-            object-fit: cover;
-            margin: 14px 0 10px;
-            background: #f2ebe4;
-            border: 1px solid #eee5dc;
-            display: none;
-        }
-        .detail-panel .detail-stars {
-            color: #f5a623;
-            font-size: 18px;
-            letter-spacing: 1px;
-            margin: 10px 0 6px;
-        }
-        .detail-panel .detail-yelp-meta {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
-        .detail-panel .detail-yelp-meta a {
+        .detail-panel .close-btn:hover {
             color: #b85c38;
-            text-decoration: none;
-            font-weight: 600;
+            transform: scale(1.03);
+            background: #fff6ef;
         }
-        .detail-panel .detail-yelp-meta a:hover {
-            text-decoration: underline;
+        .detail-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
         }
-        .detail-panel .detail-tags {
-            display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;
+        .detail-hero {
+            position: relative;
+            min-height: 280px;
+            background: linear-gradient(135deg, #8b5e4a 0%, #c47b53 48%, #e1aa7a 100%);
+            overflow: hidden;
+            flex-shrink: 0;
         }
-        .detail-panel .detail-tags .tag {
-            padding: 3px 10px; background: #f5f0eb;
-            border-radius: 12px; font-size: 11px;
-            font-weight: 600; color: #9a7b5a;
+        .detail-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10, 8, 7, 0.08) 18%, rgba(16, 8, 6, 0.58) 100%);
+            pointer-events: none;
         }
-        .detail-panel .detail-desc {
-            font-size: 14px; color: #555;
-            line-height: 1.6; margin-bottom: 20px;
-            white-space: pre-wrap;
+        .detail-hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            position: absolute;
+            inset: 0;
         }
-        .detail-panel .detail-section-title {
-            font-size: 14px; font-weight: 700;
-            color: #b85c38; margin-bottom: 12px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid #ece5de;
+        .detail-hero.has-image .detail-hero-image {
+            display: block;
         }
-        .detail-menu-table {
-            width: 100%; border-collapse: collapse;
-            font-size: 13px; margin-bottom: 10px;
+        .detail-hero-overlay {
+            position: absolute;
+            inset: auto 0 0 0;
+            z-index: 1;
+            padding: 28px 28px 26px;
+            color: #fff;
         }
-        .detail-menu-table th {
-            text-align: left; font-weight: 700; color: #333;
-            padding: 8px 6px 8px 0; border-bottom: 1px solid #ece5de;
-        }
-        .detail-menu-table td {
-            padding: 10px 6px 10px 0; border-bottom: 1px solid #f0ebe5;
-            color: #555;
-        }
-        .detail-menu-table tr:last-child td { border-bottom: none; }
-        .detail-menu-table .menu-name {
-            font-weight: 600; color: #333;
-        }
-        .detail-menu-table .menu-price {
-            color: #b85c38; font-weight: 600;
-        }
-        .detail-menu-table .menu-desc {
-            font-size: 12px; color: #999;
-            font-style: italic; padding-top: 2px;
-        }
-        .detail-review-card {
-            background: #faf8f6;
-            border-radius: 8px;
-            padding: 14px 16px;
+        .detail-category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 249, 244, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            backdrop-filter: blur(8px);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
             margin-bottom: 10px;
         }
+        .detail-panel h2 {
+            font-size: 32px;
+            line-height: 1.02;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+            text-wrap: balance;
+        }
+        .detail-hero-subtitle {
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 248, 243, 0.92);
+        }
+        .detail-body {
+            padding: 24px 28px 32px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .detail-subtitle-row,
+        .detail-info-row,
+        .detail-actions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .detail-subtitle-row {
+            margin-bottom: 10px;
+            color: #7d6b5f;
+            font-size: 14px;
+        }
+        .detail-subtitle-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .detail-subtitle-item .subtitle-icon,
+        .detail-info-chip .chip-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            color: #b85c38;
+        }
+        .detail-info-row {
+            margin-bottom: 18px;
+        }
+        .detail-yelp-extra {
+            margin: -6px 0 18px;
+            padding: 14px 14px 12px;
+            border-radius: 16px;
+            background: #fcf6f0;
+            border: 1px solid #ecdccc;
+        }
+        .detail-yelp-extra:empty {
+            display: none;
+        }
+        .detail-yelp-extra-title {
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: #a46c4d;
+            margin-bottom: 10px;
+        }
+        .detail-yelp-facts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px;
+        }
+        .detail-yelp-fact {
+            background: #fff;
+            border: 1px solid #ebddcf;
+            border-radius: 12px;
+            padding: 8px 10px;
+            min-width: 0;
+        }
+        .detail-yelp-fact-label {
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9c7f6d;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .detail-yelp-fact-value {
+            font-size: 13px;
+            color: #5a4a40;
+            font-weight: 700;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .detail-info-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: #f8f1ea;
+            border: 1px solid #ebddd0;
+            color: #6d5547;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .detail-info-chip strong {
+            font-weight: 800;
+        }
+        .detail-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            border: 1px solid transparent;
+        }
+        .detail-status-pill.open {
+            background: #e6f4e9;
+            color: #2f7a3d;
+            border-color: #cde8d2;
+        }
+        .detail-status-pill.closed {
+            background: #fdebea;
+            color: #b54436;
+            border-color: #f7c8c2;
+        }
+        .detail-status-pill.unknown {
+            background: #f2eee8;
+            color: #7b6b60;
+            border-color: #e3d8cb;
+        }
+        .detail-actions-row {
+            margin-bottom: 22px;
+        }
+        .detail-description {
+            font-size: 14px;
+            color: #5d4f46;
+            line-height: 1.72;
+            margin-bottom: 18px;
+            white-space: pre-wrap;
+        }
+        .detail-section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0 14px;
+            color: #a46847;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        .detail-section-heading::after {
+            content: '';
+            height: 1px;
+            flex: 1;
+            background: linear-gradient(90deg, #eadccc 0%, #e6d6c5 100%);
+        }
+        .detail-menu-list,
+        .detail-review-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .detail-menu-card,
+        .detail-review-card,
+        .detail-summary-card {
+            border-radius: 20px;
+            border: 1px solid #ecdccc;
+            background: #fff;
+            box-shadow: 0 12px 30px rgba(71, 44, 26, 0.06);
+        }
+        .detail-menu-card {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 18px;
+        }
+        .detail-menu-card .menu-main {
+            min-width: 0;
+        }
+        .detail-menu-card .menu-name {
+            font-weight: 800;
+            color: #3d2c23;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .detail-menu-card .menu-desc {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #7b6a60;
+        }
+        .detail-menu-card .menu-price {
+            flex: 0 0 auto;
+            align-self: flex-start;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: #fff5ee;
+            color: #b85c38;
+            font-weight: 800;
+            font-size: 13px;
+        }
+        .detail-empty-state {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px dashed #e3d1c0;
+            background: #fffaf7;
+            color: #7a6b61;
+        }
+        .detail-empty-state .empty-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f6ebe2;
+            color: #b85c38;
+            font-size: 22px;
+            flex: 0 0 auto;
+        }
+        .detail-empty-state .empty-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .detail-empty-state .empty-copy strong {
+            color: #4a3528;
+            font-size: 14px;
+        }
+        .detail-empty-state .empty-copy span {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .detail-review-summary {
+            display: grid;
+            gap: 14px;
+            padding: 18px 18px 16px;
+            background: linear-gradient(135deg, #fffaf5 0%, #fff2e7 100%);
+            border: 1px solid #ecd6c5;
+        }
+        .detail-review-summary-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .detail-review-source {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #4a3328;
+        }
+        .detail-review-source .wordmark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 52px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 11px;
+            background: #d32323;
+            color: #fff;
+            font-weight: 900;
+            letter-spacing: 0.01em;
+        }
+        .detail-review-summary-note {
+            color: #7f6b61;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .detail-review-card {
+            padding: 16px 18px;
+        }
+        .detail-review-card .review-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
         .detail-review-card .reviewer {
-            font-size: 13px; font-weight: 600; color: #333;
+            font-size: 14px;
+            font-weight: 800;
+            color: #3d2c23;
+        }
+        .detail-review-card .review-source-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: #f7efe7;
+            color: #9d6c4b;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
         }
         .detail-review-card .review-stars {
-            font-size: 14px; color: #f5a623;
-            letter-spacing: 1px; margin: 4px 0;
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 8px;
         }
         .detail-review-card .review-text {
-            font-size: 13px; color: #666; line-height: 1.5;
+            font-size: 13px;
+            color: #68594f;
+            line-height: 1.6;
+        }
+        .detail-review-card .review-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #9b887b;
         }
         .detail-review-card .review-date {
-            font-size: 11px; color: #bbb; margin-top: 6px;
+            font-size: 12px;
+            color: #9b887b;
+        }
+        .detail-review-card .review-link {
+            color: #b85c38;
+            font-weight: 800;
+            text-decoration: none;
+        }
+        .detail-review-card .review-link:hover {
+            text-decoration: underline;
+        }
+        body.detail-open {
+            overflow: hidden;
         }
 
         /* ── Skeleton Loader ── */
@@ -1062,7 +1503,27 @@
                 padding: 16px 14px 14px;
             }
             .restaurant-grid { grid-template-columns: 1fr; }
-            .detail-panel { width: 100vw; }
+            .detail-panel {
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 100vw;
+                max-width: 100vw;
+                border-radius: 0;
+                transform: translateX(100%);
+            }
+            .detail-panel.open { transform: translateX(0); }
+            .detail-hero {
+                min-height: 240px;
+            }
+            .detail-hero-overlay,
+            .detail-body {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .detail-panel h2 {
+                font-size: 28px;
+            }
             .filter-toggle { display: block; }
             .topbar .user-info span { display: none; }
             .content-layout {
@@ -1231,22 +1692,44 @@
 <!-- Detail side-panel -->
 <div class="detail-backdrop" id="detail-backdrop"></div>
 <div class="detail-panel" id="detail-panel">
-    <button class="close-btn" id="detail-close">&times;</button>
-    <h2 id="detail-name"></h2>
-    <div class="detail-meta" id="detail-cuisine"></div>
-    <div class="detail-meta" id="detail-location"></div>
-    <img id="detail-image" class="detail-img" alt="Restaurant image" />
-    <div class="detail-stars" id="detail-stars"></div>
-    <div class="detail-yelp-meta" id="detail-yelp-meta"></div>
-    <div class="detail-tags" id="detail-tags"></div>
-    <div class="detail-desc" id="detail-desc"></div>
-    <div class="detail-section-title">Menu Items</div>
-    <div id="detail-menu">
-        <div style="font-size:13px;color:#aaa;font-style:italic;">Loading menu…</div>
-    </div>
-    <div class="detail-section-title" style="margin-top:20px;">Reviews</div>
-    <div id="detail-reviews">
-        <div style="font-size:13px;color:#aaa;font-style:italic;">Loading reviews…</div>
+    <button class="close-btn" id="detail-close" aria-label="Close restaurant details">&times;</button>
+    <div class="detail-shell">
+        <div class="detail-hero" id="detail-hero">
+            <img id="detail-image" class="detail-hero-image" alt="Restaurant image" />
+            <div class="detail-hero-overlay">
+                <div class="detail-category-badge" id="detail-category-badge"></div>
+                <h2 id="detail-name"></h2>
+                <div class="detail-hero-subtitle" id="detail-hero-subtitle"></div>
+            </div>
+        </div>
+        <div class="detail-body">
+            <div class="detail-subtitle-row" id="detail-subtitle-row"></div>
+            <div class="detail-rating-line" id="detail-rating-line"></div>
+            <div class="detail-info-row" id="detail-info-row"></div>
+            <div class="detail-yelp-extra" id="detail-yelp-extra"></div>
+            <div class="detail-actions-row" id="detail-actions-row"></div>
+            <div class="detail-description" id="detail-desc"></div>
+            <div class="detail-section-heading"><span>Menu Items</span></div>
+            <div id="detail-menu" class="detail-menu-list">
+                <div class="detail-empty-state">
+                    <div class="empty-icon">…</div>
+                    <div class="empty-copy">
+                        <strong>Loading menu items</strong>
+                        <span>Fetching the latest menu details.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section-heading" style="margin-top:22px;"><span>Reviews</span></div>
+            <div id="detail-reviews" class="detail-review-stack">
+                <div class="detail-empty-state">
+                    <div class="empty-icon">…</div>
+                    <div class="empty-copy">
+                        <strong>Loading reviews</strong>
+                        <span>Gathering review summaries from PlateRate and Yelp.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1265,6 +1748,7 @@
     let hasMoreRestaurants = true;
     let sentinelElement = null;
     let infiniteObserver = null;
+    let activeDetailRestaurant = null;
     const INITIAL_DISPLAY = 9;
     const CANONICAL_DIETARY_OPTIONS = [
         'Vegan',
@@ -1747,17 +2231,29 @@
 
     function stars(n) {
         const rating = Math.max(0, Math.min(5, Number(n) || 0));
+        const starPath = 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z';
+
+        function buildStar(type) {
+            if (type === 'full') {
+                return `<span class="star full" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="${starPath}" fill="currentColor"></path></svg></span>`;
+            }
+            if (type === 'half') {
+                return `<span class="star half" aria-hidden="true"><svg class="star-empty" viewBox="0 0 24 24" focusable="false"><path d="${starPath}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg><svg class="star-fill" viewBox="0 0 24 24" focusable="false"><path d="${starPath}" fill="currentColor"></path></svg></span>`;
+            }
+            return `<span class="star empty" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="${starPath}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path></svg></span>`;
+        }
+
         let html = '';
         for (let i = 1; i <= 5; i++) {
             if (rating >= i) {
-                html += '<span class="star full">★</span>';
+                html += buildStar('full');
             } else if (rating >= i - 0.5) {
-                html += '<span class="star half">★</span>';
+                html += buildStar('half');
             } else {
-                html += '<span class="star empty">★</span>';
+                html += buildStar('empty');
             }
         }
-        return html;
+        return `<span class="stars" aria-label="${rating.toFixed(1)} out of 5 stars">${html}</span>`;
     }
 
     function resolveImageUrl(rawUrl) {
@@ -1778,6 +2274,88 @@
             return '';
         }
         return value;
+    }
+
+    function firstPresentValue(obj, keys) {
+        for (const key of keys) {
+            if (!(key in obj)) continue;
+            const value = obj[key];
+            if (value === null || value === undefined) continue;
+            if (typeof value === 'string' && !value.trim()) continue;
+            if (Array.isArray(value) && !value.length) continue;
+            return value;
+        }
+        return '';
+    }
+
+    function normalizeYelpList(raw) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) {
+            return raw
+                .map(item => {
+                    if (typeof item === 'string') return item.trim();
+                    if (item && typeof item === 'object') {
+                        if (item.title) return String(item.title).trim();
+                        if (item.name) return String(item.name).trim();
+                    }
+                    return '';
+                })
+                .filter(Boolean);
+        }
+        if (typeof raw === 'string') {
+            return raw.split(',').map(v => v.trim()).filter(Boolean);
+        }
+        return [];
+    }
+
+    function formatDistanceText(rawDistance) {
+        const distanceNum = Number(rawDistance);
+        if (!Number.isFinite(distanceNum) || distanceNum <= 0) return '';
+        if (distanceNum >= 1000) {
+            return `${(distanceNum / 1000).toFixed(1)} km away`;
+        }
+        return `${Math.round(distanceNum)} m away`;
+    }
+
+    function buildYelpFacts(restaurant) {
+        const facts = [];
+
+        const yelpPrice = firstPresentValue(restaurant, ['yelpPrice', 'yelp_price']);
+        if (yelpPrice) {
+            facts.push({ label: 'Price', value: String(yelpPrice) });
+        }
+
+        const categories = normalizeYelpList(firstPresentValue(restaurant, ['yelpCategories', 'yelp_categories']));
+        if (categories.length) {
+            facts.push({ label: 'Categories', value: categories.join(', ') });
+        }
+
+        const transactions = normalizeYelpList(firstPresentValue(restaurant, ['yelpTransactions', 'yelp_transactions']));
+        if (transactions.length) {
+            facts.push({ label: 'Service', value: transactions.join(', ') });
+        }
+
+        const distance = formatDistanceText(firstPresentValue(restaurant, ['yelpDistanceMeters', 'yelp_distance_meters', 'yelpDistance', 'yelp_distance']));
+        if (distance) {
+            facts.push({ label: 'Distance', value: distance });
+        }
+
+        const displayPhone = firstPresentValue(restaurant, ['yelpDisplayPhone', 'yelp_display_phone']);
+        if (displayPhone) {
+            facts.push({ label: 'Display Phone', value: String(displayPhone) });
+        }
+
+        const alias = firstPresentValue(restaurant, ['yelpAlias', 'yelp_alias']);
+        if (alias) {
+            facts.push({ label: 'Yelp Alias', value: String(alias) });
+        }
+
+        const claimed = firstPresentValue(restaurant, ['yelpIsClaimed', 'yelp_is_claimed']);
+        if (typeof claimed === 'boolean') {
+            facts.push({ label: 'Yelp Listing', value: claimed ? 'Claimed' : 'Unclaimed' });
+        }
+
+        return facts;
     }
 
     function setStatus(msg) {
@@ -2072,57 +2650,128 @@
     renderModalStarRating(0);
 
     // ── Detail panel ──
+    function updateDetailReviewCount(reviewCount) {
+        const countEl = document.getElementById('detail-rating-count');
+        if (!countEl) return;
+        const count = Math.max(0, Number(reviewCount) || 0);
+        countEl.textContent = `${count} review${count === 1 ? '' : 's'}`;
+    }
+
     function openDetail(restaurantId) {
         const r = allRestaurants.find(x => x.id == restaurantId);
         if (!r) return;
 
-        document.getElementById('detail-name').textContent = r.name || '';
-        document.getElementById('detail-cuisine').textContent = '🍽 ' + (r.cuisine || '—');
-        document.getElementById('detail-location').textContent = '📍 ' + (r.location || '—');
-        document.getElementById('detail-stars').innerHTML = stars(r.stars || 0);
+        activeDetailRestaurant = r;
+
+        const restaurantName = r.name || '';
+        const cuisine = r.cuisine || 'Restaurant';
+        const location = r.location || 'Address unavailable';
+        const description = r.description || 'Browse menu items, ratings, and reviews at a glance.';
+        const ratingValue = Number(r.stars ?? r.rating ?? r.yelpRating ?? r.yelp_rating ?? 0);
+        const reviewCount = Number(r.reviewCount ?? r.review_count ?? r.yelpReviewCount ?? r.yelp_review_count ?? 0);
+        const phone = r.yelpPhone || r.yelp_phone || '';
+        const yelpUrl = safeExternalUrl(r.yelpUrl || r.yelp_url);
+        const yelpStatus = r.yelpIsClosed ?? r.yelp_is_closed;
+        const heroImageUrl = resolveImageUrl(r.imageUrl || r.image_url || r.yelpImageUrl || r.yelp_image_url);
+
+        document.getElementById('detail-category-badge').textContent = cuisine;
+        document.getElementById('detail-name').textContent = restaurantName;
+        document.getElementById('detail-hero-subtitle').textContent = description;
+
+        document.getElementById('detail-subtitle-row').innerHTML = `
+            <span class="detail-subtitle-item"><span class="subtitle-icon" aria-hidden="true">🍽</span><span>${escHtml(cuisine)}</span></span>
+            <span class="detail-subtitle-item"><span class="subtitle-icon" aria-hidden="true">📍</span><span>${escHtml(location)}</span></span>
+        `;
+
+        document.getElementById('detail-rating-line').innerHTML = `
+            ${stars(ratingValue)}
+            <span class="detail-rating-score">${ratingValue.toFixed(1)}</span>
+            <span class="detail-rating-separator" aria-hidden="true">·</span>
+            <span class="detail-rating-count" id="detail-rating-count">${reviewCount} review${reviewCount === 1 ? '' : 's'}</span>
+        `;
+
+        const statusClass = yelpStatus === true ? 'closed' : yelpStatus === false ? 'open' : 'unknown';
+        const statusText = yelpStatus === true ? 'Closed' : yelpStatus === false ? 'Open Now' : 'Status Unknown';
+        const infoParts = [];
+        if (phone) {
+            infoParts.push(`<span class="detail-info-chip"><span class="chip-icon" aria-hidden="true">📞</span><span>${escHtml(phone)}</span></span>`);
+        }
+        if (statusClass !== 'unknown') {
+            infoParts.push(`<span class="detail-status-pill ${statusClass}">${escHtml(statusText)}</span>`);
+        }
+        if (yelpUrl) {
+            infoParts.push(`<a class="plr-btn plr-btn-outline plr-btn-sm" href="${escHtml(yelpUrl)}" target="_blank" rel="noopener noreferrer">View on Yelp</a>`);
+        }
+        document.getElementById('detail-info-row').innerHTML = infoParts.join('');
+
+        const yelpFacts = buildYelpFacts(r);
+        const yelpExtraEl = document.getElementById('detail-yelp-extra');
+        if (yelpFacts.length) {
+            yelpExtraEl.innerHTML = `
+                <div class="detail-yelp-extra-title">Yelp Details</div>
+                <div class="detail-yelp-facts">
+                    ${yelpFacts.map(fact => `
+                        <div class="detail-yelp-fact">
+                            <div class="detail-yelp-fact-label">${escHtml(fact.label)}</div>
+                            <div class="detail-yelp-fact-value">${escHtml(fact.value)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            yelpExtraEl.innerHTML = '';
+        }
+
+        const actionsRow = document.getElementById('detail-actions-row');
+        if ({{ 'true' if is_guest else 'false' }}) {
+            actionsRow.innerHTML = `<a class="plr-btn plr-btn-primary" href="{{ url_for('user_login') }}">Login to Review</a>`;
+        } else {
+            actionsRow.innerHTML = `<button type="button" class="plr-btn plr-btn-primary" id="detail-review-btn">Leave Review</button>`;
+        }
+
+        if (!{{ 'true' if is_guest else 'false' }}) {
+            const reviewBtn = document.getElementById('detail-review-btn');
+            if (reviewBtn) {
+                reviewBtn.addEventListener('click', () => openReviewModal(restaurantId, restaurantName));
+            }
+        }
 
         const detailImageEl = document.getElementById('detail-image');
-        const detailImageUrl = resolveImageUrl(r.imageUrl || r.image_url || r.yelpImageUrl || r.yelp_image_url);
-        if (detailImageUrl) {
-            detailImageEl.src = detailImageUrl;
+        const detailHeroEl = document.getElementById('detail-hero');
+        if (heroImageUrl) {
+            detailImageEl.src = heroImageUrl;
+            detailHeroEl.classList.add('has-image');
             detailImageEl.style.display = 'block';
-            detailImageEl.onerror = () => { detailImageEl.style.display = 'none'; };
+            detailImageEl.onerror = () => {
+                detailHeroEl.classList.remove('has-image');
+                detailImageEl.style.display = 'none';
+            };
         } else {
             detailImageEl.removeAttribute('src');
+            detailHeroEl.classList.remove('has-image');
             detailImageEl.style.display = 'none';
         }
-
-        const yelpMetaParts = [];
-        if (r.yelpPrice || r.yelp_price) {
-            yelpMetaParts.push(`Price: ${escHtml(r.yelpPrice || r.yelp_price)}`);
-        }
-        if ((r.yelpPhone || r.yelp_phone)) {
-            yelpMetaParts.push(`Phone: ${escHtml(r.yelpPhone || r.yelp_phone)}`);
-        }
-        const yelpStatus = (r.yelpIsClosed ?? r.yelp_is_closed);
-        if (typeof yelpStatus === 'boolean') {
-            yelpMetaParts.push(yelpStatus ? 'Currently closed' : 'Currently open');
-        }
-        const yelpReviews = (r.yelpReviewCount ?? r.yelp_review_count);
-        if (yelpReviews != null && yelpReviews !== '') {
-            yelpMetaParts.push(`${Number(yelpReviews)} Yelp reviews`);
-        }
-        const yelpUrl = safeExternalUrl(r.yelpUrl || r.yelp_url);
-        if (yelpUrl) {
-            yelpMetaParts.push(`<a href="${escHtml(yelpUrl)}" target="_blank" rel="noopener noreferrer">View on Yelp ↗</a>`);
-        }
-        document.getElementById('detail-yelp-meta').innerHTML = yelpMetaParts.join(' • ');
-
-        const tagsEl = document.getElementById('detail-tags');
-        const tags = (r.dietaryTags || r.dietary_tags || '').split(',').map(t => t.trim()).filter(Boolean);
-        tagsEl.innerHTML = tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('');
-
         document.getElementById('detail-desc').textContent = r.description || 'No description available.';
-        document.getElementById('detail-menu').innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">Loading menu…</div>';
-        document.getElementById('detail-reviews').innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">Loading reviews…</div>';
+        document.getElementById('detail-menu').innerHTML = `
+            <div class="detail-empty-state">
+                <div class="empty-icon">…</div>
+                <div class="empty-copy">
+                    <strong>Loading menu items</strong>
+                    <span>Fetching the latest menu details.</span>
+                </div>
+            </div>`;
+        document.getElementById('detail-reviews').innerHTML = `
+            <div class="detail-empty-state">
+                <div class="empty-icon">…</div>
+                <div class="empty-copy">
+                    <strong>Loading reviews</strong>
+                    <span>Gathering review summaries from PlateRate and Yelp.</span>
+                </div>
+            </div>`;
 
         document.getElementById('detail-backdrop').classList.add('show');
         document.getElementById('detail-panel').classList.add('open');
+        document.body.classList.add('detail-open');
 
         // Load menu items and reviews for this restaurant
         loadDetailMenu(restaurantId);
@@ -2135,31 +2784,50 @@
         const restaurant = allRestaurants.find(r => r.id == restaurantId);
         
         if (!restaurant) {
-            container.innerHTML = '<div style="font-size:13px;color:#aaa;">Restaurant not found.</div>';
+            container.innerHTML = `
+                <div class="detail-empty-state">
+                    <div class="empty-icon">⚠</div>
+                    <div class="empty-copy">
+                        <strong>Restaurant not found</strong>
+                        <span>The menu could not be loaded for this listing.</span>
+                    </div>
+                </div>`;
             return;
         }
 
         const menuItems = restaurant.menuItems || restaurant.menu_items || [];
 
         if (!Array.isArray(menuItems) || menuItems.length === 0) {
-            container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No menu items available.</div>';
+            container.innerHTML = `
+                <div class="detail-empty-state">
+                    <div class="empty-icon">🍽</div>
+                    <div class="empty-copy">
+                        <strong>No menu items listed yet</strong>
+                        <span>This restaurant has not added any menu items.</span>
+                    </div>
+                </div>`;
             return;
         }
 
-        // Build menu table
-        let html = `<table class="detail-menu-table"><thead><tr><th>Name</th><th>Price</th></tr></thead><tbody>`;
-        menuItems.forEach(item => {
+        const cards = menuItems.map(item => {
             const itemName = item.itemName || item.name || 'Unnamed item';
-            const price = item.price ? `$${parseFloat(item.price).toFixed(2)}` : '—';
+            const rawPrice = item.price;
+            const parsedPrice = rawPrice !== null && rawPrice !== undefined && rawPrice !== '' ? Number(rawPrice) : NaN;
+            const price = Number.isFinite(parsedPrice)
+                ? `$${parsedPrice.toFixed(2)}`
+                : (typeof rawPrice === 'string' && rawPrice.trim() ? rawPrice.trim() : '—');
             const description = item.description || '';
-            html += `<tr><td><div class="menu-name">${escHtml(itemName)}</div>`;
-            if (description) {
-                html += `<div class="menu-desc">${escHtml(description)}</div>`;
-            }
-            html += `</td><td class="menu-price">${price}</td></tr>`;
-        });
-        html += `</tbody></table>`;
-        container.innerHTML = html;
+            return `
+                <div class="detail-menu-card">
+                    <div class="menu-main">
+                        <div class="menu-name">${escHtml(itemName)}</div>
+                        ${description ? `<div class="menu-desc">${escHtml(description)}</div>` : ''}
+                    </div>
+                    <div class="menu-price">${escHtml(price)}</div>
+                </div>`;
+        }).join('');
+
+        container.innerHTML = cards;
     }
 
     async function loadDetailReviews(restaurantId) {
@@ -2188,30 +2856,48 @@
                 ? (Array.isArray(yelpResult.payload.data) ? yelpResult.payload.data : [])
                 : [];
             const yelpFailed = !(yelpResult.ok && yelpResult.payload && yelpResult.payload.ok);
+            const yelpCount = Number((restaurant && (restaurant.yelpReviewCount ?? restaurant.yelp_review_count)) || 0);
+            const yelpRating = Number((restaurant && (restaurant.yelpRating ?? restaurant.yelp_rating)) || 0);
+            const yelpUrl = (restaurant && (restaurant.yelpUrl || restaurant.yelp_url)) || '';
+            const safeYelpUrl = safeExternalUrl(yelpUrl);
+            const visibleReviewCount = localReviews.length + yelpReviews.length;
+            updateDetailReviewCount(visibleReviewCount || yelpCount || 0);
+
+            const summaryCard = (yelpCount > 0 || yelpRating > 0 || safeYelpUrl)
+                ? `
+                    <div class="detail-review-summary detail-summary-card">
+                        <div class="detail-review-summary-header">
+                            <div class="detail-review-source">
+                                <span class="wordmark" aria-hidden="true">Yelp</span>
+                                <span>Yelp summary</span>
+                            </div>
+                            ${safeYelpUrl ? `<a class="plr-btn plr-btn-outline plr-btn-sm" href="${escHtml(safeYelpUrl)}" target="_blank" rel="noopener noreferrer">Open Yelp Reviews</a>` : ''}
+                        </div>
+                        <div class="detail-review-card">
+                            <div class="review-topline">
+                                <div class="reviewer">Yelp aggregate</div>
+                                <span class="review-source-tag">Yelp</span>
+                            </div>
+                            <div class="review-stars">${stars(yelpRating)}</div>
+                            <div class="review-text">${yelpCount > 0 ? `This restaurant has ${escHtml(String(yelpCount))} Yelp review${yelpCount === 1 ? '' : 's'}.` : 'Yelp review totals are available, but no review text can be shown here.'} Full review text is unavailable through the API, so PlateRate shows the aggregate score and the Yelp listing instead.</div>
+                            <div class="review-meta">
+                                <span>${yelpRating > 0 ? `${yelpRating.toFixed(1)} average` : 'Yelp rating unavailable'}</span>
+                                ${safeYelpUrl ? `<a class="review-link" href="${escHtml(safeYelpUrl)}" target="_blank" rel="noopener noreferrer">Open Yelp Reviews</a>` : ''}
+                            </div>
+                        </div>
+                    </div>`
+                : '';
 
             if (!localReviews.length && !yelpReviews.length) {
-                const yelpCount = Number((restaurant && (restaurant.yelpReviewCount ?? restaurant.yelp_review_count)) || 0);
-                const yelpRating = Number((restaurant && (restaurant.yelpRating ?? restaurant.yelp_rating)) || 0);
-                const yelpUrl = (restaurant && (restaurant.yelpUrl || restaurant.yelp_url)) || '';
-                const safeYelpUrl = safeExternalUrl(yelpUrl);
-
-                if (yelpCount > 0) {
-                    const sourceLink = safeYelpUrl
-                        ? `<a href="${escHtml(safeYelpUrl)}" target="_blank" rel="noopener noreferrer">Open Yelp reviews ↗</a>`
-                        : 'Open Yelp to view reviews.';
-                    container.innerHTML = `
-                        <div class="detail-review-card">
-                            <div class="reviewer">Yelp <span style="font-size:11px;color:#999;">(summary)</span></div>
-                            <div class="review-stars">${stars(yelpRating)}</div>
-                            <div class="review-text">This restaurant has ${escHtml(String(yelpCount))} review(s) on Yelp. Full review text is unavailable via the API for this listing.</div>
-                            <div class="review-date">${sourceLink}</div>
+                const emptyState = `
+                    <div class="detail-empty-state">
+                        <div class="empty-icon">💬</div>
+                        <div class="empty-copy">
+                            <strong>No reviews yet</strong>
+                            <span>Be the first to leave a PlateRate review for this restaurant.</span>
                         </div>
-                    `;
-                } else if (yelpFailed) {
-                    container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No Yelp reviews available</div>';
-                } else {
-                    container.innerHTML = '<div style="font-size:13px;color:#aaa;font-style:italic;">No Yelp reviews available</div>';
-                }
+                    </div>`;
+                container.innerHTML = summaryCard || emptyState;
                 return;
             }
 
@@ -2220,7 +2906,7 @@
                 ...yelpReviews.map(rv => ({ ...rv, __source: 'yelp' }))
             ];
 
-            container.innerHTML = allReviews.map(rv => {
+            const reviewCards = allReviews.map(rv => {
                 const reviewer = escHtml(rv.username || 'Anonymous');
                 const rating = Math.max(0, Math.min(5, Number(rv.rating) || 0));
                 const comment = escHtml(rv.comment || '');
@@ -2229,25 +2915,46 @@
                 const sourceLabel = rv.__source === 'yelp' ? 'Yelp' : 'PlateRate';
                 return `
                     <div class="detail-review-card">
-                        <div class="reviewer">${reviewer} <span style="font-size:11px;color:#999;">(${sourceLabel})</span></div>
+                        <div class="review-topline">
+                            <div class="reviewer">${reviewer}</div>
+                            <span class="review-source-tag">${sourceLabel}</span>
+                        </div>
                         <div class="review-stars">${stars(rating)}</div>
                         <div class="review-text">${comment || 'No comment provided.'}</div>
-                        <div class="review-date">${dateText}</div>
+                        <div class="review-meta">
+                            <span class="review-date">${dateText}</span>
+                        </div>
                     </div>
                 `;
             }).join('');
+
+            container.innerHTML = `${summaryCard}${reviewCards}`;
         } catch (e) {
-            container.innerHTML = '<div style="font-size:13px;color:#aaa;">Could not load reviews.</div>';
+            container.innerHTML = `
+                <div class="detail-empty-state">
+                    <div class="empty-icon">⚠</div>
+                    <div class="empty-copy">
+                        <strong>Could not load reviews</strong>
+                        <span>Please try again in a moment.</span>
+                    </div>
+                </div>`;
         }
     }
 
     function closeDetail() {
         document.getElementById('detail-backdrop').classList.remove('show');
         document.getElementById('detail-panel').classList.remove('open');
+        document.body.classList.remove('detail-open');
+        activeDetailRestaurant = null;
     }
 
     document.getElementById('detail-close').addEventListener('click', closeDetail);
     document.getElementById('detail-backdrop').addEventListener('click', closeDetail);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeDetail();
+        }
+    });
 
     // ── Delegate card button clicks ──
     document.getElementById('restaurant-grid').addEventListener('click', function(e) {
