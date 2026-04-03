@@ -176,11 +176,7 @@ public class ReviewController {
                     .body(Map.of("error", "Admin privileges required"));
         }
 
-        User actingUser = userRepository.findFirstByRole(User.Role.USER).orElse(null);
-        if (actingUser == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "No regular USER account exists for admin view-as-user mode"));
-        }
+        User actingUser = resolveActingUserForAdminView(adminUser);
 
         ParsedReviewInput parsed = parseReviewInput(body.get("restaurantId"), body.get("rating"), body.get("comment"));
         if (parsed.error != null) {
@@ -193,6 +189,7 @@ public class ReviewController {
             out.put("review", ReviewDto.fromEntity(review));
             out.put("mode", "ADMIN_USER_VIEW");
             out.put("actingUser", actingUser.getUsername());
+            out.put("actingRole", actingUser.getRole().name());
             out.put("impersonatedBy", adminUser.getUsername());
             return ResponseEntity.status(HttpStatus.CREATED).body(out);
         } catch (IllegalArgumentException e) {
@@ -224,11 +221,7 @@ public class ReviewController {
                     .body(Map.of("error", "Admin privileges required"));
         }
 
-        User actingUser = userRepository.findFirstByRole(User.Role.USER).orElse(null);
-        if (actingUser == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "No regular USER account exists for admin view-as-user mode"));
-        }
+        User actingUser = resolveActingUserForAdminView(adminUser);
 
         ParsedReviewInput parsed = parseReviewInput(restaurantId, rating, comment);
         if (parsed.error != null) {
@@ -250,11 +243,16 @@ public class ReviewController {
             out.put("review", ReviewDto.fromEntity(review));
             out.put("mode", "ADMIN_USER_VIEW");
             out.put("actingUser", actingUser.getUsername());
+            out.put("actingRole", actingUser.getRole().name());
             out.put("impersonatedBy", adminUser.getUsername());
             return ResponseEntity.status(HttpStatus.CREATED).body(out);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private User resolveActingUserForAdminView(User adminUser) {
+        return userRepository.findFirstByRole(User.Role.USER).orElse(adminUser);
     }
 
     private ParsedReviewInput parseReviewInput(Object restaurantIdRaw, Object ratingRaw, Object commentRaw) {

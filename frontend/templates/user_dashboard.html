@@ -3060,16 +3060,30 @@
         msgEl.textContent = '';
 
         try {
-            const formData = new FormData();
-            formData.append('restaurantId', String(activeRestaurantId));
-            formData.append('rating', String(rating));
-            formData.append('comment', comment);
-            selectedReviewFiles.forEach((file) => formData.append('images', file));
+            let requestOptions;
+            if (selectedReviewFiles.length > 0) {
+                const formData = new FormData();
+                formData.append('restaurantId', String(activeRestaurantId));
+                formData.append('rating', String(rating));
+                formData.append('comment', comment);
+                selectedReviewFiles.forEach((file) => formData.append('images', file));
+                requestOptions = {
+                    method: 'POST',
+                    body: formData
+                };
+            } else {
+                requestOptions = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        restaurantId: activeRestaurantId,
+                        rating,
+                        comment
+                    })
+                };
+            }
 
-            const res = await fetch('/api/reviews', {
-                method: 'POST',
-                body: formData
-            });
+            const res = await fetch('/api/reviews', requestOptions);
 
             let data = {};
             try { data = await res.json(); } catch (_) {}
