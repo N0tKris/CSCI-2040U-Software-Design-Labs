@@ -3110,6 +3110,90 @@ def owner_create_restaurant():
             error="Could not connect to the server. Please try again.",
             backend_url=BACKEND_BASE_URL,
         )
+    
+@app.post("/owner/restaurant/update")
+def owner_update_restaurant():
+    """Handle owner restaurant detail updates from dashboard form."""
+    if not session.get("owner_token"):
+        return redirect(url_for("owner_login"))
+
+    token = session["owner_token"]
+    headers = {"Authorization": token, "Content-Type": "application/json"}
+
+    restaurant_id = request.form.get("restaurant_id", "").strip()
+    name = request.form.get("name", "").strip()
+    cuisine = request.form.get("cuisine", "").strip()
+    location = request.form.get("location", "").strip()
+    dietary_tags = request.form.get("dietary_tags", "").strip()
+    description = request.form.get("description", "").strip()
+
+    if not restaurant_id or not name or not cuisine or not location:
+        return redirect(url_for("owner_dashboard", edit="true"))
+
+    payload = {
+        "name": name,
+        "cuisine": cuisine,
+        "location": location,
+        "dietaryTags": dietary_tags or None,
+        "description": description or None,
+    }
+
+    try:
+        resp = requests.put(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}",
+            json=payload,
+            headers=headers,
+            timeout=5,
+        )
+
+        if resp.ok:
+            return redirect(url_for("owner_dashboard"))
+
+        try:
+            msg = resp.json().get("error") or resp.json().get("message") or "Failed to update restaurant."
+        except ValueError:
+            msg = "Failed to update restaurant."
+
+        # re-fetch dashboard data so the page still renders nicely with the error
+        restaurant = None
+        reviews: list[Any] = []
+
+        try:
+            my_resp = requests.get(
+                f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
+                headers={"Authorization": token},
+                timeout=5,
+            )
+            if my_resp.ok:
+                data = my_resp.json()
+                restaurant = data.get("restaurant") if isinstance(data, dict) else None
+        except (requests.RequestException, ValueError):
+            pass
+
+        if restaurant and restaurant.get("id"):
+            rid = restaurant["id"]
+            try:
+                review_resp = requests.get(
+                    f"{BACKEND_BASE_URL.rstrip('/')}/api/reviews/restaurant/{rid}",
+                    headers={"Authorization": token},
+                    timeout=5,
+                )
+                if review_resp.ok:
+                    data = review_resp.json()
+                    reviews = data if isinstance(data, list) else []
+            except (requests.RequestException, ValueError):
+                pass
+
+        return render_template(
+            "owner_dashboard.html",
+            owner_username=session.get("owner_username", "Owner"),
+            restaurant=restaurant,
+            reviews=reviews,
+            error=msg,
+        )
+
+    except requests.RequestException:
+        return redirect(url_for("owner_dashboard", edit="true"))
 
 
 @app.post("/owner/menu/add")
