@@ -1245,7 +1245,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             });
         });
 
-        const backendUrl = {{ backend_url | tojson }}.replace(/\/$/, '');
+        const backendUrl = {{ backend_url | tojson }}.replace(/\\/$/, '');
 
         function escapeHtml(value) {
             return String(value ?? '').replace(/[&<>"']/g, (character) => ({
