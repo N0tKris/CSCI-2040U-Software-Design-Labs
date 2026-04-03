@@ -30,9 +30,8 @@
     }
 
     .topbar {
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid var(--line);
+        background: #fff;
+        border-bottom: 1px solid #e0d8d0;
         padding: 0 28px;
         height: 68px;
         display: flex;
@@ -41,43 +40,103 @@
         position: sticky;
         top: 0;
         z-index: 100;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.04);
     }
-
-    .topbar .brand {
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--accent);
-        letter-spacing: -0.4px;
-    }
-
-    .topbar .user-info {
+    .topbar-left {
         display: flex;
         align-items: center;
         gap: 14px;
+        min-width: 0;
+    }
+    .topbar .brand {
+        font-size: 23px;
+        font-weight: 800;
+        color: #b85c38;
+        letter-spacing: -0.3px;
+        text-decoration: none;
+    }
+    .topbar .brand-sub {
+        font-size: 13px;
+        color: #9a8b80;
+        padding-left: 14px;
+        border-left: 1px solid #e0d8d0;
+        white-space: nowrap;
+    }
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .topbar-identity {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+    .topbar-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #b85c38, #d4845a);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        box-shadow: 0 8px 20px rgba(184, 92, 56, 0.24);
+        flex: 0 0 auto;
+    }
+    .topbar-user-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+    }
+    .topbar-user-meta .label {
+        font-size: 12px;
+        color: #9a8b80;
+    }
+    .topbar-user-meta strong {
         font-size: 14px;
-        color: var(--muted);
+        color: #3f2a1d;
+        white-space: nowrap;
     }
-
-    .topbar .user-info span {
-        font-weight: 700;
-        color: var(--text);
+    .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
-
-    .btn-logout {
-        padding: 10px 18px;
-        background: #fff;
-        border: 1px solid #d9cfc6;
+    .nav-btn {
+        padding: 9px 16px;
+        border: 1px solid #d6cec7;
         border-radius: 999px;
         font-size: 13px;
-        color: #5f5750;
-        cursor: pointer;
+        font-weight: 600;
+        color: #6a635d;
         text-decoration: none;
-        transition: 0.2s;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+        background: #fff;
     }
-
-    .btn-logout:hover {
-        border-color: var(--accent);
-        color: var(--accent);
+    .nav-btn:hover {
+        border-color: #b85c38;
+        color: #b85c38;
+        background: #fcf5f1;
+    }
+    .nav-btn-primary {
+        background: #b85c38;
+        border-color: #b85c38;
+        color: #fff;
+    }
+    .nav-btn-primary:hover {
+        background: #a04e2e;
+        border-color: #a04e2e;
+        color: #fff;
     }
 
     .page-shell {
@@ -744,10 +803,22 @@
 
 <!-- Top bar -->
 <div class="topbar">
-    <div class="brand">PlateRate</div>
-    <div class="user-info">
-        Owner: <span>{{ owner_username }}</span>
-        <a href="{{ url_for('owner_logout') }}" class="btn-logout">Sign out</a>
+    <div class="topbar-left">
+        <a href="{{ url_for('index') }}" class="brand"><span aria-hidden="true">🍽</span> PlateRate</a>
+        <div class="brand-sub">Restaurant Owner</div>
+    </div>
+    <div class="topbar-right">
+        {% set display_name = owner_username or 'Owner' %}
+        <div class="topbar-identity">
+            <div class="topbar-avatar">{{ display_name[:1] | upper }}</div>
+            <div class="topbar-user-meta">
+                <span class="label">Logged in as</span>
+                <strong>{{ display_name }}</strong>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="{{ url_for('owner_logout') }}" class="nav-btn">Sign Out</a>
+        </div>
     </div>
 </div>
 
