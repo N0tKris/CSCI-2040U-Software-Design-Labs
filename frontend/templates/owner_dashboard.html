@@ -5,427 +5,740 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Owner Dashboard — PlateRate</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { zoom: 0.9; }
-        @media (max-width: 768px) {
-            html { zoom: 1; }
-        }
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f5f0eb;
-            color: #333;
-            min-height: 100vh;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --bg: #f5f0eb;
+        --card: #ffffff;
+        --card-soft: #faf8f6;
+        --line: #e7ddd4;
+        --text: #2f2a26;
+        --muted: #7b7168;
+        --accent: #b85c38;
+        --accent-2: #d4845a;
+        --shadow: 0 10px 30px rgba(0,0,0,0.06);
+        --radius: 18px;
+    }
+
+    html { zoom: 1; }
+
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+    }
+
+    .topbar {
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        padding: 0 28px;
+        height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .topbar .brand {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--accent);
+        letter-spacing: -0.4px;
+    }
+
+    .topbar .user-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 14px;
+        color: var(--muted);
+    }
+
+    .topbar .user-info span {
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .btn-logout {
+        padding: 10px 18px;
+        background: #fff;
+        border: 1px solid #d9cfc6;
+        border-radius: 999px;
+        font-size: 13px;
+        color: #5f5750;
+        cursor: pointer;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .btn-logout:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .page-shell {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 26px 24px 40px;
+    }
+
+    .alert {
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-size: 14px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .alert-error {
+        background: #fdecea;
+        color: #b71c1c;
+    }
+
+    .alert-success {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .dashboard-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+        gap: 22px;
+        margin-bottom: 22px;
+    }
+
+    .overview-card,
+    .stats-card,
+    .panel-card,
+    .review-panel,
+    .no-restaurant-card,
+    .form-card {
+        background: var(--card);
+        border: 1px solid rgba(0,0,0,0.03);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .overview-card {
+        overflow: hidden;
+    }
+
+    .overview-banner {
+        height: 210px;
+        background: linear-gradient(135deg, #d9cbbd 0%, #eadfd5 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .overview-banner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .overview-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 62px;
+        color: #c2a27c;
+    }
+
+    .cuisine-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(255,255,255,0.95);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        padding: 7px 14px;
+        border-radius: 999px;
+    }
+
+    .overview-body {
+        padding: 24px 24px 22px;
+    }
+
+    .overview-title-row {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+    }
+
+    .overview-title h1 {
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: var(--text);
+    }
+
+    .overview-subtitle {
+        font-size: 14px;
+        color: var(--muted);
+    }
+
+    .mini-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .mini-chip {
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: #f7f0ea;
+        color: #8d6b4e;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .overview-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px 18px;
+        padding-top: 16px;
+        margin-top: 16px;
+        border-top: 1px solid #efe7df;
+    }
+
+    .info-block .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 5px;
+    }
+
+    .info-block .value {
+        font-size: 14px;
+        color: #4b433d;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+    
+
+    .restaurant-desc {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #efe7df;
+        color: #655c56;
+        font-size: 14px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+    }
+
+    .stats-card {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+    }
+
+    .stats-card h2 {
+        font-size: 18px;
+        font-weight: 800;
+        margin-bottom: 16px;
+        color: var(--text);
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .stat-tile {
+        background: var(--card-soft);
+        border: 1px solid #eee4db;
+        border-radius: 14px;
+        padding: 16px 14px;
+    }
+
+    .stat-number {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--accent);
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .dashboard-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    }
+
+    .btn-edit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-edit:hover {
+        background: #a04e2e;
+    }
+
+    .btn-cancel {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        background: #fff;
+        color: #5f5750;
+        border: 1px solid #d9cfc6;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+    .btn-cancel:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+   }
+
+    .overview-edit-form {
+        margin-top: 6px;
+   }
+
+    .overview-edit-form .form-grid {
+        margin-top: 18px;
+    }
+
+    .overview-edit-form .btn-save {
+        margin-top: 4px;
+   }
+
+    .left-stack,
+    .right-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        min-width: 0;
+    }
+
+    .panel-card,
+    .review-panel {
+        overflow: hidden;
+    }
+
+    .panel-header {
+        padding: 16px 22px;
+        background: var(--card-soft);
+        border-bottom: 1px solid #ece2d9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .panel-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--accent);
+    }
+
+    .panel-count {
+        background: #f5e8df;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+        padding: 5px 10px;
+        border-radius: 999px;
+    }
+
+    .panel-body {
+        padding: 20px 22px 22px;
+    }
+
+    .current-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid #e7ddd4;
+        background: #f5f0eb;
+        margin-bottom: 14px;
+    }
+
+    .upload-drop-zone {
+        border: 2px dashed #d5cfc9;
+        border-radius: 12px;
+        padding: 26px 18px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        position: relative;
+        background: #fffdfb;
+    }
+
+    .upload-drop-zone:hover,
+    .upload-drop-zone.drag-over {
+        border-color: var(--accent);
+        background: #faf6f3;
+    }
+
+    .upload-drop-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+    }
+
+    .upload-icon {
+        font-size: 34px;
+        margin-bottom: 10px;
+    }
+
+    .upload-hint {
+        font-size: 12px;
+        color: #8c827a;
+        margin-top: 6px;
+    }
+
+    .upload-preview {
+        width: 100%;
+        max-height: 180px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid #e0d8d0;
+        margin-bottom: 14px;
+        display: none;
+    }
+
+    .btn-upload,
+    .btn-save {
+        padding: 12px 18px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-upload:hover,
+    .btn-save:hover {
+        background: #a04e2e;
+    }
+
+    .btn-upload:disabled {
+        background: #cfc8c2;
+        cursor: not-allowed;
+    }
+
+    .menu-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 260px;
+        overflow: auto;
+        padding-right: 4px;
+        margin-bottom: 18px;
+    }
+
+    .menu-item-row {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 14px;
+        border: 1px solid #eee4db;
+        border-radius: 12px;
+        background: #fffdfb;
+    }
+
+    .menu-item-name {
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 3px;
+    }
+
+    .menu-item-desc {
+        font-size: 12px;
+        color: #887f77;
+        line-height: 1.5;
+    }
+
+    .menu-item-price {
+        font-weight: 800;
+        color: var(--accent);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .empty-menu {
+        padding: 26px 16px;
+        border: 1px dashed #e5d9cf;
+        border-radius: 12px;
+        text-align: center;
+        color: #9b9188;
+        font-size: 14px;
+        background: #fffdfa;
+        margin-bottom: 18px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #8b8178;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 11px 13px;
+        border: 1px solid #d8cec5;
+        border-radius: 10px;
+        font-size: 14px;
+        background: #faf8f6;
+        font-family: inherit;
+        transition: 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: #fff;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .review-panel {
+        display: flex;
+        flex-direction: column;
+        min-height: 680px;
+        max-height: 680px;
+    }
+
+    .review-summary {
+        padding: 18px 22px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .review-summary-pill {
+        background: #f7efe7;
+        color: var(--accent);
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .review-scroll {
+        padding: 18px 22px 22px;
+        overflow: auto;
+        flex: 1;
+    }
+
+    .review-card {
+        background: #fcfaf8;
+        border: 1px solid #ede3da;
+        border-radius: 14px;
+        padding: 16px 16px;
+        margin-bottom: 12px;
+    }
+
+    .review-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .reviewer-name {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .review-date {
+        font-size: 12px;
+        color: #aaa099;
+        white-space: nowrap;
+    }
+
+    .review-stars {
+        color: #f5a623;
+        font-size: 16px;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+
+    .review-text {
+        font-size: 14px;
+        color: #5d5550;
+        line-height: 1.6;
+    }
+
+    .empty-reviews {
+        border: 1px dashed #e6dbd1;
+        border-radius: 14px;
+        padding: 34px 18px;
+        text-align: center;
+        color: #a29991;
+        font-size: 14px;
+        background: #fffdfa;
+    }
+
+    .empty-reviews .empty-icon {
+        font-size: 34px;
+        margin-bottom: 10px;
+    }
+
+    .no-restaurant-card {
+        padding: 44px 28px;
+        text-align: center;
+        margin-bottom: 24px;
+    }
+
+    .no-restaurant-card .empty-icon {
+        font-size: 52px;
+        margin-bottom: 14px;
+    }
+
+    .no-restaurant-card h3 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 8px;
+    }
+
+    .no-restaurant-card p {
+        font-size: 14px;
+        color: #8d837a;
+        margin-bottom: 0;
+    }
+
+    .form-card {
+        overflow: hidden;
+    }
+
+    .form-card-header {
+        padding: 16px 22px;
+        background: var(--card-soft);
+        border-bottom: 1px solid #ece2d9;
+        font-size: 16px;
+        font-weight: 800;
+        color: var(--accent);
+    }
+
+    .form-card-body {
+        padding: 22px;
+    }
+
+    @media (max-width: 1200px) {
+        .dashboard-header {
+            grid-template-columns: 1fr;
         }
 
-        /* ── Top bar ── */
+        .dashboard-main {
+            grid-template-columns: 1fr;
+        }
+
+        .review-panel {
+            min-height: auto;
+            max-height: none;
+        }
+
+        .review-scroll {
+            overflow: visible;
+        }
+    }
+
+    @media (max-width: 760px) {
         .topbar {
-            background: #fff;
-            border-bottom: 1px solid #e0d8d0;
-            padding: 0 32px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-        .topbar .brand {
-            font-size: 22px;
-            font-weight: 700;
-            color: #b85c38;
-            letter-spacing: -0.3px;
-        }
-        .topbar .user-info {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            font-size: 14px;
-            color: #555;
-        }
-        .topbar .user-info span { font-weight: 600; color: #333; }
-        .btn-logout {
-            padding: 7px 18px;
-            background: transparent;
-            border: 1px solid #d5cfc9;
-            border-radius: 20px;
-            font-size: 13px;
-            color: #666;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .btn-logout:hover { border-color: #b85c38; color: #b85c38; }
-
-        /* ── Hero banner ── */
-        .owner-hero {
-            background: linear-gradient(135deg, #b85c38 0%, #d4845a 100%);
-            padding: 40px 32px 36px;
-            color: #fff;
-        }
-        .owner-hero h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-        .owner-hero p { font-size: 14px; opacity: 0.88; }
-
-        /* ── Dashboard layout ── */
-        .dashboard {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 28px 24px 60px;
-        }
-
-        /* ── Alerts ── */
-        .alert {
-            padding: 14px 18px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
+            padding: 0 16px;
+            height: auto;
+            min-height: 64px;
+            flex-wrap: wrap;
             gap: 10px;
         }
-        .alert-error { background: #fdecea; color: #b71c1c; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; }
 
-        /* ── Restaurant hero card ── */
-        .restaurant-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-            overflow: hidden;
-            margin-bottom: 24px;
+        .page-shell {
+            padding: 18px 14px 28px;
         }
-        .restaurant-card-banner {
-            height: 140px;
-            background: linear-gradient(135deg, #e8ddd4 0%, #d9cdc0 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 56px;
-            color: #c4a882;
-            position: relative;
-            overflow: hidden;
-        }
-        .restaurant-card-banner .banner-placeholder {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            font-size: 56px;
-        }
-        .restaurant-card-banner .cuisine-badge {
-            position: absolute;
-            top: 14px;
-            left: 16px;
-            background: rgba(255,255,255,0.92);
-            padding: 5px 14px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #b85c38;
-        }
-        .restaurant-card-body {
-            padding: 24px 28px 28px;
-        }
-        .restaurant-card-body h2 {
+
+        .overview-title h1 {
             font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 24px;
-            margin-bottom: 14px;
-        }
-        .info-item {
-            font-size: 14px;
-            color: #666;
-        }
-        .info-item .label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
-            color: #b85c38;
-            margin-bottom: 3px;
-        }
-        .info-item .value {
-            font-weight: 500;
-            color: #444;
-        }
-        .restaurant-desc {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-            padding-top: 12px;
-            border-top: 1px solid #ece5de;
-            white-space: pre-wrap;
-        }
-        .diet-tags {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .diet-tags .tag {
-            padding: 3px 10px;
-            background: #f5f0eb;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #9a7b5a;
         }
 
-        /* ── Upload image section ── */
-        .upload-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .upload-drop-zone {
-            border: 2px dashed #d5cfc9;
-            border-radius: 10px;
-            padding: 32px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
-            position: relative;
-        }
-        .upload-drop-zone:hover,
-        .upload-drop-zone.drag-over {
-            border-color: #b85c38;
-            background: #faf6f3;
-        }
-        .upload-drop-zone input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
-        .upload-icon { font-size: 36px; margin-bottom: 10px; }
-        .upload-hint { font-size: 13px; color: #888; margin-top: 6px; }
-        .upload-preview {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #e0d8d0;
-            margin-bottom: 16px;
-            display: none;
-        }
-        .btn-upload {
-            padding: 11px 28px;
-            background: #b85c38;
-            color: #fff;
-            border: none;
-            border-radius: 9px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 12px;
-        }
-        .btn-upload:hover { background: #a04e2e; }
-        .btn-upload:disabled { background: #ccc; cursor: not-allowed; }
-
-        /* ── Restaurant banner image ── */
-        .restaurant-card-banner img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            inset: 0;
-            display: block;
+        .overview-info-grid,
+        .form-grid,
+        .stat-grid {
+            grid-template-columns: 1fr;
         }
 
-        /* ── No restaurant state ── */
-        .no-restaurant-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-            padding: 48px 28px;
-            text-align: center;
-            margin-bottom: 24px;
+        .overview-banner {
+            height: 170px;
         }
-        .no-restaurant-card .empty-icon { font-size: 52px; margin-bottom: 14px; }
-        .no-restaurant-card h3 {
-            font-size: 20px; font-weight: 700; color: #333; margin-bottom: 6px;
-        }
-        .no-restaurant-card p { font-size: 14px; color: #888; margin-bottom: 24px; }
-
-        /* ── Create form ── */
-        .form-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .form-card-header {
-            padding: 16px 24px;
-            background: #faf8f6;
-            border-bottom: 1px solid #ece5de;
-            font-size: 16px;
-            font-weight: 700;
-            color: #b85c38;
-        }
-        .form-card-body { padding: 24px 24px 28px; }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            color: #888;
-            margin-bottom: 6px;
-        }
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1px solid #d5cfc9;
-            border-radius: 9px;
-            font-size: 14px;
-            background: #faf8f6;
-            font-family: inherit;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #b85c38;
-            background: #fff;
-        }
-        .form-group.full { grid-column: 1 / -1; }
-        .btn-save {
-            padding: 12px 28px;
-            background: #b85c38;
-            color: #fff;
-            border: none;
-            border-radius: 9px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-save:hover { background: #a04e2e; }
-
-        /* ── Menu section ── */
-        .menu-card {
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 2px 14px rgba(0,0,0,0.06);
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .menu-item-row {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0ebe5;
-            font-size: 14px;
-        }
-        .menu-item-row:last-child { border-bottom: none; }
-        .menu-item-name { font-weight: 600; color: #333; }
-        .menu-item-desc { font-size: 12px; color: #888; margin-top: 2px; }
-        .menu-item-price {
-            font-weight: 700;
-            color: #b85c38;
-            white-space: nowrap;
-            margin-left: 16px;
-        }
-        .empty-menu {
-            padding: 24px 20px;
-            text-align: center;
-            color: #aaa;
-            font-size: 14px;
-        }
-
-        /* ── Reviews section ── */
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .section-title .count {
-            background: #f5f0eb;
-            color: #b85c38;
-            font-size: 12px;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 12px;
-        }
-        .review-card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px 22px;
-            margin-bottom: 12px;
-            transition: box-shadow 0.2s;
-        }
-        .review-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
-        .review-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        .reviewer-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #333;
-        }
-        .review-date {
-            font-size: 12px;
-            color: #bbb;
-        }
-        .review-stars {
-            color: #f5a623;
-            font-size: 16px;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-        .review-text {
-            font-size: 14px;
-            color: #555;
-            line-height: 1.6;
-        }
-        .empty-reviews {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 40px 20px;
-            text-align: center;
-            color: #aaa;
-            font-size: 14px;
-        }
-        .empty-reviews .empty-icon { font-size: 36px; margin-bottom: 10px; }
-
-        @media (max-width: 700px) {
-            .topbar { padding: 0 16px; }
-            .owner-hero { padding: 28px 16px; }
-            .owner-hero h1 { font-size: 22px; }
-            .dashboard { padding: 20px 14px 40px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .info-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    }
+  </style>
 </head>
 <body>
 
@@ -438,13 +751,7 @@
     </div>
 </div>
 
-<!-- Hero -->
-<div class="owner-hero">
-    <h1>Owner Dashboard</h1>
-    <p>Manage your restaurant and view customer feedback</p>
-</div>
-
-<div class="dashboard">
+<div class="page-shell">
 
     {% if error %}
     <div class="alert alert-error">⚠ {{ error }}</div>
@@ -453,195 +760,302 @@
     <div class="alert alert-success">✓ {{ success }}</div>
     {% endif %}
 
-    {% if restaurant %}
-    <!-- ── Restaurant details card ── -->
-    <div class="restaurant-card">
-        <div class="restaurant-card-banner">
+{% if restaurant %}
+
+<div class="dashboard-header">
+    <div class="overview-card">
+        <div class="overview-banner">
             {% if restaurant.imageUrl %}
-            <img src="{{ restaurant.imageUrl if restaurant.imageUrl.startswith('http://') or restaurant.imageUrl.startswith('https://') else (backend_url.rstrip('/') ~ '/' ~ restaurant.imageUrl.lstrip('/')) }}" alt="{{ restaurant.name }}" onerror="this.style.display='none'; this.parentElement.querySelector('.banner-placeholder').style.display='flex';" />
-            <div class="banner-placeholder" style="display: none;">🍽️</div>
+            <img src="{{ restaurant.imageUrl if restaurant.imageUrl.startswith('http://') or restaurant.imageUrl.startswith('https://') else (backend_url.rstrip('/') ~ '/' ~ restaurant.imageUrl.lstrip('/')) }}"
+                 alt="{{ restaurant.name }}"
+                 onerror="this.style.display='none'; this.parentElement.querySelector('.overview-placeholder').style.display='flex';" />
+            <div class="overview-placeholder" style="display:none;">🍽️</div>
             {% else %}
-            <div class="banner-placeholder">🍽️</div>
+            <div class="overview-placeholder">🍽️</div>
             {% endif %}
             <span class="cuisine-badge">{{ restaurant.cuisine or 'Restaurant' }}</span>
         </div>
-        <div class="restaurant-card-body">
-            <h2>{{ restaurant.name }}</h2>
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="label">Cuisine</div>
-                    <div class="value">{{ restaurant.cuisine or '—' }}</div>
-                </div>
-                <div class="info-item">
-                    <div class="label">Location</div>
-                    <div class="value">📍 {{ restaurant.location or '—' }}</div>
-                </div>
-                {% if restaurant.dietaryTags %}
-                <div class="info-item" style="grid-column:1/-1;">
-                    <div class="label">Dietary Options</div>
-                    <div class="diet-tags">
-                        {% for tag in restaurant.dietaryTags.split(',') %}
-                            {% if tag.strip() %}
-                            <span class="tag">{{ tag.strip() }}</span>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
+
+<div class="overview-body">
+    {% if request.args.get('edit') == 'true' %}
+    <form method="POST" action="{{ url_for('owner_update_restaurant') }}" class="overview-edit-form">
+        <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
+
+        <div class="overview-title-row">
+            <div class="overview-title">
+                <h1>Edit Restaurant Details</h1>
+                <div class="overview-subtitle">Update the information shown to customers on your restaurant profile.</div>
             </div>
-            {% if restaurant.description %}
-            <div class="restaurant-desc">{{ restaurant.description }}</div>
+            <div class="edit-actions">
+                <button type="submit" class="btn-save">Save Changes</button>
+                <a href="{{ url_for('owner_dashboard') }}" class="btn-cancel">Cancel</a>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="edit_name">Restaurant Name *</label>
+                <input type="text" id="edit_name" name="name" required value="{{ restaurant.name or '' }}" />
+            </div>
+            <div class="form-group">
+                <label for="edit_cuisine">Cuisine *</label>
+                <input type="text" id="edit_cuisine" name="cuisine" required value="{{ restaurant.cuisine or '' }}" />
+            </div>
+            <div class="form-group full">
+                <label for="edit_location">Location *</label>
+                <input type="text" id="edit_location" name="location" required value="{{ restaurant.location or '' }}" />
+            </div>
+            <div class="form-group full">
+                <label for="edit_dietary_tags">Dietary Tags</label>
+                <input type="text" id="edit_dietary_tags" name="dietary_tags" value="{{ restaurant.dietaryTags or '' }}" placeholder="e.g. vegan, gluten-free" />
+            </div>
+            <div class="form-group full">
+                <label for="edit_description">Description</label>
+                <textarea id="edit_description" name="description" rows="4" placeholder="Tell customers about your restaurant…">{{ restaurant.description or '' }}</textarea>
+            </div>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="overview-title-row">
+        <div class="overview-title">
+            <h1>{{ restaurant.name }}</h1>
+            <div class="overview-subtitle">Manage your restaurant profile, menu, image, and customer feedback.</div>
+        </div>
+        <div class="edit-actions">
+            <a href="{{ url_for('owner_dashboard', edit='true') }}" class="btn-edit">Edit Details</a>
+        </div>
+    </div>
+
+    {% if restaurant.dietaryTags %}
+    <div class="mini-chip-row">
+        {% for tag in restaurant.dietaryTags.split(',') %}
+            {% if tag.strip() %}
+            <span class="mini-chip">{{ tag.strip() }}</span>
             {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="overview-info-grid">
+        <div class="info-block">
+            <div class="label">Cuisine</div>
+            <div class="value">{{ restaurant.cuisine or '—' }}</div>
+        </div>
+        <div class="info-block">
+            <div class="label">Location</div>
+            <div class="value">📍 {{ restaurant.location or '—' }}</div>
         </div>
     </div>
 
-    <!-- ── Upload Restaurant Image ── -->
-    <div class="upload-card">
-        <div class="form-card-header">Restaurant Image</div>
-        <div class="form-card-body">
-            <form method="POST" action="{{ url_for('owner_upload_image') }}" enctype="multipart/form-data" id="upload-form">
-                <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
-                {% if restaurant.imageUrl and restaurant.imageUrl|length > 0 %}
-                <div style="margin-bottom: 16px;">
-                    <div style="font-size: 12px; font-weight: 600; color: #9a7b5a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Current Image</div>
-                    <img src="{{ restaurant.imageUrl if restaurant.imageUrl.startswith('http://') or restaurant.imageUrl.startswith('https://') else (backend_url.rstrip('/') ~ '/' ~ restaurant.imageUrl.lstrip('/')) }}" alt="Current restaurant image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #e0d8d0; background: #f5f0eb;" loading="lazy" />
-                </div>
-                {% endif %}
-                <img id="upload-preview" class="upload-preview" alt="New preview" />
-                <div class="upload-drop-zone" id="upload-drop-zone">
-                    <input type="file" name="file" id="upload-file-input" accept="image/jpeg,image/png,image/gif,image/webp" />
-                    <div class="upload-icon">📷</div>
-                    <div><strong>Click or drag &amp; drop</strong> an image here</div>
-                    <div class="upload-hint">JPG, PNG, GIF or WebP · Max 5 MB</div>
-                </div>
-                <button type="submit" class="btn-upload" id="upload-btn" disabled>Upload Image</button>
-            </form>
-        </div>
-    </div>
+    {% if restaurant.description %}
+    <div class="restaurant-desc">{{ restaurant.description }}</div>
+    {% endif %}
+    {% endif %}
+</div>
+</div>
 
-    <!-- ── Menu section ── -->
-    <div class="section-title">
-        Menu
-        <span class="count">{{ restaurant.menuItems|length if restaurant.menuItems else 0 }}</span>
-    </div>
-
-    <div class="menu-card">
-        <div class="form-card-header">Current Menu</div>
-        <div class="form-card-body">
-            {% if restaurant.menuItems %}
-                {% for item in restaurant.menuItems %}
-                <div class="menu-item-row">
-                    <div>
-                        <div class="menu-item-name">{{ item.itemName }}</div>
-                        {% if item.description %}
-                        <div class="menu-item-desc">{{ item.description }}</div>
+    <div class="stats-card">
+        <div>
+            <h2>Quick Overview</h2>
+            <div class="stat-grid">
+                <div class="stat-tile">
+                    <div class="stat-number">{{ restaurant.menuItems|length if restaurant.menuItems else 0 }}</div>
+                    <div class="stat-label">Menu Items</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-number">{{ reviews|length if reviews else 0 }}</div>
+                    <div class="stat-label">Reviews</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-number">
+                        {% if reviews %}
+                            {{ "%.1f"|format((reviews|sum(attribute='rating')) / (reviews|length)) }}
+                        {% else %}
+                            0.0
                         {% endif %}
                     </div>
-                    <div class="menu-item-price">${{ "%.2f"|format(item.price) }}</div>
+                    <div class="stat-label">Average Rating</div>
                 </div>
-                {% endfor %}
-            {% else %}
+                <div class="stat-tile">
+                    <div class="stat-number">{{ 'Yes' if restaurant.imageUrl else 'No' }}</div>
+                    <div class="stat-label">Image Uploaded</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-main">
+    <div class="left-stack">
+
+        <div class="panel-card">
+            <div class="panel-header">
+                <div class="panel-title">Restaurant Image</div>
+            </div>
+            <div class="panel-body">
+                <form method="POST" action="{{ url_for('owner_upload_image') }}" enctype="multipart/form-data" id="upload-form">
+                    <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
+
+                    {% if restaurant.imageUrl and restaurant.imageUrl|length > 0 %}
+                    <img class="current-image"
+                         src="{{ restaurant.imageUrl if restaurant.imageUrl.startswith('http://') or restaurant.imageUrl.startswith('https://') else (backend_url.rstrip('/') ~ '/' ~ restaurant.imageUrl.lstrip('/')) }}"
+                         alt="Current restaurant image"
+                         loading="lazy" />
+                    {% endif %}
+
+                    <img id="upload-preview" class="upload-preview" alt="New preview" />
+
+                    <div class="upload-drop-zone" id="upload-drop-zone">
+                        <input type="file" name="file" id="upload-file-input" accept="image/jpeg,image/png,image/gif,image/webp" />
+                        <div class="upload-icon">📷</div>
+                        <div><strong>Click or drag &amp; drop</strong> an image here</div>
+                        <div class="upload-hint">JPG, PNG, GIF or WebP · Max 5 MB</div>
+                    </div>
+
+                    <button type="submit" class="btn-upload" id="upload-btn" disabled style="margin-top:14px;">Upload Image</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-header">
+                <div class="panel-title">Menu Management</div>
+                <div class="panel-count">{{ restaurant.menuItems|length if restaurant.menuItems else 0 }}</div>
+            </div>
+            <div class="panel-body">
+
+                {% if restaurant.menuItems %}
+                <div class="menu-list">
+                    {% for item in restaurant.menuItems %}
+                    <div class="menu-item-row">
+                        <div>
+                            <div class="menu-item-name">{{ item.itemName }}</div>
+                            {% if item.description %}
+                            <div class="menu-item-desc">{{ item.description }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="menu-item-price">${{ "%.2f"|format(item.price) }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
                 <div class="empty-menu">No menu items yet. Add your first item below.</div>
-            {% endif %}
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('owner_add_menu_item') }}">
+                    <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="item_name">Item Name *</label>
+                            <input type="text" id="item_name" name="item_name" required placeholder="e.g. Margherita Pizza" />
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price *</label>
+                            <input type="number" id="price" name="price" required step="0.01" min="0" placeholder="e.g. 12.99" />
+                        </div>
+                        <div class="form-group full">
+                            <label for="item_description">Description</label>
+                            <textarea id="item_description" name="description" rows="2" placeholder="Optional item description…"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-save">Add Item</button>
+                </form>
+            </div>
         </div>
+
     </div>
 
-    <!-- ── Add menu item form ── -->
-    <div class="form-card">
-        <div class="form-card-header">Add Menu Item</div>
-        <div class="form-card-body">
-            <form method="POST" action="{{ url_for('owner_add_menu_item') }}">
-                <input type="hidden" name="restaurant_id" value="{{ restaurant.id }}" />
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="item_name">Item Name *</label>
-                        <input type="text" id="item_name" name="item_name" required placeholder="e.g. Margherita Pizza" />
-                    </div>
-                    <div class="form-group">
-                        <label for="price">Price *</label>
-                        <input type="number" id="price" name="price" required step="0.01" min="0" placeholder="e.g. 12.99" />
-                    </div>
-                    <div class="form-group full">
-                        <label for="item_description">Description</label>
-                        <textarea id="item_description" name="description" rows="2" placeholder="Optional item description…"></textarea>
-                    </div>
+    <div class="right-stack">
+        <div class="review-panel">
+            <div class="panel-header">
+                <div class="panel-title">Customer Reviews</div>
+                <div class="panel-count">{{ reviews|length if reviews else 0 }}</div>
+            </div>
+
+            <div class="review-summary">
+                <div class="review-summary-pill">
+                    Average Rating:
+                    {% if reviews %}
+                        {{ "%.1f"|format((reviews|sum(attribute='rating')) / (reviews|length)) }}/5
+                    {% else %}
+                        0.0/5
+                    {% endif %}
                 </div>
-                <button type="submit" class="btn-save">Add Item</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- ── Reviews section ── -->
-    <div class="section-title">
-        Customer Reviews
-        <span class="count">{{ reviews|length if reviews else 0 }}</span>
-    </div>
-
-    {% if reviews %}
-        {% for rv in reviews %}
-        <div class="review-card">
-            <div class="review-header">
-                <div class="reviewer-name">{{ rv.username or 'Anonymous' }}</div>
-                <div class="review-date">
-                    {% if rv.timestamp %}{{ rv.timestamp[:10] }}{% else %}—{% endif %}
+                <div class="review-summary-pill">
+                    Total Reviews: {{ reviews|length if reviews else 0 }}
                 </div>
             </div>
-            <div class="review-stars">
-                {% set star_count = rv.rating | int %}
-                {{ '★' * star_count }}{{ '☆' * (5 - star_count) }}
+
+            <div class="review-scroll">
+                {% if reviews %}
+                    {% for rv in reviews %}
+                    <div class="review-card">
+                        <div class="review-header">
+                            <div class="reviewer-name">{{ rv.username or 'Anonymous' }}</div>
+                            <div class="review-date">
+                                {% if rv.timestamp %}{{ rv.timestamp[:10] }}{% else %}—{% endif %}
+                            </div>
+                        </div>
+                        <div class="review-stars">
+                            {% set star_count = rv.rating | int %}
+                            {{ '★' * star_count }}{{ '☆' * (5 - star_count) }}
+                        </div>
+                        {% if rv.comment %}
+                        <div class="review-text">{{ rv.comment }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-reviews">
+                        <div class="empty-icon">💬</div>
+                        No reviews yet. Once customers rate your restaurant, they'll appear here.
+                    </div>
+                {% endif %}
             </div>
-            {% if rv.comment %}
-            <div class="review-text">{{ rv.comment }}</div>
-            {% endif %}
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-reviews">
-            <div class="empty-icon">💬</div>
-            No reviews yet. Once customers rate your restaurant, they'll appear here.
-        </div>
-    {% endif %}
-
-    {% else %}
-    <!-- ── No restaurant state ── -->
-    <div class="no-restaurant-card">
-        <div class="empty-icon">🏪</div>
-        <h3>No restaurant registered yet</h3>
-        <p>Create your restaurant listing below to start receiving customers and reviews.</p>
     </div>
+</div>
 
-    <!-- ── Create restaurant form ── -->
-    <div class="form-card">
-        <div class="form-card-header">Register Your Restaurant</div>
-        <div class="form-card-body">
-            <form method="POST" action="{{ url_for('owner_create_restaurant') }}">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="name">Restaurant Name *</label>
-                        <input type="text" id="name" name="name" required placeholder="e.g. The Cozy Bistro" />
-                    </div>
-                    <div class="form-group">
-                        <label for="cuisine">Cuisine *</label>
-                        <input type="text" id="cuisine" name="cuisine" required placeholder="e.g. Italian, Mexican" />
-                    </div>
-                    <div class="form-group">
-                        <label for="location">Location *</label>
-                        <input type="text" id="location" name="location" required placeholder="e.g. 123 Main St, Oshawa" />
-                    </div>
-                    <div class="form-group">
-                        <label for="dietary_tags">Dietary Tags</label>
-                        <input type="text" id="dietary_tags" name="dietary_tags" placeholder="e.g. vegan, gluten-free" />
-                    </div>
-                    <div class="form-group full">
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description" rows="3" placeholder="Tell customers about your restaurant…"></textarea>
-                    </div>
+{% else %}
+
+<div class="no-restaurant-card">
+    <div class="empty-icon">🏪</div>
+    <h3>No restaurant registered yet</h3>
+    <p>Create your restaurant listing below to start receiving customers and reviews.</p>
+</div>
+
+<div class="form-card">
+    <div class="form-card-header">Register Your Restaurant</div>
+    <div class="form-card-body">
+        <form method="POST" action="{{ url_for('owner_create_restaurant') }}">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Restaurant Name *</label>
+                    <input type="text" id="name" name="name" required placeholder="e.g. The Cozy Bistro" />
                 </div>
-                <button type="submit" class="btn-save">Register Restaurant</button>
-            </form>
-        </div>
+                <div class="form-group">
+                    <label for="cuisine">Cuisine *</label>
+                    <input type="text" id="cuisine" name="cuisine" required placeholder="e.g. Italian, Mexican" />
+                </div>
+                <div class="form-group">
+                    <label for="location">Location *</label>
+                    <input type="text" id="location" name="location" required placeholder="e.g. 123 Main St, Oshawa" />
+                </div>
+                <div class="form-group">
+                    <label for="dietary_tags">Dietary Tags</label>
+                    <input type="text" id="dietary_tags" name="dietary_tags" placeholder="e.g. vegan, gluten-free" />
+                </div>
+                <div class="form-group full">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Tell customers about your restaurant…"></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn-save">Register Restaurant</button>
+        </form>
     </div>
-    {% endif %}
+</div>
+{% endif %}
 </div>
 
 <script>

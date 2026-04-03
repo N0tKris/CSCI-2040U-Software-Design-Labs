@@ -104,9 +104,29 @@ public class RestaurantController {
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@RequestHeader(value = "Authorization", required = false) String token,
                                     @PathVariable Long id, @RequestBody Restaurant restaurant) {
-        // Only admin may update restaurants
-        if (!authService.isAdmin(token)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Admin privileges required"));
+        boolean isAdmin = authService.isAdmin(token);
+        boolean isOwner = authService.isOwner(token);
+
+        if (!isAdmin && !isOwner) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Admin or Owner privileges required"));
+        }
+
+        Restaurant existing = restaurantService.getRestaurantById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (isOwner && !isAdmin) {
+            Long ownerId = authService.getUserByToken(token).map(u -> u.getId()).orElse(null);
+            if (ownerId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Invalid token"));
+            }
+            if (!ownerId.equals(existing.getOwnerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You can only update your own restaurant"));
+            }
         }
 
         if (!restaurantService.validateRestaurant(restaurant)) {
@@ -114,6 +134,7 @@ public class RestaurantController {
             error.put("error", "name, cuisine and location are required");
             return ResponseEntity.badRequest().body(error);
         }
+
         Restaurant updated = restaurantService.updateRestaurant(id, restaurant);
         if (updated == null) {
             return ResponseEntity.notFound().build();
