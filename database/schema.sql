@@ -53,6 +53,7 @@ CREATE TABLE menus (
     item_name     VARCHAR(100)   NOT NULL,
     price         NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
     description   TEXT,
+    image_url     VARCHAR(512),
 
     CONSTRAINT fk_menus_restaurant
         FOREIGN KEY (restaurant_id)

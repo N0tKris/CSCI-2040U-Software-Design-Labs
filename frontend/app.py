@@ -950,7 +950,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <tbody id="menu-tbody">
                 {% if menu_items %}
                     {% for m in menu_items %}
-                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="menu" data-detail='{{ {"type": "menu", "id": (m.id or ''), "restaurantName": m.restaurant_name, "restaurantId": (m.restaurant_id or m.restaurantId or ''), "name": m.name, "price": m.price, "description": (m.description or '')}|tojson }}'>
+                    <tr class="admin-detail-row {% if loop.index > 5 %}extra-row{% endif %}" data-section="menu" data-detail='{{ {"type": "menu", "id": (m.id or ''), "restaurantName": m.restaurant_name, "restaurantId": (m.restaurant_id or m.restaurantId or ''), "name": m.name, "price": m.price, "description": (m.description or ''), "imageUrl": (m.imageUrl or '')}|tojson }}'>
                         <td>{{ m.restaurant_name }}</td>
                         <td>{{ m.name }}</td>
                         <td>{{ m.price }}</td>
@@ -1361,6 +1361,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     { label: 'Restaurant', value: getDetailFieldValue(detail.restaurantName || detail.restaurantId) },
                     { label: 'Item Name', value: getDetailFieldValue(detail.name) },
                     { label: 'Price', value: getDetailFieldValue(detail.price) },
+                                    if (detail.imageUrl) {
+                                        const menuImageUrl = detail.imageUrl.startsWith('http') ? detail.imageUrl : (backendUrl + (detail.imageUrl.startsWith('/') ? detail.imageUrl : '/' + detail.imageUrl));
+                                        sections.push('<div class="admin-detail-card full"><img src="' + escapeHtml(menuImageUrl) + '" alt="Menu Item Image" style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #ede3da;" onerror="this.style.display=\'none\';" /></div>');
+                                    }
                     { label: 'Description', value: getDetailFieldValue(detail.description), full: true },
                 ]));
             } else {
@@ -2022,6 +2026,70 @@ def create_restaurant() -> tuple[dict[str, Any], int]:
         return _error_payload("Couldn't reach backend to create restaurant", str(exc)), 502
 
 
+@app.put("/api/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>")
+def update_menu_item_proxy(restaurant_id: int, menu_item_id: int) -> tuple[dict[str, Any], int]:
+    payload = request.get_json(silent=True) or {}
+    token = session.get("owner_token") or session.get("admin_token") or request.headers.get("Authorization")
+    headers = {"Authorization": token, "Content-Type": "application/json"} if token else {"Content-Type": "application/json"}
+    try:
+        response = requests.put(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu/{menu_item_id}",
+            json=payload,
+            headers=headers,
+            timeout=8,
+        )
+        try:
+            body = response.json() if response.content else {}
+        except ValueError:
+            body = {"error": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to update menu item", str(exc)), 502
+
+
+@app.delete("/api/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>")
+def delete_menu_item_proxy(restaurant_id: int, menu_item_id: int) -> tuple[dict[str, Any], int]:
+    token = session.get("owner_token") or session.get("admin_token") or request.headers.get("Authorization")
+    headers = {"Authorization": token} if token else {}
+    try:
+        response = requests.delete(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu/{menu_item_id}",
+            headers=headers,
+            timeout=8,
+        )
+        try:
+            body = response.json() if response.content else {}
+        except ValueError:
+            body = {"error": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to delete menu item", str(exc)), 502
+
+
+@app.post("/api/restaurants/<int:restaurant_id>/menu/<int:menu_item_id>/upload-image")
+def upload_menu_item_image_proxy(restaurant_id: int, menu_item_id: int) -> tuple[dict[str, Any], int]:
+    token = session.get("owner_token") or session.get("admin_token") or request.headers.get("Authorization")
+    uploaded_file = request.files.get("file")
+    if not uploaded_file or not uploaded_file.filename:
+        return {"error": "No image file selected."}, 400
+
+    headers = {"Authorization": token} if token else {}
+    try:
+        response = requests.post(
+            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu/{menu_item_id}/upload-image",
+            headers=headers,
+            files={"file": (uploaded_file.filename, uploaded_file.stream, uploaded_file.content_type)},
+            timeout=12,
+        )
+        try:
+            body = response.json() if response.content else {}
+        except ValueError:
+            body = {"error": response.text}
+        return body, response.status_code
+    except requests.RequestException as exc:
+        return _error_payload("Couldn't reach backend to upload menu item image", str(exc)), 502
+
+
 @app.post("/api/auth/login")
 def proxy_login() -> tuple[dict[str, Any], int]:
     payload = request.get_json(silent=True) or {}
@@ -2556,10 +2624,13 @@ def admin_dashboard():
 
                 menu_items.append(
                     {
+                        "id": item.get("id") or "",
+                        "restaurant_id": restaurant.get("id") or "",
                         "restaurant_name": restaurant_name,
                         "name": item.get("itemName") or item.get("name") or "Unnamed item",
                         "price": price_text,
                         "description": item.get("description") or "",
+                        "imageUrl": item.get("imageUrl") or "",
                     }
                 )
             continue
@@ -3236,6 +3307,23 @@ def owner_add_menu_item():
             timeout=5,
         )
         if resp.ok:
+            uploaded_file = request.files.get("file")
+            if uploaded_file and uploaded_file.filename:
+                try:
+                    created_item = resp.json() if resp.content else {}
+                except ValueError:
+                    created_item = {}
+                menu_item_id = created_item.get("id") if isinstance(created_item, dict) else None
+                if menu_item_id:
+                    try:
+                        requests.post(
+                            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{restaurant_id}/menu/{menu_item_id}/upload-image",
+                            headers={"Authorization": token},
+                            files={"file": (uploaded_file.filename, uploaded_file.stream, uploaded_file.content_type)},
+                            timeout=10,
+                        )
+                    except requests.RequestException:
+                        pass
             return redirect(url_for("owner_dashboard"))
         try:
             msg = resp.json().get("error") or resp.json().get("message") or "Failed to add menu item."

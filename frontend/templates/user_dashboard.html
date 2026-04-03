@@ -1420,6 +1420,22 @@
             justify-content: space-between;
             gap: 12px;
             padding: 16px 18px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+        .detail-menu-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 16px 34px rgba(71, 44, 26, 0.1);
+            border-color: #dfc5af;
+        }
+        .detail-menu-thumb {
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid #ead8c9;
+            background: #f6eee7;
+            margin-bottom: 8px;
         }
         .detail-menu-card .menu-main {
             min-width: 0;
@@ -1480,6 +1496,118 @@
         .detail-empty-state .empty-copy span {
             font-size: 13px;
             line-height: 1.5;
+        }
+        .menu-detail-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.56);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 220;
+            padding: 16px;
+        }
+        .menu-detail-modal.active {
+            display: flex;
+        }
+        .menu-detail-modal-card {
+            background: #fff;
+            border-radius: 20px;
+            width: min(780px, 100%);
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 28px 70px rgba(31, 17, 10, 0.28);
+            border: 1px solid #ecdccc;
+        }
+        .menu-detail-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0e4da;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 1;
+        }
+        .menu-detail-modal-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #3d2c23;
+        }
+        .menu-detail-modal-close {
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 10px;
+            background: #f3e9e0;
+            color: #7f6654;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .menu-detail-modal-close:hover {
+            background: #ebddcf;
+            color: #5e4b3f;
+        }
+        .menu-detail-modal-body {
+            padding: 18px 20px 20px;
+            display: grid;
+            gap: 14px;
+        }
+        .menu-detail-modal-image {
+            width: 100%;
+            max-height: 320px;
+            object-fit: cover;
+            border-radius: 14px;
+            border: 1px solid #ecdccc;
+            background: #f8f1eb;
+        }
+        .menu-detail-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .menu-detail-meta-item {
+            border: 1px solid #efdfd0;
+            border-radius: 12px;
+            background: #fffbf8;
+            padding: 12px;
+        }
+        .menu-detail-meta-item .label {
+            font-size: 11px;
+            color: #a07f69;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .menu-detail-meta-item .value {
+            font-size: 14px;
+            color: #3f2f25;
+            font-weight: 700;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .menu-detail-description {
+            border: 1px solid #efdfd0;
+            border-radius: 12px;
+            background: #fffbf8;
+            padding: 12px;
+        }
+        .menu-detail-description .label {
+            font-size: 11px;
+            color: #a07f69;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+        .menu-detail-description .value {
+            font-size: 14px;
+            line-height: 1.65;
+            color: #5f4b3f;
         }
         .detail-review-summary {
             display: grid;
@@ -2134,6 +2262,32 @@
         <div class="review-detail-stars" id="review-detail-stars"></div>
         <div class="review-detail-text" id="review-detail-text"></div>
         <div class="review-detail-gallery" id="review-detail-gallery"></div>
+    </div>
+</div>
+
+<div class="menu-detail-modal" id="menu-item-detail-modal">
+    <div class="menu-detail-modal-card">
+        <div class="menu-detail-modal-header">
+            <div class="menu-detail-modal-title" id="menu-item-modal-title">Menu Item</div>
+            <button class="menu-detail-modal-close" id="menu-item-modal-close" aria-label="Close menu item detail">&times;</button>
+        </div>
+        <div class="menu-detail-modal-body">
+            <img class="menu-detail-modal-image" id="menu-item-modal-image" alt="Menu item image" loading="lazy" />
+            <div class="menu-detail-meta-grid">
+                <div class="menu-detail-meta-item">
+                    <div class="label">Price</div>
+                    <div class="value" id="menu-item-modal-price">—</div>
+                </div>
+                <div class="menu-detail-meta-item">
+                    <div class="label">Item</div>
+                    <div class="value" id="menu-item-modal-item">Menu Item</div>
+                </div>
+            </div>
+            <div class="menu-detail-description">
+                <div class="label">Description</div>
+                <div class="value" id="menu-item-modal-description">No description available.</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -3343,9 +3497,20 @@
                 ? `$${parsedPrice.toFixed(2)}`
                 : (typeof rawPrice === 'string' && rawPrice.trim() ? rawPrice.trim() : '—');
             const description = item.description || '';
+            const imageUrl = item.imageUrl || '';
+            const normalizedImageUrl = resolveImageUrl(imageUrl);
+            const escapedImageUrl = escHtml(normalizedImageUrl);
+            const encodedName = encodeURIComponent(itemName);
+            const encodedPrice = encodeURIComponent(price);
+            const encodedDescription = encodeURIComponent(description || 'No description available.');
             return `
-                <div class="detail-menu-card">
+                <div class="detail-menu-card" onclick="openMenuItemDetailModal(this)"
+                     data-item-name="${encodedName}"
+                     data-item-price="${encodedPrice}"
+                     data-item-description="${encodedDescription}"
+                     data-item-image-url="${escapedImageUrl}">
                     <div class="menu-main">
+                        ${normalizedImageUrl ? `<img class="detail-menu-thumb" src="${escapedImageUrl}" alt="${escHtml(itemName)}" onerror="this.style.display='none';" />` : ''}
                         <div class="menu-name">${escHtml(itemName)}</div>
                         ${description ? `<div class="menu-desc">${escHtml(description)}</div>` : ''}
                     </div>
@@ -3502,6 +3667,41 @@
         activeDetailRestaurant = null;
     }
 
+    function openMenuItemDetailModal(cardEl) {
+        if (!cardEl) return;
+        const modal = document.getElementById('menu-item-detail-modal');
+        const titleEl = document.getElementById('menu-item-modal-title');
+        const itemEl = document.getElementById('menu-item-modal-item');
+        const priceEl = document.getElementById('menu-item-modal-price');
+        const descriptionEl = document.getElementById('menu-item-modal-description');
+        const imageEl = document.getElementById('menu-item-modal-image');
+
+        const itemName = cardEl.dataset.itemName ? decodeURIComponent(cardEl.dataset.itemName) : 'Menu Item';
+        const itemPrice = cardEl.dataset.itemPrice ? decodeURIComponent(cardEl.dataset.itemPrice) : '—';
+        const itemDescription = cardEl.dataset.itemDescription ? decodeURIComponent(cardEl.dataset.itemDescription) : 'No description available.';
+        const rawImageUrl = cardEl.dataset.itemImageUrl || '';
+
+        titleEl.textContent = itemName;
+        itemEl.textContent = itemName;
+        priceEl.textContent = itemPrice;
+        descriptionEl.textContent = itemDescription;
+
+        const resolvedImage = resolveImageUrl(rawImageUrl);
+        if (resolvedImage) {
+            imageEl.src = resolvedImage;
+            imageEl.style.display = 'block';
+        } else {
+            imageEl.removeAttribute('src');
+            imageEl.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+    }
+
+    function closeMenuItemDetailModal() {
+        document.getElementById('menu-item-detail-modal').classList.remove('active');
+    }
+
     function openReviewDetailModal(review) {
         const backdrop = document.getElementById('review-detail-backdrop');
         const titleEl = document.getElementById('review-detail-title');
@@ -3578,6 +3778,10 @@
     document.getElementById('review-detail-backdrop').addEventListener('click', function(e) {
         if (e.target === this) closeReviewDetailModal();
     });
+    document.getElementById('menu-item-modal-close').addEventListener('click', closeMenuItemDetailModal);
+    document.getElementById('menu-item-detail-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeMenuItemDetailModal();
+    });
     document.getElementById('review-lightbox-close').addEventListener('click', closeReviewLightbox);
     document.getElementById('review-lightbox-prev').addEventListener('click', showPrevReviewLightbox);
     document.getElementById('review-lightbox-next').addEventListener('click', showNextReviewLightbox);
@@ -3590,6 +3794,7 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeReviewLightbox();
+            closeMenuItemDetailModal();
             closeReviewDetailModal();
             closeDetail();
         }

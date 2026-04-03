@@ -33,6 +33,10 @@ public class MenuItem {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /** URL path to the menu item's uploaded image, e.g. "/uploads/menu-item-1.jpg". */
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     public MenuItem() {}
 
     public MenuItem(Restaurant restaurant, String itemName, BigDecimal price, String description) {
@@ -56,4 +60,7 @@ public class MenuItem {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }
