@@ -1370,7 +1370,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     const menuImageUrl = detail.imageUrl.startsWith('http')
                         ? detail.imageUrl
                         : (backendUrl + (detail.imageUrl.startsWith('/') ? detail.imageUrl : '/' + detail.imageUrl));
-                    sections.push('<div class="admin-detail-card full"><img src="' + escapeHtml(menuImageUrl) + '" alt="Menu Item Image" style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #ede3da;" onerror="this.style.display=\'none\';" /></div>');
+                    const imgHtml = `<div class="admin-detail-card full"><img src="${escapeHtml(menuImageUrl)}" alt="Menu Item Image" style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #ede3da;" /></div>`;
+                    sections.push(imgHtml);
                 }
             } else {
                 sections.push(renderDetailCards([
