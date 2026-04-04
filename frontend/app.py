@@ -1222,7 +1222,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
     <script>
         // 🔍 DEBUG: Script is loading
-        console.log('🔍 [ADMIN_DASHBOARD] Script initialized');
+        console.log('[DEBUG] [ADMIN_DASHBOARD] Script initialized');
 
         // ── Show More / Show Less ──
         document.querySelectorAll('.btn-show-more').forEach(btn => {
@@ -1575,10 +1575,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
         const openYelpModalBtn = document.getElementById('open-yelp-modal');
         const yelpCancelBtn = document.getElementById('yelp_cancel_btn');
         const yelpImportBtn = document.getElementById('yelp_import_btn');
-        console.log('🔍 Yelp modal elements:', { openYelpModalBtn, yelpCancelBtn, yelpImportBtn, yelpBackdrop });
+        console.log('[DEBUG] Yelp modal elements:', { openYelpModalBtn, yelpCancelBtn, yelpImportBtn, yelpBackdrop });
         if (openYelpModalBtn) {
             openYelpModalBtn.addEventListener('click', () => {
-                console.log('🔍 Open Yelp modal clicked');
+                console.log('[DEBUG] Open Yelp modal clicked');
                 document.getElementById('yelp_msg').textContent = '';
                 document.getElementById('yelp_msg').style.color = '';
                 yelpBackdrop.style.display = 'flex';
@@ -1628,12 +1628,12 @@ ADMIN_DASHBOARD_TEMPLATE = """
         const openAddModalBtn = document.getElementById('open-add-modal');
         const adminAddCancelBtn = document.getElementById('admin_add_cancel');
         const adminAddSaveBtn = document.getElementById('admin_add_save');
-        console.log('🔍 Add restaurant modal elements:', { openAddModalBtn, adminAddCancelBtn, adminAddSaveBtn, adminBackdrop });
-        if (openAddModalBtn) openAddModalBtn.addEventListener('click', () => { console.log('🔍 Open Add modal clicked'); adminBackdrop.style.display = 'flex'; });
-        if (adminAddCancelBtn) adminAddCancelBtn.addEventListener('click', () => { console.log('🔍 Cancel Add modal'); adminBackdrop.style.display = 'none'; });
+        console.log('[DEBUG] Add restaurant modal elements:', { openAddModalBtn, adminAddCancelBtn, adminAddSaveBtn, adminBackdrop });
+        if (openAddModalBtn) openAddModalBtn.addEventListener('click', () => { console.log('[DEBUG] Open Add modal clicked'); adminBackdrop.style.display = 'flex'; });
+        if (adminAddCancelBtn) adminAddCancelBtn.addEventListener('click', () => { console.log('[DEBUG] Cancel Add modal'); adminBackdrop.style.display = 'none'; });
 
         if (adminAddSaveBtn) adminAddSaveBtn.addEventListener('click', async () => {
-            console.log('🔍 Save restaurant clicked');
+            console.log('[DEBUG] Save restaurant clicked');
             const payload = {
                 name: document.getElementById('admin_name').value.trim(),
                 cuisine: document.getElementById('admin_cuisine').value.trim(),
@@ -1647,7 +1647,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             }
 
             try {
-                console.log('🔍 Sending POST request to /admin/restaurants with payload:', payload);
+                console.log('[DEBUG] Sending POST request to /admin/restaurants with payload:', payload);
                 const res = await fetch('/admin/restaurants', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1655,7 +1655,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 });
 
                 const data = await res.json().catch(() => ({}));
-                console.log('🔍 Response status:', res.status, 'data:', data);
+                console.log('[DEBUG] Response status:', res.status, 'data:', data);
 
                 if (res.ok) {
                     // Success - refresh dashboard to show new restaurant
@@ -1671,18 +1671,18 @@ ADMIN_DASHBOARD_TEMPLATE = """
         });
 
         // Attach delete handlers to per-row delete buttons
-        console.log('🔍 Attaching delete handlers to', document.querySelectorAll('.admin-delete').length, 'buttons');
+        console.log('[DEBUG] Attaching delete handlers to', document.querySelectorAll('.admin-delete').length, 'buttons');
         document.querySelectorAll('.admin-delete').forEach(btn => {
             btn.addEventListener('click', async (ev) => {
-                console.log('🔍 Delete button clicked:', btn.getAttribute('data-id'));
+                console.log('[DEBUG] Delete button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 if (!id) return;
                 if (!confirm('Delete restaurant #' + id + '? This action cannot be undone.')) return;
                 try {
-                    console.log('🔍 Sending DELETE request for restaurant:', id);
+                    console.log('[DEBUG] Sending DELETE request for restaurant:', id);
                     const resp = await fetch('/admin/restaurants/' + encodeURIComponent(id), { method: 'DELETE' });
                     const body = await resp.json().catch(() => ({}));
-                    console.log('🔍 Delete response:', resp.status, body);
+                    console.log('[DEBUG] Delete response:', resp.status, body);
                     if (resp.ok) {
                         window.location.reload();
                         return;
@@ -1695,10 +1695,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
         });
 
         // Edit button handlers - open modal and populate fields
-        console.log('🔍 Attaching edit handlers to', document.querySelectorAll('.admin-edit').length, 'buttons');
+        console.log('[DEBUG] Attaching edit handlers to', document.querySelectorAll('.admin-edit').length, 'buttons');
         document.querySelectorAll('.admin-edit').forEach(btn => {
             btn.addEventListener('click', (ev) => {
-                console.log('🔍 Edit button clicked:', btn.getAttribute('data-id'));
+                console.log('[DEBUG] Edit button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 if (!id) return;
                 document.getElementById('admin_edit_name').value = btn.getAttribute('data-name') || '';
@@ -1799,9 +1799,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
         }
 
         const adminEditSaveBtn = document.getElementById('admin_edit_save');
-        console.log('🔍 Edit save button:', adminEditSaveBtn);
+        console.log('[DEBUG] Edit save button:', adminEditSaveBtn);
         if (adminEditSaveBtn) adminEditSaveBtn.addEventListener('click', async () => {
-            console.log('🔍 Edit save button clicked');
+            console.log('[DEBUG] Edit save button clicked');
             const id = document.getElementById('admin_edit_save').getAttribute('data-id');
             if (!id) return alert('No restaurant selected');
 
@@ -1879,7 +1879,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
         document.querySelectorAll('.admin-upload-img').forEach(btn => {
             btn.addEventListener('click', () => {
-                console.log('🔍 Upload image button clicked:', btn.getAttribute('data-id'));
+                console.log('[DEBUG] Upload image button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name') || ('Restaurant #' + id);
                 document.getElementById('admin-upload-subtitle').textContent = 'Uploading image for: ' + name;
@@ -1977,7 +1977,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             }
         });
 
-        console.log('🔍 [ADMIN_DASHBOARD] Script fully loaded and all event listeners attached!');
+        console.log('[DEBUG] [ADMIN_DASHBOARD] Script fully loaded and all event listeners attached!');
     </script>
 </body>
 </html>
