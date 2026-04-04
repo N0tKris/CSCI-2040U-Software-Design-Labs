@@ -868,7 +868,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if users|length > 5 %}
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ users|length }}</span>
-                <button class="btn-show-more" data-section="users" data-total="{{ users|length }}">Show all {{ users|length }} →</button>
+                <button type="button" class="btn-show-more" data-section="users" data-total="{{ users|length }}">Show all {{ users|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -883,8 +883,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     </div>
                 </div>
                 <div class="section-actions">
-                    <button id="open-yelp-modal" class="btn-secondary">🔍 Import from Yelp</button>
-                    <button id="open-add-modal" class="btn-primary">+ Add Restaurant</button>
+                    <button type="button" id="open-yelp-modal" class="btn-secondary">🔍 Import from Yelp</button>
+                    <button type="button" id="open-add-modal" class="btn-primary">+ Add Restaurant</button>
                 </div>
             </div>
             <table>
@@ -928,7 +928,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if restaurants|length > 5 %}
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ restaurants|length }}</span>
-                <button class="btn-show-more" data-section="restaurants" data-total="{{ restaurants|length }}">Show all {{ restaurants|length }} →</button>
+                <button type="button" class="btn-show-more" data-section="restaurants" data-total="{{ restaurants|length }}">Show all {{ restaurants|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -965,7 +965,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if menu_items|length > 5 %}
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ menu_items|length }}</span>
-                <button class="btn-show-more" data-section="menu" data-total="{{ menu_items|length }}">Show all {{ menu_items|length }} →</button>
+                <button type="button" class="btn-show-more" data-section="menu" data-total="{{ menu_items|length }}">Show all {{ menu_items|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -1012,8 +1012,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                             {% endif %}
                         </td>
                         <td style="white-space:nowrap;">
-                            <button class="admin-action-btn approve-btn" data-id="{{ rv.id }}" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;">✅ Approve</button>
-                            <button class="admin-action-btn reject-btn" data-id="{{ rv.id }}" style="background:#fdecea;color:#b71c1c;border:1px solid #ef9a9a;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">❌ Reject</button>
+                            <button type="button" class="admin-action-btn approve-btn" data-id="{{ rv.id }}" style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;margin-right:4px;">✅ Approve</button>
+                            <button type="button" class="admin-action-btn reject-btn" data-id="{{ rv.id }}" style="background:#fdecea;color:#b71c1c;border:1px solid #ef9a9a;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px;">❌ Reject</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -1025,7 +1025,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if pending_reviews|length > 5 %}
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ pending_reviews|length }}</span>
-                <button class="btn-show-more" data-section="pending-reviews" data-total="{{ pending_reviews|length }}">Show all {{ pending_reviews|length }} →</button>
+                <button type="button" class="btn-show-more" data-section="pending-reviews" data-total="{{ pending_reviews|length }}">Show all {{ pending_reviews|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -1065,7 +1065,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if reviews|length > 5 %}
             <div class="section-footer">
                 <span class="row-count-label">Showing 5 of {{ reviews|length }}</span>
-                <button class="btn-show-more" data-section="reviews" data-total="{{ reviews|length }}">Show all {{ reviews|length }} →</button>
+                <button type="button" class="btn-show-more" data-section="reviews" data-total="{{ reviews|length }}">Show all {{ reviews|length }} →</button>
             </div>
             {% endif %}
         </div>
@@ -1094,8 +1094,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
             </div>
             <div id="yelp_msg" style="font-size:13px;min-height:18px;margin-top:14px;"></div>
             <div class="modal-actions">
-                <button id="yelp_import_btn" class="btn-primary">Import</button>
-                <button id="yelp_cancel_btn" class="btn-secondary">Cancel</button>
+                <button type="button" id="yelp_import_btn" class="btn-primary">Import</button>
+                <button type="button" id="yelp_cancel_btn" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -1129,8 +1129,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="admin_add_save" class="btn-primary">Save Restaurant</button>
-                <button id="admin_add_cancel" class="btn-secondary">Cancel</button>
+                <button type="button" id="admin_add_save" class="btn-primary">Save Restaurant</button>
+                <button type="button" id="admin_add_cancel" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -1178,8 +1178,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="admin_edit_save" class="btn-primary">Save Changes</button>
-                <button id="admin_edit_cancel" class="btn-secondary">Cancel</button>
+                <button type="button" id="admin_edit_save" class="btn-primary">Save Changes</button>
+                <button type="button" id="admin_edit_cancel" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -1221,6 +1221,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
     </div>
 
     <script>
+        // 🔍 DEBUG: Script is loading
+        console.log('🔍 [ADMIN_DASHBOARD] Script initialized');
+
         // ── Show More / Show Less ──
         document.querySelectorAll('.btn-show-more').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1361,12 +1364,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     { label: 'Restaurant', value: getDetailFieldValue(detail.restaurantName || detail.restaurantId) },
                     { label: 'Item Name', value: getDetailFieldValue(detail.name) },
                     { label: 'Price', value: getDetailFieldValue(detail.price) },
-                                    if (detail.imageUrl) {
-                                        const menuImageUrl = detail.imageUrl.startsWith('http') ? detail.imageUrl : (backendUrl + (detail.imageUrl.startsWith('/') ? detail.imageUrl : '/' + detail.imageUrl));
-                                        sections.push('<div class="admin-detail-card full"><img src="' + escapeHtml(menuImageUrl) + '" alt="Menu Item Image" style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #ede3da;" onerror="this.style.display=\'none\';" /></div>');
-                                    }
                     { label: 'Description', value: getDetailFieldValue(detail.description), full: true },
                 ]));
+                if (detail.imageUrl) {
+                    const menuImageUrl = detail.imageUrl.startsWith('http')
+                        ? detail.imageUrl
+                        : (backendUrl + (detail.imageUrl.startsWith('/') ? detail.imageUrl : '/' + detail.imageUrl));
+                    sections.push('<div class="admin-detail-card full"><img src="' + escapeHtml(menuImageUrl) + '" alt="Menu Item Image" style="width: 100%; height: auto; max-height: 300px; object-fit: cover; border-radius: 10px; border: 1px solid #ede3da;" onerror="this.style.display=\'none\';" /></div>');
+                }
             } else {
                 sections.push(renderDetailCards([
                     { label: 'ID', value: getDetailFieldValue(detail.id) },
@@ -1567,18 +1572,28 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
         // ── Yelp Import modal ──
         const yelpBackdrop = document.getElementById('yelp-import-backdrop');
-        document.getElementById('open-yelp-modal').addEventListener('click', () => {
-            document.getElementById('yelp_msg').textContent = '';
-            document.getElementById('yelp_msg').style.color = '';
-            yelpBackdrop.style.display = 'flex';
-        });
-        document.getElementById('yelp_cancel_btn').addEventListener('click', () => { yelpBackdrop.style.display = 'none'; });
+        const openYelpModalBtn = document.getElementById('open-yelp-modal');
+        const yelpCancelBtn = document.getElementById('yelp_cancel_btn');
+        const yelpImportBtn = document.getElementById('yelp_import_btn');
+        console.log('🔍 Yelp modal elements:', { openYelpModalBtn, yelpCancelBtn, yelpImportBtn, yelpBackdrop });
+        if (openYelpModalBtn) {
+            openYelpModalBtn.addEventListener('click', () => {
+                console.log('🔍 Open Yelp modal clicked');
+                document.getElementById('yelp_msg').textContent = '';
+                document.getElementById('yelp_msg').style.color = '';
+                yelpBackdrop.style.display = 'flex';
+            });
+        }
+        if (yelpCancelBtn) {
+            yelpCancelBtn.addEventListener('click', () => { yelpBackdrop.style.display = 'none'; });
+        }
 
-        document.getElementById('yelp_import_btn').addEventListener('click', async () => {
+        if (yelpImportBtn) {
+            yelpImportBtn.addEventListener('click', async () => {
             const location = document.getElementById('yelp_location').value.trim() || 'Toronto';
             const limit = parseInt(document.getElementById('yelp_limit').value, 10) || 20;
             const msgEl = document.getElementById('yelp_msg');
-            const btn = document.getElementById('yelp_import_btn');
+            const btn = yelpImportBtn;
 
             btn.disabled = true;
             btn.textContent = 'Importing…';
@@ -1606,13 +1621,19 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 btn.disabled = false;
                 btn.textContent = 'Import';
             }
-        });
+            });
+        }
 
         const adminBackdrop = document.getElementById('admin-add-backdrop');
-        document.getElementById('open-add-modal').addEventListener('click', () => { adminBackdrop.style.display = 'flex'; });
-        document.getElementById('admin_add_cancel').addEventListener('click', () => { adminBackdrop.style.display = 'none'; });
+        const openAddModalBtn = document.getElementById('open-add-modal');
+        const adminAddCancelBtn = document.getElementById('admin_add_cancel');
+        const adminAddSaveBtn = document.getElementById('admin_add_save');
+        console.log('🔍 Add restaurant modal elements:', { openAddModalBtn, adminAddCancelBtn, adminAddSaveBtn, adminBackdrop });
+        if (openAddModalBtn) openAddModalBtn.addEventListener('click', () => { console.log('🔍 Open Add modal clicked'); adminBackdrop.style.display = 'flex'; });
+        if (adminAddCancelBtn) adminAddCancelBtn.addEventListener('click', () => { console.log('🔍 Cancel Add modal'); adminBackdrop.style.display = 'none'; });
 
-        document.getElementById('admin_add_save').addEventListener('click', async () => {
+        if (adminAddSaveBtn) adminAddSaveBtn.addEventListener('click', async () => {
+            console.log('🔍 Save restaurant clicked');
             const payload = {
                 name: document.getElementById('admin_name').value.trim(),
                 cuisine: document.getElementById('admin_cuisine').value.trim(),
@@ -1626,6 +1647,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
             }
 
             try {
+                console.log('🔍 Sending POST request to /admin/restaurants with payload:', payload);
                 const res = await fetch('/admin/restaurants', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1633,6 +1655,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 });
 
                 const data = await res.json().catch(() => ({}));
+                console.log('🔍 Response status:', res.status, 'data:', data);
 
                 if (res.ok) {
                     // Success - refresh dashboard to show new restaurant
@@ -1648,14 +1671,18 @@ ADMIN_DASHBOARD_TEMPLATE = """
         });
 
         // Attach delete handlers to per-row delete buttons
+        console.log('🔍 Attaching delete handlers to', document.querySelectorAll('.admin-delete').length, 'buttons');
         document.querySelectorAll('.admin-delete').forEach(btn => {
             btn.addEventListener('click', async (ev) => {
+                console.log('🔍 Delete button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 if (!id) return;
                 if (!confirm('Delete restaurant #' + id + '? This action cannot be undone.')) return;
                 try {
+                    console.log('🔍 Sending DELETE request for restaurant:', id);
                     const resp = await fetch('/admin/restaurants/' + encodeURIComponent(id), { method: 'DELETE' });
                     const body = await resp.json().catch(() => ({}));
+                    console.log('🔍 Delete response:', resp.status, body);
                     if (resp.ok) {
                         window.location.reload();
                         return;
@@ -1668,8 +1695,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
         });
 
         // Edit button handlers - open modal and populate fields
+        console.log('🔍 Attaching edit handlers to', document.querySelectorAll('.admin-edit').length, 'buttons');
         document.querySelectorAll('.admin-edit').forEach(btn => {
             btn.addEventListener('click', (ev) => {
+                console.log('🔍 Edit button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 if (!id) return;
                 document.getElementById('admin_edit_name').value = btn.getAttribute('data-name') || '';
@@ -1701,10 +1730,13 @@ ADMIN_DASHBOARD_TEMPLATE = """
             });
         });
 
-        document.getElementById('admin_edit_cancel').addEventListener('click', () => {
-            document.getElementById('admin-edit-backdrop').style.display = 'none';
-            document.getElementById('admin_edit_image_file').value = '';
-        });
+        const adminEditCancelBtn = document.getElementById('admin_edit_cancel');
+        if (adminEditCancelBtn) {
+            adminEditCancelBtn.addEventListener('click', () => {
+                document.getElementById('admin-edit-backdrop').style.display = 'none';
+                document.getElementById('admin_edit_image_file').value = '';
+            });
+        }
 
         // Image file handling in edit modal
         const editImageFile = document.getElementById('admin_edit_image_file');
@@ -1712,30 +1744,32 @@ ADMIN_DASHBOARD_TEMPLATE = """
         const editImageMsg = document.getElementById('admin_edit_image_msg');
         const editImagePreview = document.getElementById('admin_edit_image_preview');
 
-        editDropZone.addEventListener('click', () => editImageFile.click());
+        if (editDropZone && editImageFile) {
+            editDropZone.addEventListener('click', () => editImageFile.click());
 
-        editImageFile.addEventListener('change', handleEditImageFileSelect);
+            editImageFile.addEventListener('change', handleEditImageFileSelect);
 
-        editDropZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            editDropZone.style.borderColor = '#b85c38';
-            editDropZone.style.background = '#faf6f3';
-        });
+            editDropZone.addEventListener('dragover', e => {
+                e.preventDefault();
+                editDropZone.style.borderColor = '#b85c38';
+                editDropZone.style.background = '#faf6f3';
+            });
 
-        editDropZone.addEventListener('dragleave', () => {
-            editDropZone.style.borderColor = '#d5cfc9';
-            editDropZone.style.background = '';
-        });
+            editDropZone.addEventListener('dragleave', () => {
+                editDropZone.style.borderColor = '#d5cfc9';
+                editDropZone.style.background = '';
+            });
 
-        editDropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            editDropZone.style.borderColor = '#d5cfc9';
-            editDropZone.style.background = '';
-            if (e.dataTransfer.files.length) {
-                editImageFile.files = e.dataTransfer.files;
-                handleEditImageFileSelect();
-            }
-        });
+            editDropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                editDropZone.style.borderColor = '#d5cfc9';
+                editDropZone.style.background = '';
+                if (e.dataTransfer.files.length) {
+                    editImageFile.files = e.dataTransfer.files;
+                    handleEditImageFileSelect();
+                }
+            });
+        }
 
         function handleEditImageFileSelect() {
             const file = editImageFile.files[0];
@@ -1764,7 +1798,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
             reader.readAsDataURL(file);
         }
 
-        document.getElementById('admin_edit_save').addEventListener('click', async () => {
+        const adminEditSaveBtn = document.getElementById('admin_edit_save');
+        console.log('🔍 Edit save button:', adminEditSaveBtn);
+        if (adminEditSaveBtn) adminEditSaveBtn.addEventListener('click', async () => {
+            console.log('🔍 Edit save button clicked');
             const id = document.getElementById('admin_edit_save').getAttribute('data-id');
             if (!id) return alert('No restaurant selected');
 
@@ -1842,6 +1879,7 @@ ADMIN_DASHBOARD_TEMPLATE = """
 
         document.querySelectorAll('.admin-upload-img').forEach(btn => {
             btn.addEventListener('click', () => {
+                console.log('🔍 Upload image button clicked:', btn.getAttribute('data-id'));
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name') || ('Restaurant #' + id);
                 document.getElementById('admin-upload-subtitle').textContent = 'Uploading image for: ' + name;
@@ -1854,28 +1892,31 @@ ADMIN_DASHBOARD_TEMPLATE = """
             });
         });
 
-        document.getElementById('admin-upload-cancel').addEventListener('click', () => { uploadBackdrop.style.display = 'none'; });
+        const adminUploadCancelBtn = document.getElementById('admin-upload-cancel');
+        if (adminUploadCancelBtn) adminUploadCancelBtn.addEventListener('click', () => { uploadBackdrop.style.display = 'none'; });
 
-        adminUploadFile.addEventListener('change', handleAdminFileSelect);
+        if (adminUploadFile) adminUploadFile.addEventListener('change', handleAdminFileSelect);
 
-        adminUploadDropZone.addEventListener('dragover', e => {
-            e.preventDefault();
-            adminUploadDropZone.style.borderColor = '#b85c38';
-            adminUploadDropZone.style.background = '#faf6f3';
-        });
-        adminUploadDropZone.addEventListener('dragleave', () => {
-            adminUploadDropZone.style.borderColor = '#d5cfc9';
-            adminUploadDropZone.style.background = '';
-        });
-        adminUploadDropZone.addEventListener('drop', e => {
-            e.preventDefault();
-            adminUploadDropZone.style.borderColor = '#d5cfc9';
-            adminUploadDropZone.style.background = '';
-            if (e.dataTransfer.files.length) {
-                adminUploadFile.files = e.dataTransfer.files;
-                handleAdminFileSelect();
-            }
-        });
+        if (adminUploadDropZone && adminUploadFile) {
+            adminUploadDropZone.addEventListener('dragover', e => {
+                e.preventDefault();
+                adminUploadDropZone.style.borderColor = '#b85c38';
+                adminUploadDropZone.style.background = '#faf6f3';
+            });
+            adminUploadDropZone.addEventListener('dragleave', () => {
+                adminUploadDropZone.style.borderColor = '#d5cfc9';
+                adminUploadDropZone.style.background = '';
+            });
+            adminUploadDropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                adminUploadDropZone.style.borderColor = '#d5cfc9';
+                adminUploadDropZone.style.background = '';
+                if (e.dataTransfer.files.length) {
+                    adminUploadFile.files = e.dataTransfer.files;
+                    handleAdminFileSelect();
+                }
+            });
+        }
 
         function handleAdminFileSelect() {
             const file = adminUploadFile.files[0];
@@ -1935,6 +1976,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 adminUploadSave.disabled = false;
             }
         });
+
+        console.log('🔍 [ADMIN_DASHBOARD] Script fully loaded and all event listeners attached!');
     </script>
 </body>
 </html>
