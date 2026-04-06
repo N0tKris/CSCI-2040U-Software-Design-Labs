@@ -29,6 +29,8 @@ public class RestaurantDto {
     private Boolean yelpIsClosed;
     private List<String> menuItemNames;
     private List<MenuItemDto> menuItems;
+    private Double latitude;
+    private Double longitude;
 
     public RestaurantDto() {}
 
@@ -71,6 +73,8 @@ public class RestaurantDto {
                     .map(MenuItemDto::fromEntity)
                     .collect(Collectors.toList());
         }
+        dto.latitude = r.getLatitude();
+        dto.longitude = r.getLongitude();
         return dto;
     }
 
@@ -112,6 +116,10 @@ public class RestaurantDto {
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
     public List<MenuItemDto> getMenuItems() { return menuItems; }
     public void setMenuItems(List<MenuItemDto> menuItems) { this.menuItems = menuItems; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     private static double parseYelpRating(String description) {
         if (description == null || description.isBlank()) {

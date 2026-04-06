@@ -212,6 +212,8 @@ public class RestaurantService {
             r.setLocation(updated.getLocation());
             r.setDescription(updated.getDescription());
             r.setDietaryTags(updated.getDietaryTags());
+            r.setLatitude(updated.getLatitude());
+            r.setLongitude(updated.getLongitude());
             if (updated.getOwnerId() != null) {
                 r.setOwnerId(updated.getOwnerId());
             }
@@ -232,6 +234,8 @@ public class RestaurantService {
         restaurant.setLocation(updated.getLocation());
         restaurant.setDescription(updated.getDescription());
         restaurant.setDietaryTags(updated.getDietaryTags());
+        restaurant.setLatitude(updated.getLatitude());
+        restaurant.setLongitude(updated.getLongitude());
         if (updated.getOwnerId() != null) {
             restaurant.setOwnerId(updated.getOwnerId());
         }

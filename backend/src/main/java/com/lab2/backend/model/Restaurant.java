@@ -78,6 +78,14 @@ public class Restaurant {
     @Column(name = "yelp_is_closed")
     private Boolean yelpIsClosed;
 
+    /** Geographic latitude of the restaurant location (decimal degrees). */
+    @Column(name = "latitude")
+    private Double latitude;
+
+    /** Geographic longitude of the restaurant location (decimal degrees). */
+    @Column(name = "longitude")
+    private Double longitude;
+
     public Restaurant() {}
 
     public Restaurant(String name, String cuisine, String dietaryTags,
@@ -142,4 +150,10 @@ public class Restaurant {
 
     public Boolean getYelpIsClosed() { return yelpIsClosed; }
     public void setYelpIsClosed(Boolean yelpIsClosed) { this.yelpIsClosed = yelpIsClosed; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

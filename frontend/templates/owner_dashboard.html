@@ -993,6 +993,14 @@
                 <label for="edit_description">Description</label>
                 <textarea id="edit_description" name="description" rows="4" placeholder="Tell customers about your restaurant…">{{ restaurant.description or '' }}</textarea>
             </div>
+            <div class="form-group">
+                <label for="edit_latitude">Latitude <span style="font-weight:400;color:#9a8b80;">(optional)</span></label>
+                <input type="number" step="any" id="edit_latitude" name="latitude" value="{{ restaurant.latitude or '' }}" placeholder="e.g. 43.9414" />
+            </div>
+            <div class="form-group">
+                <label for="edit_longitude">Longitude <span style="font-weight:400;color:#9a8b80;">(optional)</span></label>
+                <input type="number" step="any" id="edit_longitude" name="longitude" value="{{ restaurant.longitude or '' }}" placeholder="e.g. -78.8964" />
+            </div>
         </div>
     </form>
 
@@ -1254,6 +1262,14 @@
                 <div class="form-group full">
                     <label for="description">Description</label>
                     <textarea id="description" name="description" rows="3" placeholder="Tell customers about your restaurant…"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="latitude">Latitude <span style="font-weight:400;color:#9a8b80;">(optional)</span></label>
+                    <input type="number" step="any" id="latitude" name="latitude" placeholder="e.g. 43.9414" />
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude <span style="font-weight:400;color:#9a8b80;">(optional)</span></label>
+                    <input type="number" step="any" id="longitude" name="longitude" placeholder="e.g. -78.8964" />
                 </div>
             </div>
             <button type="submit" class="btn-save">Register Restaurant</button>
