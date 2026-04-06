@@ -284,6 +284,24 @@
             transform: scale(1.04);
             box-shadow: 0 4px 12px rgba(184, 92, 56, 0.3);
         }
+        .search-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .search-bar .search-btn-secondary {
+            background: #f4ebe3;
+            color: #7d5d46;
+            border: 1px solid #e3d2c3;
+            box-shadow: none;
+        }
+        .search-bar .search-btn-secondary:hover {
+            background: #eadccf;
+            color: #6c4d39;
+            transform: scale(1.02);
+            box-shadow: none;
+        }
 
         /* ── Filter Panel ── */
         .cuisine-chip-row {
@@ -1381,6 +1399,39 @@
         .detail-actions-row {
             margin-bottom: 22px;
         }
+        .detail-location-block {
+            margin-bottom: 18px;
+            padding: 14px 14px 12px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #fffaf6 0%, #fcf5ef 100%);
+            border: 1px solid #ecdccc;
+        }
+        .detail-location-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: #a46847;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .detail-location-text {
+            font-size: 14px;
+            color: #5d4f46;
+            line-height: 1.55;
+            margin-bottom: 10px;
+        }
+        .detail-map-shell {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.28s ease, transform 0.28s ease;
+        }
+        .detail-map-shell.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
         .detail-description {
             font-size: 14px;
             color: #5d4f46;
@@ -1951,7 +2002,17 @@
             .topbar { padding: 0 14px; height: var(--mobile-topbar-height); }
             .hero { padding: calc(var(--mobile-topbar-height) + var(--mobile-topbar-gap)) 16px 28px; }
             .hero h1 { font-size: 24px; }
-            .search-bar { padding: 4px 4px 4px 14px; }
+            .search-bar {
+                padding: 4px 4px 4px 14px;
+                flex-wrap: wrap;
+            }
+            .search-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            .search-actions button {
+                flex: 1 1 0;
+            }
             .search-bar button { padding: 10px 20px; font-size: 13px; }
             .page { padding: 20px 14px 40px; }
             .admin-view-banner {
@@ -2043,11 +2104,16 @@
             border-radius: 14px;
             overflow: hidden;
             border: 1px solid #ecdccc;
-            margin-bottom: 6px;
+            margin-bottom: 0;
+            background: #f9f5f1;
+        }
+        #detail-map {
+            height: 300px;
+            width: 100%;
         }
         .detail-map-fallback {
             width: 100%;
-            height: 80px;
+            min-height: 112px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2057,6 +2123,8 @@
             color: #9a8b80;
             font-size: 13px;
             gap: 8px;
+            text-align: center;
+            padding: 18px;
         }
     </style>
 </head>
@@ -2136,7 +2204,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </span>
         <input type="text" id="search-input" placeholder="Search restaurants by name, cuisine, or location…" aria-label="Search restaurants" />
-        <button id="search-btn">Search</button>
+        <div class="search-actions">
+            <button type="button" class="search-btn-secondary" id="near-me-btn">Find Restaurants Near Me</button>
+            <button type="button" id="search-btn">Search</button>
+        </div>
     </div>
 </div>
 
@@ -2250,11 +2321,10 @@
             <div class="detail-info-row" id="detail-info-row"></div>
             <div class="detail-yelp-extra" id="detail-yelp-extra"></div>
             <div class="detail-actions-row" id="detail-actions-row"></div>
-            <div class="detail-description" id="detail-desc"></div>
-            <div class="detail-section-heading" style="margin-top:22px;"><span>Location</span></div>
             <div id="detail-map-section">
-                <div class="detail-map-fallback"><span>📍</span><span>Location not available</span></div>
+                <div class="detail-map-fallback"><span>📍</span><span>Location not available for this restaurant</span></div>
             </div>
+            <div class="detail-description" id="detail-desc"></div>
             <div class="detail-section-heading" style="margin-top:22px;"><span>Menu Items</span></div>
             <div id="detail-menu" class="detail-menu-list">
                 <div class="detail-empty-state">
@@ -2348,6 +2418,8 @@
     let infiniteObserver = null;
     let activeDetailRestaurant = null;
     let detailLeafletMap = null;
+    let detailMapRenderToken = 0;
+    let userLocation = null;
     const INITIAL_DISPLAY = 9;
     const CANONICAL_DIETARY_OPTIONS = [
         'Vegan',
@@ -2815,7 +2887,7 @@
         });
 
         // Update filtered set and reinitialize pagination
-        filteredRestaurants = filtered;
+        filteredRestaurants = sortRestaurantsByDistance(filtered);
 
         // Fade transition when re-rendering
         const grid = document.getElementById('restaurant-grid');
@@ -2885,6 +2957,60 @@
             return value;
         }
         return '';
+    }
+
+    function toFiniteNumber(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : null;
+    }
+
+    function isValidCoordinatePair(lat, lng) {
+        return lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng)
+            && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    }
+
+    function getRestaurantLatitude(restaurant) {
+        return toFiniteNumber(firstPresentValue(restaurant, ['latitude', 'lat', 'yelpLatitude', 'yelp_latitude']));
+    }
+
+    function getRestaurantLongitude(restaurant) {
+        return toFiniteNumber(firstPresentValue(restaurant, ['longitude', 'lng', 'lon', 'yelpLongitude', 'yelp_longitude']));
+    }
+
+    function getRestaurantAddress(restaurant) {
+        return firstPresentValue(restaurant, ['address', 'location']) || '';
+    }
+
+    function haversineDistanceMeters(lat1, lng1, lat2, lng2) {
+        const toRadians = degrees => degrees * Math.PI / 180;
+        const earthRadiusMeters = 6371000;
+        const deltaLat = toRadians(lat2 - lat1);
+        const deltaLng = toRadians(lng2 - lng1);
+        const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
+            + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2))
+            * Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+        return 2 * earthRadiusMeters * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function getRestaurantDistanceMeters(restaurant) {
+        if (!userLocation) return null;
+        const lat = getRestaurantLatitude(restaurant);
+        const lng = getRestaurantLongitude(restaurant);
+        if (!isValidCoordinatePair(lat, lng)) return null;
+        return haversineDistanceMeters(userLocation.latitude, userLocation.longitude, lat, lng);
+    }
+
+    function sortRestaurantsByDistance(restaurants) {
+        if (!userLocation) return restaurants;
+        return [...restaurants].sort((a, b) => {
+            const distanceA = getRestaurantDistanceMeters(a);
+            const distanceB = getRestaurantDistanceMeters(b);
+            if (distanceA == null && distanceB == null) return 0;
+            if (distanceA == null) return 1;
+            if (distanceB == null) return -1;
+            return distanceA - distanceB;
+        });
     }
 
     function normalizeYelpList(raw) {
@@ -3067,7 +3193,7 @@
                 return;
             }
 
-            filteredRestaurants = allRestaurants;
+            filteredRestaurants = sortRestaurantsByDistance(allRestaurants);
             renderFilterPanel();
             initializePaginatedView();
         } catch (e) {
@@ -3108,6 +3234,30 @@
 
     document.getElementById('search-btn').addEventListener('click', () => {
         onSearchInput(document.getElementById('search-input').value.trim());
+    });
+    document.getElementById('near-me-btn').addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            setStatus('Geolocation is not supported in this browser.');
+            return;
+        }
+
+        setStatus('Finding your location…');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                filteredRestaurants = sortRestaurantsByDistance(filteredRestaurants.length ? filteredRestaurants : allRestaurants);
+                applyFilters();
+                setStatus('Sorted by restaurants near you');
+            },
+            (error) => {
+                const reason = error && error.message ? error.message : 'Unable to access your location.';
+                setStatus(reason);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        );
     });
     document.getElementById('search-input').addEventListener('keydown', e => {
         if (e.key === 'Enter') onSearchInput(e.target.value.trim());
@@ -3375,7 +3525,7 @@
 
         const restaurantName = r.name || '';
         const cuisine = r.cuisine || 'Restaurant';
-        const location = r.location || 'Address unavailable';
+        const location = getRestaurantAddress(r) || 'Address unavailable';
         const description = r.description || 'Browse menu items, ratings, and reviews at a glance.';
         const ratingValue = Number(r.stars ?? r.rating ?? r.yelpRating ?? r.yelp_rating ?? 0);
         const reviewCount = Number(r.reviewCount ?? r.review_count ?? r.yelpReviewCount ?? r.yelp_review_count ?? 0);
@@ -3465,10 +3615,12 @@
 
         // ── Leaflet map ──
         const mapSection = document.getElementById('detail-map-section');
-        const lat = (r.latitude != null && r.latitude !== '') ? parseFloat(r.latitude) : null;
-        const lng = (r.longitude != null && r.longitude !== '') ? parseFloat(r.longitude) : null;
-        const hasCoords = lat != null && lng != null && isFinite(lat) && isFinite(lng)
-            && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        const lat = getRestaurantLatitude(r);
+        const lng = getRestaurantLongitude(r);
+        const hasCoords = isValidCoordinatePair(lat, lng);
+
+        detailMapRenderToken += 1;
+        const mapRenderToken = detailMapRenderToken;
 
         if (detailLeafletMap) {
             detailLeafletMap.remove();
@@ -3476,12 +3628,19 @@
         }
 
         if (hasCoords) {
-            mapSection.innerHTML = '<div id="detail-leaflet-map" class="detail-map-container"></div>';
-            // Defer map initialization so the detail panel CSS transition has time to make the
-            // container visible; Leaflet needs the element to have non-zero dimensions.
-            const MAP_INIT_DELAY_MS = 80;
+            mapSection.innerHTML = `
+                <div class="detail-location-block">
+                    <div class="detail-location-label">📍 Address</div>
+                    <div class="detail-location-text">${escHtml(location)}</div>
+                    <div class="detail-map-shell">
+                        <div id="detail-map" class="detail-map-container detail-map-loading"></div>
+                    </div>
+                </div>`;
+            const mapShell = mapSection.querySelector('.detail-map-shell');
+            const MAP_INIT_DELAY_MS = 100;
             setTimeout(() => {
-                const mapEl = document.getElementById('detail-leaflet-map');
+                if (mapRenderToken !== detailMapRenderToken) return;
+                const mapEl = document.getElementById('detail-map');
                 if (!mapEl) return;
                 try {
                     detailLeafletMap = L.map(mapEl, { scrollWheelZoom: false }).setView([lat, lng], 15);
@@ -3494,12 +3653,20 @@
                     L.marker([lat, lng]).addTo(detailLeafletMap)
                         .bindPopup(popupContent)
                         .openPopup();
+                    setTimeout(() => {
+                        if (mapRenderToken !== detailMapRenderToken || !detailLeafletMap) return;
+                        detailLeafletMap.invalidateSize();
+                        if (mapShell) {
+                            mapShell.classList.add('is-visible');
+                        }
+                        mapEl.classList.remove('detail-map-loading');
+                    }, 100);
                 } catch (e) {
-                    mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available</span></div>';
+                    mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available for this restaurant</span></div>';
                 }
             }, MAP_INIT_DELAY_MS);
         } else {
-            mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available</span></div>';
+            mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available for this restaurant</span></div>';
         }
 
         document.getElementById('detail-menu').innerHTML = `
@@ -3731,9 +3898,14 @@
     }
 
     function closeDetail() {
+        detailMapRenderToken += 1;
         document.getElementById('detail-backdrop').classList.remove('show');
         document.getElementById('detail-panel').classList.remove('open');
         document.body.classList.remove('detail-open');
+        if (detailLeafletMap) {
+            detailLeafletMap.remove();
+            detailLeafletMap = null;
+        }
         activeDetailRestaurant = null;
     }
 

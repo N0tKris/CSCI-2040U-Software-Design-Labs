@@ -38,6 +38,10 @@ public class Restaurant {
     @Column(nullable = false, length = 255)
     private String location;
 
+    /** Formatted street address from Yelp display_address or the app's canonical address string. */
+    @Column(name = "address", length = 255)
+    private String address;
+
     /** Menu items belonging to this restaurant. Removed when restaurant is deleted. */
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -117,6 +121,9 @@ public class Restaurant {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
     public List<MenuItem> getMenuItems() { return menuItems; }
     public void setMenuItems(List<MenuItem> menuItems) { this.menuItems = menuItems; }

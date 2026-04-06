@@ -14,6 +14,7 @@ public class RestaurantDto {
     private String name;
     private String cuisine;
     private String location;
+    private String address;
     private String dietaryTags;
     private String description;
     private Long ownerId;
@@ -41,6 +42,7 @@ public class RestaurantDto {
         dto.name = r.getName();
         dto.cuisine = r.getCuisine();
         dto.location = r.getLocation();
+        dto.address = hasText(r.getAddress()) ? r.getAddress() : r.getLocation();
         dto.dietaryTags = r.getDietaryTags();
         dto.description = r.getDescription();
         dto.ownerId = r.getOwnerId();
@@ -86,6 +88,8 @@ public class RestaurantDto {
     public void setCuisine(String cuisine) { this.cuisine = cuisine; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
     public String getDietaryTags() { return dietaryTags; }
     public void setDietaryTags(String dietaryTags) { this.dietaryTags = dietaryTags; }
     public String getDescription() { return description; }

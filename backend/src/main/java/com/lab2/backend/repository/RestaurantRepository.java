@@ -17,4 +17,10 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     /** Used by Yelp import to prevent duplicate entries. */
     boolean existsByNameAndLocation(String name, String location);
+
+    /** Used by Yelp import to refresh an existing restaurant entry when syncing data. */
+    Optional<Restaurant> findByNameAndLocation(String name, String location);
+
+    /** Stable key for Yelp-imported restaurants. */
+    Optional<Restaurant> findByYelpId(String yelpId);
 }
