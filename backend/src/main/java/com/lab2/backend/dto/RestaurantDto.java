@@ -14,6 +14,7 @@ public class RestaurantDto {
     private String name;
     private String cuisine;
     private String location;
+    private String address;
     private String dietaryTags;
     private String description;
     private Long ownerId;
@@ -29,6 +30,8 @@ public class RestaurantDto {
     private Boolean yelpIsClosed;
     private List<String> menuItemNames;
     private List<MenuItemDto> menuItems;
+    private Double latitude;
+    private Double longitude;
 
     public RestaurantDto() {}
 
@@ -39,6 +42,7 @@ public class RestaurantDto {
         dto.name = r.getName();
         dto.cuisine = r.getCuisine();
         dto.location = r.getLocation();
+        dto.address = hasText(r.getAddress()) ? r.getAddress() : r.getLocation();
         dto.dietaryTags = r.getDietaryTags();
         dto.description = r.getDescription();
         dto.ownerId = r.getOwnerId();
@@ -71,6 +75,8 @@ public class RestaurantDto {
                     .map(MenuItemDto::fromEntity)
                     .collect(Collectors.toList());
         }
+        dto.latitude = r.getLatitude();
+        dto.longitude = r.getLongitude();
         return dto;
     }
 
@@ -82,6 +88,8 @@ public class RestaurantDto {
     public void setCuisine(String cuisine) { this.cuisine = cuisine; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
     public String getDietaryTags() { return dietaryTags; }
     public void setDietaryTags(String dietaryTags) { this.dietaryTags = dietaryTags; }
     public String getDescription() { return description; }
@@ -112,6 +120,10 @@ public class RestaurantDto {
     public void setMenuItemNames(List<String> menuItemNames) { this.menuItemNames = menuItemNames; }
     public List<MenuItemDto> getMenuItems() { return menuItems; }
     public void setMenuItems(List<MenuItemDto> menuItems) { this.menuItems = menuItems; }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 
     private static double parseYelpRating(String description) {
         if (description == null || description.isBlank()) {

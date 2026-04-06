@@ -911,7 +911,9 @@ ADMIN_DASHBOARD_TEMPLATE = """
                                     data-location="{{ r.location|e }}"
                                     data-dietary="{{ (r.dietaryTags or r.dietary_tags)|default('')|e }}"
                                     data-description="{{ (r.description or '')|e }}"
-                                    data-image="{{ (r.imageUrl or r.image_url)|default('')|e }}">✏️</button>
+                                    data-image="{{ (r.imageUrl or r.image_url)|default('')|e }}"
+                                    data-latitude="{{ (r.latitude)|default('')|e }}"
+                                    data-longitude="{{ (r.longitude)|default('')|e }}">✏️</button>
                                 <button class="icon-btn admin-upload-img" title="Upload Image" aria-label="Upload image"
                                     data-id="{{ r.id }}"
                                     data-name="{{ r.name|e }}">📷</button>
@@ -1127,6 +1129,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
                     <label class="form-label">Description</label>
                     <textarea id="admin_description" class="form-textarea"></textarea>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Latitude <span style="color:#9a8b80;font-weight:400;">(optional)</span></label>
+                    <input id="admin_latitude" class="form-input" type="number" step="any" placeholder="e.g. 43.9414" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Longitude <span style="color:#9a8b80;font-weight:400;">(optional)</span></label>
+                    <input id="admin_longitude" class="form-input" type="number" step="any" placeholder="e.g. -78.8964" />
+                </div>
             </div>
             <div class="modal-actions">
                 <button type="button" id="admin_add_save" class="btn-primary">Save Restaurant</button>
@@ -1175,6 +1185,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 <div class="form-group form-full">
                     <label class="form-label">Description</label>
                     <textarea id="admin_edit_description" class="form-textarea"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Latitude <span style="color:#9a8b80;font-weight:400;">(optional)</span></label>
+                    <input id="admin_edit_latitude" class="form-input" type="number" step="any" placeholder="e.g. 43.9414" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Longitude <span style="color:#9a8b80;font-weight:400;">(optional)</span></label>
+                    <input id="admin_edit_longitude" class="form-input" type="number" step="any" placeholder="e.g. -78.8964" />
                 </div>
             </div>
             <div class="modal-actions">
@@ -1642,6 +1660,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 location: document.getElementById('admin_location').value.trim(),
                 description: document.getElementById('admin_description').value.trim()
             };
+            const latVal = document.getElementById('admin_latitude').value.trim();
+            const lngVal = document.getElementById('admin_longitude').value.trim();
+            if (latVal !== '') payload.latitude = parseFloat(latVal);
+            if (lngVal !== '') payload.longitude = parseFloat(lngVal);
             if (!payload.name || !payload.cuisine || !payload.location) {
                 alert('Please provide name, cuisine and location');
                 return;
@@ -1707,6 +1729,8 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 document.getElementById('admin_edit_location').value = btn.getAttribute('data-location') || '';
                 document.getElementById('admin_edit_dietary').value = btn.getAttribute('data-dietary') || '';
                 document.getElementById('admin_edit_description').value = btn.getAttribute('data-description') || '';
+                document.getElementById('admin_edit_latitude').value = btn.getAttribute('data-latitude') || '';
+                document.getElementById('admin_edit_longitude').value = btn.getAttribute('data-longitude') || '';
 
                 // Handle image preview
                 const imageUrl = btn.getAttribute('data-image') || '';
@@ -1813,6 +1837,10 @@ ADMIN_DASHBOARD_TEMPLATE = """
                 location: document.getElementById('admin_edit_location').value.trim(),
                 description: document.getElementById('admin_edit_description').value.trim()
             };
+            const editLatVal = document.getElementById('admin_edit_latitude').value.trim();
+            const editLngVal = document.getElementById('admin_edit_longitude').value.trim();
+            if (editLatVal !== '') payload.latitude = parseFloat(editLatVal);
+            if (editLngVal !== '') payload.longitude = parseFloat(editLngVal);
 
             if (!payload.name || !payload.cuisine || !payload.location) {
                 alert('Please provide name, cuisine and location');
@@ -3176,6 +3204,8 @@ def owner_create_restaurant():
     location = request.form.get("location", "").strip()
     dietary_tags = request.form.get("dietary_tags", "").strip()
     description = request.form.get("description", "").strip()
+    latitude_raw = request.form.get("latitude", "").strip()
+    longitude_raw = request.form.get("longitude", "").strip()
 
     if not name or not cuisine or not location:
         return render_template(
@@ -3194,6 +3224,16 @@ def owner_create_restaurant():
         "dietaryTags": dietary_tags or None,
         "description": description or None,
     }
+    if latitude_raw:
+        try:
+            payload["latitude"] = float(latitude_raw)
+        except ValueError:
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
+    if longitude_raw:
+        try:
+            payload["longitude"] = float(longitude_raw)
+        except ValueError:
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
 
     try:
         resp = requests.post(
@@ -3241,6 +3281,8 @@ def owner_update_restaurant():
     location = request.form.get("location", "").strip()
     dietary_tags = request.form.get("dietary_tags", "").strip()
     description = request.form.get("description", "").strip()
+    latitude_raw = request.form.get("latitude", "").strip()
+    longitude_raw = request.form.get("longitude", "").strip()
 
     if not restaurant_id or not name or not cuisine or not location:
         return redirect(url_for("owner_dashboard", edit="true"))
@@ -3252,6 +3294,16 @@ def owner_update_restaurant():
         "dietaryTags": dietary_tags or None,
         "description": description or None,
     }
+    if latitude_raw:
+        try:
+            payload["latitude"] = float(latitude_raw)
+        except ValueError:
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
+    if longitude_raw:
+        try:
+            payload["longitude"] = float(longitude_raw)
+        except ValueError:
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
 
     try:
         resp = requests.put(

@@ -89,6 +89,7 @@ public class RestaurantService {
                 r.setName(name);
                 r.setCuisine(cuisine);
                 r.setLocation(location);
+                r.setAddress(location);
                 r.setDescription("Imported from restaurants_only.json");
                 r.setDietaryTags("");
 
@@ -210,8 +211,11 @@ public class RestaurantService {
             r.setName(updated.getName());
             r.setCuisine(updated.getCuisine());
             r.setLocation(updated.getLocation());
+            r.setAddress(updated.getAddress());
             r.setDescription(updated.getDescription());
             r.setDietaryTags(updated.getDietaryTags());
+            r.setLatitude(updated.getLatitude());
+            r.setLongitude(updated.getLongitude());
             if (updated.getOwnerId() != null) {
                 r.setOwnerId(updated.getOwnerId());
             }
@@ -230,8 +234,11 @@ public class RestaurantService {
         restaurant.setName(updated.getName());
         restaurant.setCuisine(updated.getCuisine());
         restaurant.setLocation(updated.getLocation());
+        restaurant.setAddress(updated.getAddress());
         restaurant.setDescription(updated.getDescription());
         restaurant.setDietaryTags(updated.getDietaryTags());
+        restaurant.setLatitude(updated.getLatitude());
+        restaurant.setLongitude(updated.getLongitude());
         if (updated.getOwnerId() != null) {
             restaurant.setOwnerId(updated.getOwnerId());
         }
@@ -349,6 +356,7 @@ public class RestaurantService {
         restaurant.setName(trimToNull(restaurant.getName()));
         restaurant.setCuisine(trimToNull(restaurant.getCuisine()));
         restaurant.setLocation(trimToNull(restaurant.getLocation()));
+        restaurant.setAddress(trimToNull(restaurant.getAddress()));
         restaurant.setDietaryTags(trimToNull(restaurant.getDietaryTags()));
         restaurant.setDescription(trimToNull(restaurant.getDescription()));
     }

@@ -130,18 +130,31 @@ public class YelpService {
             if (!businesses.isArray()) return 0;
 
             List<Restaurant> toSave = new ArrayList<>();
+            int upsertedCount = 0;
 
             for (JsonNode biz : businesses) {
                 Restaurant r = mapToRestaurant(biz);
                 if (r == null) continue;                         // invalid entry
-                if (isDuplicate(r)) continue;                    // already in DB
-                toSave.add(r);
+                Optional<Restaurant> existing = Optional.empty();
+                if (hasText(r.getYelpId())) {
+                    existing = restaurantRepository.findByYelpId(r.getYelpId());
+                }
+                if (existing.isEmpty()) {
+                    existing = restaurantRepository.findByNameAndLocation(r.getName(), r.getLocation());
+                }
+                if (existing.isPresent()) {
+                    mergeImportedRestaurant(existing.get(), r);
+                    toSave.add(existing.get());
+                } else {
+                    toSave.add(r);
+                }
+                upsertedCount++;
             }
 
             if (!toSave.isEmpty()) {
                 restaurantRepository.saveAll(toSave);            // batch insert
             }
-            return toSave.size();
+            return upsertedCount;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse Yelp response: " + e.getMessage(), e);
@@ -407,10 +420,13 @@ public class YelpService {
 
         // Location
         JsonNode loc = biz.path("location");
-        String address = textOrNull(loc, "address1");
-        String city = textOrNull(loc, "city");
-        String location = buildLocation(address, city);
+        String address = buildFormattedAddress(loc);
+        String location = hasText(address) ? address : buildFallbackLocation(loc);
         if (location == null || location.isBlank()) return null;
+
+        JsonNode coordinates = biz.path("coordinates");
+        Double latitude = doubleOrNull(coordinates, "latitude");
+        Double longitude = doubleOrNull(coordinates, "longitude");
 
         // Rating → stored in description for now (the entity has no rating column)
         JsonNode ratingNode = biz.path("rating");
@@ -425,6 +441,7 @@ public class YelpService {
         r.setName(name.length() > 100 ? name.substring(0, 100) : name);
         r.setCuisine(cuisine.length() > 50 ? cuisine.substring(0, 50) : cuisine);
         r.setLocation(location.length() > 255 ? location.substring(0, 255) : location);
+        r.setAddress(address != null && address.length() > 255 ? address.substring(0, 255) : address);
         r.setDescription(description);
         r.setYelpImageUrl(truncate(textOrNull(biz, "image_url"), 512));
         r.setYelpUrl(truncate(textOrNull(biz, "url"), 512));
@@ -437,11 +454,48 @@ public class YelpService {
         r.setYelpRating(isPresentValueNode(ratingNode) ? rating : null);
         r.setYelpReviewCount(isPresentValueNode(reviewCountNode) ? reviewCount : null);
         r.setYelpIsClosed(parseBooleanOrNull(biz.path("is_closed")));
+        r.setLatitude(latitude);
+        r.setLongitude(longitude);
         return r;
     }
 
-    private boolean isDuplicate(Restaurant r) {
-        return restaurantRepository.existsByNameAndLocation(r.getName(), r.getLocation());
+    private void mergeImportedRestaurant(Restaurant existing, Restaurant incoming) {
+        if (!hasText(existing.getAddress()) && hasText(incoming.getAddress())) {
+            existing.setAddress(incoming.getAddress());
+        }
+        if (existing.getLatitude() == null && incoming.getLatitude() != null) {
+            existing.setLatitude(incoming.getLatitude());
+        }
+        if (existing.getLongitude() == null && incoming.getLongitude() != null) {
+            existing.setLongitude(incoming.getLongitude());
+        }
+        if (!hasText(existing.getYelpImageUrl()) && hasText(incoming.getYelpImageUrl())) {
+            existing.setYelpImageUrl(incoming.getYelpImageUrl());
+        }
+        if (!hasText(existing.getYelpUrl()) && hasText(incoming.getYelpUrl())) {
+            existing.setYelpUrl(incoming.getYelpUrl());
+        }
+        if (!hasText(existing.getYelpId()) && hasText(incoming.getYelpId())) {
+            existing.setYelpId(incoming.getYelpId());
+        }
+        if (!hasText(existing.getYelpPhone()) && hasText(incoming.getYelpPhone())) {
+            existing.setYelpPhone(incoming.getYelpPhone());
+        }
+        if (!hasText(existing.getYelpPrice()) && hasText(incoming.getYelpPrice())) {
+            existing.setYelpPrice(incoming.getYelpPrice());
+        }
+        if (existing.getYelpRating() == null && incoming.getYelpRating() != null) {
+            existing.setYelpRating(incoming.getYelpRating());
+        }
+        if (existing.getYelpReviewCount() == null && incoming.getYelpReviewCount() != null) {
+            existing.setYelpReviewCount(incoming.getYelpReviewCount());
+        }
+        if (existing.getYelpIsClosed() == null && incoming.getYelpIsClosed() != null) {
+            existing.setYelpIsClosed(incoming.getYelpIsClosed());
+        }
+        if (!hasText(existing.getDescription()) && hasText(incoming.getDescription())) {
+            existing.setDescription(incoming.getDescription());
+        }
     }
 
     private static String textOrNull(JsonNode node, String field) {
@@ -451,10 +505,49 @@ public class YelpService {
         return text.isEmpty() ? null : text;
     }
 
-    private static String buildLocation(String address, String city) {
-        if (address != null && city != null) return address + ", " + city;
-        if (city != null) return city;
-        return address;       // may be null → caller checks
+    private static String buildFallbackLocation(JsonNode locationNode) {
+        String address = textOrNull(locationNode, "address1");
+        String city = textOrNull(locationNode, "city");
+        String state = textOrNull(locationNode, "state");
+        String postalCode = textOrNull(locationNode, "zip_code");
+        StringBuilder builder = new StringBuilder();
+        if (address != null) builder.append(address);
+        if (city != null) {
+            if (builder.length() > 0) builder.append(", ");
+            builder.append(city);
+        }
+        if (state != null) {
+            if (builder.length() > 0) builder.append(", ");
+            builder.append(state);
+        }
+        if (postalCode != null) {
+            if (builder.length() > 0) builder.append(" ");
+            builder.append(postalCode);
+        }
+        return builder.toString().trim();
+    }
+
+    private static String buildFormattedAddress(JsonNode locationNode) {
+        JsonNode displayAddress = locationNode.path("display_address");
+        if (displayAddress.isArray() && !displayAddress.isEmpty()) {
+            List<String> parts = new ArrayList<>();
+            for (JsonNode part : displayAddress) {
+                String value = part.asText("").trim();
+                if (!value.isBlank()) {
+                    parts.add(value);
+                }
+            }
+            if (!parts.isEmpty()) {
+                return String.join(", ", parts);
+            }
+        }
+        if (displayAddress.isTextual()) {
+            String text = displayAddress.asText("").trim();
+            if (!text.isBlank()) {
+                return text;
+            }
+        }
+        return null;
     }
 
     private static String firstNonBlank(String... values) {
@@ -476,6 +569,32 @@ public class YelpService {
             return null;
         }
         return node.asBoolean();
+    }
+
+    private static Double doubleOrNull(JsonNode node, String field) {
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return null;
+        }
+        JsonNode child = node.path(field);
+        if (child.isMissingNode() || child.isNull()) {
+            return null;
+        }
+        if (child.isNumber()) {
+            return child.asDouble();
+        }
+        String text = child.asText("").trim();
+        if (text.isBlank()) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private static boolean isPresentValueNode(JsonNode node) {

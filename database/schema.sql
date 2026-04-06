@@ -36,7 +36,19 @@ CREATE TABLE restaurants (
     cuisine       VARCHAR(50)  NOT NULL,
     dietary_tags  VARCHAR(255),          -- comma-separated tags, e.g. 'vegan,gluten-free'
     description   TEXT,
-    location      VARCHAR(255) NOT NULL
+    location      VARCHAR(255) NOT NULL,
+    address       VARCHAR(255),
+    latitude      DOUBLE PRECISION,
+    longitude     DOUBLE PRECISION,
+    yelp_image_url VARCHAR(512),
+    yelp_url      VARCHAR(512),
+    yelp_id       VARCHAR(128),
+    yelp_phone    VARCHAR(64),
+    yelp_price    VARCHAR(16),
+    yelp_rating   DOUBLE PRECISION,
+    yelp_review_count INTEGER,
+    yelp_is_closed BOOLEAN,
+    owner_id      INT
 );
 
 -- Index for cuisine-based filtering
