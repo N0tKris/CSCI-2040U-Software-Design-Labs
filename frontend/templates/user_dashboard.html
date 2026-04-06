@@ -3477,7 +3477,9 @@
 
         if (hasCoords) {
             mapSection.innerHTML = '<div id="detail-leaflet-map" class="detail-map-container"></div>';
-            // Defer map init until the panel is visible so Leaflet can measure the container
+            // Defer map initialization so the detail panel CSS transition has time to make the
+            // container visible; Leaflet needs the element to have non-zero dimensions.
+            const MAP_INIT_DELAY_MS = 80;
             setTimeout(() => {
                 const mapEl = document.getElementById('detail-leaflet-map');
                 if (!mapEl) return;
@@ -3487,13 +3489,15 @@
                         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                         maxZoom: 19
                     }).addTo(detailLeafletMap);
+                    const popupContent = `<strong>${escHtml(restaurantName)}</strong>`
+                        + (location ? `<br>${escHtml(location)}` : '');
                     L.marker([lat, lng]).addTo(detailLeafletMap)
-                        .bindPopup(`<strong>${escHtml(restaurantName)}</strong>${location ? '<br>' + escHtml(location) : ''}`)
+                        .bindPopup(popupContent)
                         .openPopup();
                 } catch (e) {
                     mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available</span></div>';
                 }
-            }, 80);
+            }, MAP_INIT_DELAY_MS);
         } else {
             mapSection.innerHTML = '<div class="detail-map-fallback"><span>📍</span><span>Location not available</span></div>';
         }

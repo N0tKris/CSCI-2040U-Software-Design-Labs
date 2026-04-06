@@ -3228,12 +3228,12 @@ def owner_create_restaurant():
         try:
             payload["latitude"] = float(latitude_raw)
         except ValueError:
-            pass
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
     if longitude_raw:
         try:
             payload["longitude"] = float(longitude_raw)
         except ValueError:
-            pass
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
 
     try:
         resp = requests.post(
@@ -3298,12 +3298,12 @@ def owner_update_restaurant():
         try:
             payload["latitude"] = float(latitude_raw)
         except ValueError:
-            pass
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
     if longitude_raw:
         try:
             payload["longitude"] = float(longitude_raw)
         except ValueError:
-            pass
+            pass  # Input type="number" prevents non-numeric values; skip silently if bypassed
 
     try:
         resp = requests.put(
