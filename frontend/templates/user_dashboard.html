@@ -2241,7 +2241,7 @@
 
         <main class="results-content">
             <div class="results-header">
-                <h2>Restaurants near you</h2>
+                <h2 id="results-heading">All Restaurants</h2>
                 <span id="status-bar">Loading…</span>
             </div>
 
@@ -2420,6 +2420,8 @@
     let detailLeafletMap = null;
     let detailMapRenderToken = 0;
     let userLocation = null;
+    const DEFAULT_RESULTS_HEADING = 'All Restaurants';
+    const NEAR_ME_RESULTS_HEADING = 'Restaurants near you';
     const INITIAL_DISPLAY = 9;
     const CANONICAL_DIETARY_OPTIONS = [
         'Vegan',
@@ -3087,6 +3089,12 @@
         document.getElementById('status-bar').textContent = msg;
     }
 
+    function updateResultsHeading() {
+        const headingEl = document.getElementById('results-heading');
+        if (!headingEl) return;
+        headingEl.textContent = userLocation ? NEAR_ME_RESULTS_HEADING : DEFAULT_RESULTS_HEADING;
+    }
+
     // ── Emoji map for cuisine ──
     function cuisineEmoji(cuisine) {
         if (!cuisine) return '🍽';
@@ -3178,6 +3186,7 @@
 
     // ── Load restaurants ──
     async function loadRestaurants() {
+        updateResultsHeading();
         setStatus('Loading…');
         try {
             debugLog('fetch-start', { endpoint: '/api/restaurants' });
@@ -3248,6 +3257,7 @@
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
                 };
+                updateResultsHeading();
                 filteredRestaurants = sortRestaurantsByDistance(filteredRestaurants.length ? filteredRestaurants : allRestaurants);
                 applyFilters();
                 setStatus('Sorted by restaurants near you');
