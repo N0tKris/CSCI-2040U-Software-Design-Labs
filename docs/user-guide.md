@@ -39,7 +39,21 @@ You can scroll through the catalog to explore all listings.
 
 ## Searching & Filtering
 
-Use the **search bar** at the top of the dashboard to find restaurants by name, cuisine type, or location. Type your query and click **Search** to filter results.
+Use the **search bar** at the top of the dashboard to find restaurants by:
+
+- Restaurant name
+- Cuisine type
+- Location
+- Dietary tags (restaurant-level and menu-item-level)
+
+Type your query and click **Search** to filter results.
+
+### Find Restaurants Near Me
+
+Click **Find Restaurants Near Me** to use browser geolocation and sort/filter nearby restaurants.
+
+- If permission is denied, the app shows a status message and leaves current results unchanged.
+- If geolocation is unavailable, a fallback message is shown.
 
 ---
 
@@ -47,7 +61,8 @@ Use the **search bar** at the top of the dashboard to find restaurants by name, 
 
 1. Click **View Details** on any restaurant card.
 2. A detailed panel opens showing the restaurant's name, location, description, and all published reviews.
-3. If the restaurant was imported from Yelp, a Yelp rating and review snippets may also appear.
+3. Menu items include dietary-tag chips when available.
+4. If the restaurant was imported from Yelp, a Yelp rating and review snippets may also appear.
 
 ---
 
@@ -61,7 +76,10 @@ You must be logged in to leave a review.
 4. Type your **review comment** in the text field.
 5. Click **Submit Review**.
 
-Your review is saved to the database and displayed on the restaurant page immediately.
+Your review is saved to the database and enters moderation as **PENDING**.
+
+- Approved reviews become publicly visible.
+- Rejected reviews remain hidden.
 
 ---
 
@@ -75,4 +93,5 @@ Click **Sign out** in the top-right corner of any page to end your session.
 
 - You do not need to be logged in to browse restaurants or view published reviews.
 - Each user can submit multiple reviews for different restaurants.
-- Reviews are published immediately upon submission (no admin approval required in the current MVP).
+- Dietary filters can match restaurants through either restaurant tags or menu item tags.
+- Admins can test the user flow through **View As User** mode.

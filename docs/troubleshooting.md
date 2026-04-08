@@ -57,6 +57,22 @@ ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('USER','ADMIN'
 
 ---
 
+## Admin View as Owner: Restaurant Looks Unsaved
+
+**Symptom:** In admin owner simulation mode, registering a restaurant appears to fail or disappear.
+
+**Cause:** Owner simulation uses admin credentials and tracked simulation state. If simulation state is stale (for example after manual session edits or abrupt tab/session changes), the dashboard may not show the expected restaurant.
+
+**Fix:**
+1. Exit owner simulation using **Back to Admin**.
+2. Re-enter via **View as Owner** from the Admin Dashboard.
+3. Retry restaurant registration.
+4. If needed, log out admin and log back in to reset session state.
+
+The current frontend stores a simulation restaurant id in session to keep owner-view data visible after creation.
+
+---
+
 ## Yelp Import Not Working
 
 **Symptom:** Import from Yelp returns an error or imports nothing.
@@ -77,6 +93,19 @@ ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('USER','ADMIN'
 1. Verify the restaurant has a `yelp_id` set (only imported restaurants do).
 2. Confirm `YELP_API_KEY` is valid and has not expired.
 3. Check the debug endpoint: `GET /api/yelp/debug/yelp-reviews/{id}` returns raw Yelp data for a given restaurant ID.
+
+---
+
+## Review Submitted but Not Visible to Users
+
+**Symptom:** A newly submitted review is not shown on public restaurant pages.
+
+**Cause:** Reviews start in `PENDING` status and are hidden until approved.
+
+**Fix:**
+1. Log in as admin.
+2. Open pending reviews.
+3. Approve the review to set status to `PUBLISHED`.
 
 ---
 

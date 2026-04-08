@@ -74,6 +74,12 @@ Backend REST API       http://localhost:8080
 
 Flask sessions track the logged-in role independently of backend tokens.
 
+Additional frontend session flags are used for admin simulation modes:
+
+- `admin_view_as_user`
+- `admin_view_as_owner`
+- simulation state restoration keys for temporary mode switching
+
 ---
 
 ## Database Schema
@@ -84,11 +90,13 @@ Core tables:
 |---|---|
 | `users` | id, username, password, role (USER / OWNER / ADMIN) |
 | `restaurants` | id, name, cuisine, location, dietary_tags, description, image, rating, yelp_id |
-| `menus` | id, restaurant_id, item_name, price, description |
+| `menus` | id, restaurant_id, item_name, price, description, dietary_tags, image_url |
 | `reviews` | id, user_id, restaurant_id, rating, comment, status |
 
 - The `yelp_id` field on `restaurants` prevents duplicate imports.
 - The `rating` field stores Yelp-sourced ratings for imported restaurants.
+- `menus.dietary_tags` stores normalized, comma-separated menu-level dietary labels.
+- `reviews.status` is moderation-driven (`PENDING`, `PUBLISHED`, `REJECTED`).
 
 ---
 

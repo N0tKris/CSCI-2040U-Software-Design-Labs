@@ -24,10 +24,10 @@
 2. Browse the restaurant catalog on the User Dashboard.
 3. Click **Leave Review** on any restaurant card.
 4. Select a star rating and type a comment in the modal.
-5. Click **Submit Review** — the review is saved immediately.
+5. Click **Submit Review** — the review is created with status **PENDING**.
 6. Log out, then log in as **Admin**.
 7. Navigate to the Reviews panel to confirm the review appears.
-8. *(Optional for future iteration)* Use **Approve** or **Reject** to moderate the review.
+8. Use **Approve** or **Reject** to moderate the review.
 
 ---
 
@@ -39,9 +39,10 @@
 2. Create an owner account with a username and password.
 3. After logging in, fill in the **Register Your Restaurant** form with name, cuisine, location, and description.
 4. Click **Register Restaurant** — the listing now appears in the public catalog.
-5. From the Owner Dashboard, click **Add Menu Item** and add at least one item with a name, price, and description.
+5. From the Owner Dashboard, click **Add Menu Item** and add at least one item with a name, price, description, and dietary tags.
 6. Click **Upload Image**, select a JPG or PNG file under 5 MB, and submit.
-7. Log out and log in as a User to verify the restaurant, menu, and image are visible in the catalog.
+7. Optionally edit a menu item in the modal to verify update/delete flows.
+8. Log out and log in as a User to verify the restaurant, menu, dietary tags, and image are visible in the catalog.
 
 ---
 
@@ -55,11 +56,27 @@
 4. Click **Edit** on one restaurant to update its description or dietary tags. Save.
 5. Click **Delete** on a test/placeholder restaurant to remove it from the catalog.
 6. Navigate to the **Reviews** panel and review any submitted user reviews. Approve or reject as appropriate.
-7. Use **View As User** to confirm the catalog looks correct from a user perspective, then exit user view.
+7. Use **View As User** to confirm the catalog looks correct from a user perspective, then resume admin view.
+8. Use **View as Owner** to verify owner dashboard actions (register/update/menu/image) without leaving the admin session.
 
 ---
 
-## Workflow 5: Running Tests
+## Workflow 5: User Discovery with Near-Me and Dietary Filters
+
+**Goal:** Validate geolocation-assisted discovery and dietary matching.
+
+1. Open User Dashboard (guest or signed-in user).
+2. Click **Find Restaurants Near Me** and allow location access.
+3. Confirm a status message is shown and nearby results are prioritized.
+4. Apply one or more dietary filters.
+5. Verify restaurants can match by:
+   - Restaurant-level dietary tags, or
+   - Menu item dietary tags.
+6. Open details for a matching restaurant and verify menu tag chips are visible.
+
+---
+
+## Workflow 6: Running Tests
 
 **Goal:** Validate the backend and frontend test suites pass.
 

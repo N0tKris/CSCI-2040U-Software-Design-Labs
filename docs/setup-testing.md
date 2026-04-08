@@ -143,6 +143,11 @@ Existing test classes:
 - `RestaurantServiceTest.java`
 - `ReviewServiceTest.java`
 
+Feature-specific backend coverage includes:
+
+- Menu item dietary tag normalization and update behavior (`MenuItemControllerTest.java`)
+- Review moderation service behavior (`ReviewServiceTest.java`)
+
 ### Frontend Tests
 
 ```bash
@@ -154,6 +159,23 @@ npm run test:coverage      # With coverage report
 ```
 
 Test file: `filters.test.js`
+
+Current frontend tests focus on filtering behavior, including menu-item dietary tag matching in user filtering.
+
+---
+
+## Manual Smoke Checks for Recent Features
+
+1. Admin simulation modes
+  - Log in as admin.
+  - Enter **View As User**, then return to admin.
+  - Enter **View as Owner**, register/update a restaurant, then return to admin.
+2. User discovery updates
+  - Use **Find Restaurants Near Me** and verify location status messaging.
+  - Apply dietary filters and confirm matches can come from restaurant tags or menu item tags.
+3. Owner menu metadata
+  - Add/edit a menu item with dietary tags.
+  - Confirm tags appear on owner dashboard and user restaurant detail views.
 
 ---
 

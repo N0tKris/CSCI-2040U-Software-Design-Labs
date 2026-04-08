@@ -54,6 +54,11 @@ Source: `RestaurantController.java`
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | POST | `/api/restaurants/{restaurantId}/menu` | Admin or Owner (own restaurant only) | Add menu item |
+| PUT | `/api/restaurants/{restaurantId}/menu/{menuItemId}` | Admin or Owner (own restaurant only) | Update menu item |
+| DELETE | `/api/restaurants/{restaurantId}/menu/{menuItemId}` | Admin or Owner (own restaurant only) | Delete menu item |
+| POST | `/api/restaurants/{restaurantId}/menu/{menuItemId}/upload-image` | Admin or Owner (own restaurant only) | Upload menu item image |
+
+Menu item payloads support `dietaryTags` (or `dietary_tags`) and are normalized/deduplicated server-side.
 
 Source: `MenuItemController.java`
 
@@ -120,7 +125,20 @@ Source: `CatalogController.java`
 | Create restaurant | ❌ | ❌ | ✅ (1 only) | ✅ |
 | Edit / delete restaurant | ❌ | ❌ | ❌ | ✅ |
 | Upload restaurant image | ❌ | ❌ | ✅ (own only) | ✅ |
-| Add menu items | ❌ | ❌ | ✅ (own only) | ✅ |
+| Add / update / delete menu items | ❌ | ❌ | ✅ (own only) | ✅ |
 | Import from Yelp | ❌ | ❌ | ❌ | ✅ |
 | Moderate reviews | ❌ | ❌ | ❌ | ✅ |
 | View all users | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## Frontend Simulation Modes (Flask)
+
+The frontend includes admin simulation routes that reuse the admin session in role-oriented UI flows:
+
+- `GET /admin/view-as-user`
+- `GET /admin/exit-user-view`
+- `GET /admin/view-as-owner`
+- `GET /admin/exit-owner-view`
+
+These are frontend routes in `frontend/app.py` and are not backend REST APIs.

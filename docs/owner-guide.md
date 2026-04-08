@@ -38,6 +38,18 @@ Each owner account can register **one restaurant**. To create your listing:
 
 Your restaurant will appear in your dashboard and in the public restaurant catalog immediately.
 
+If registration fails, the dashboard displays backend validation or permission errors directly.
+
+---
+
+## Editing Restaurant Details
+
+Owners can update their own listing from the dashboard.
+
+1. Open your dashboard and switch to restaurant edit mode.
+2. Update fields such as name, cuisine, location, dietary tags, description, and coordinates.
+3. Save changes to publish updates.
+
 ---
 
 ## Uploading a Restaurant Image
@@ -60,9 +72,22 @@ The image will appear on your restaurant card and detail page.
 1. From the Owner Dashboard, locate your restaurant.
 2. Click **Add Menu Item** (or equivalent button).
 3. Fill in the item name, price, and description.
+4. Select one or more **Dietary Tags** from the menu item tag picker.
 4. Submit the form.
 
 Menu items will be visible to users viewing your restaurant's detail page.
+
+### Menu Item Dietary Tags
+
+- Supported canonical tags include: Vegan, Vegetarian, Halal, Kosher, Gluten-Free, Dairy-Free, Nut-Free.
+- Tags are normalized and de-duplicated on save by the backend.
+- Tags are displayed as chips on owner and user views.
+
+### Managing Existing Menu Items
+
+- Edit item details from the menu edit modal.
+- Update item images and dietary tags in the same modal.
+- Delete items that are no longer offered.
 
 ---
 
@@ -81,4 +106,5 @@ Click **Sign out** in the top-right corner of any page to end your session.
 ## Important Limitations
 
 - Each owner account is limited to **one restaurant**. If you need to manage multiple locations, create separate owner accounts.
-- Only admins can edit or delete your restaurant listing after it is created. Contact your platform administrator if changes are needed.
+- Owners can edit their own restaurant listing and menu items.
+- Admins can still edit/delete any restaurant.

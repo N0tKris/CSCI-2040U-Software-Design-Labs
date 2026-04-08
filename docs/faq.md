@@ -32,7 +32,7 @@ Only accounts with the **User** role can submit reviews. If you are logged in as
 
 **Q: My review was submitted — why isn't it showing up?**
 
-Reviews are published immediately upon submission in the current MVP. If your review is not visible, try refreshing the page. If the issue persists, contact your platform administrator to check the review status.
+New reviews are created with `PENDING` status and are only visible publicly after admin approval. If your review is not visible yet, ask an admin to review it in the moderation panel.
 
 ---
 
@@ -41,6 +41,12 @@ Reviews are published immediately upon submission in the current MVP. If your re
 **Q: Why can't I create a second restaurant?**
 
 Each Owner account is limited to one restaurant listing. This is an intentional design constraint. To manage a second restaurant, create a new Owner account.
+
+---
+
+**Q: Can owners edit their restaurant and menu after creation?**
+
+Yes. Owners can update their own restaurant details, manage menu items, update menu tags, and upload images from the Owner Dashboard.
 
 ---
 
@@ -69,6 +75,15 @@ Yelp review snippets only appear for restaurants that were imported via the Yelp
 **Q: Why does an admin API endpoint return Forbidden (403)?**
 
 The backend expects the raw session token in the `Authorization` header with no `Bearer` prefix. If you are calling the API directly (e.g., via curl or Postman), make sure the header value is exactly the UUID token returned at login.
+
+---
+
+**Q: What is the difference between View As User and View As Owner?**
+
+- **View As User** lets admins test user browsing/review flows.
+- **View As Owner** lets admins test owner dashboard flows (register/update/menu/image).
+
+Both are simulation modes in the frontend. They do not change user roles or transfer ownership.
 
 ---
 

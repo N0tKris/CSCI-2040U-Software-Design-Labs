@@ -18,10 +18,11 @@ This guide covers all administrative capabilities available to the admin role in
 
 ## Admin Dashboard Overview
 
-The Admin Dashboard provides two main management panels:
+The Admin Dashboard provides management access to platform data and simulation tools.
 
 - **Users table** — lists all registered accounts with their role (USER, OWNER, ADMIN).
 - **Restaurants table** — lists all restaurants with cuisine, location, dietary tags, and action buttons.
+- **Menu item details** — includes menu-level metadata such as price, description, and dietary tags.
 - **Reviews panel** — lists all submitted reviews with user, restaurant, rating, and comment.
 
 ---
@@ -96,8 +97,30 @@ Click **Reject** next to a pending review. It will be hidden from public view.
 To simulate the user experience for review testing:
 
 1. Click **View As User** in the Admin Dashboard.
-2. The system impersonates the first USER account, allowing you to see the platform from a user's perspective.
-3. Click **Exit User View** to return to the Admin Dashboard.
+2. The system switches to **User View Mode** (admin session remains active).
+3. You can browse restaurants and submit reviews through the admin user-view review path.
+4. Click **Resume Admin View** to return to the Admin Dashboard.
+
+---
+
+## View As Owner (Admin Simulation Mode)
+
+Admins can also simulate owner workflows without logging in as an owner account.
+
+1. Click **View as Owner** in the Admin Dashboard.
+2. You are redirected to the Owner Dashboard in **Owner View Mode**.
+3. You can test owner flows like:
+   - Register restaurant
+   - Update restaurant details
+   - Add/update/delete menu items
+   - Upload restaurant/menu item images
+4. Click **Back to Admin** or **Return to Admin Dashboard** to exit owner simulation.
+
+### Important Notes
+
+- Owner simulation does not transfer ownership or mutate user roles.
+- The mode uses admin credentials with owner-style UI/flows for testing.
+- Switching between user-view and owner-view clears the other simulation mode automatically.
 
 ---
 
