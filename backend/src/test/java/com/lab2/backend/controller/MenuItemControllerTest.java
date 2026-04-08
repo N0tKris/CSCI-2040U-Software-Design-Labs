@@ -16,8 +16,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -117,7 +119,8 @@ class MenuItemControllerTest {
         Map<String, Object> body = Map.of(
                 "itemName", "Margherita Pizza",
                 "price", "12.99",
-                "description", "Classic tomato and mozzarella"
+                "description", "Classic tomato and mozzarella",
+                "dietaryTags", "Vegan, Gluten-Free"
         );
 
         mockMvc.perform(post("/api/restaurants/{id}/menu", restaurantId)
@@ -128,6 +131,7 @@ class MenuItemControllerTest {
                 .andExpect(jsonPath("$.itemName").value("Margherita Pizza"))
                 .andExpect(jsonPath("$.price").value(12.99))
                 .andExpect(jsonPath("$.description").value("Classic tomato and mozzarella"))
+                .andExpect(jsonPath("$.dietaryTags").value("Vegan, Gluten-Free"))
                 .andExpect(jsonPath("$.restaurantId").value(restaurantId));
     }
 
@@ -252,5 +256,58 @@ class MenuItemControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.itemName").value("Water"))
                 .andExpect(jsonPath("$.price").value(0.00));
+    }
+
+    @Test
+    void menuItemDietaryTagsAreNormalizedAndDeduplicated() throws Exception {
+        ArrayList<Object> dietaryTags = new ArrayList<>();
+        dietaryTags.add(" vegan ");
+        dietaryTags.add("Gluten free");
+        dietaryTags.add("VEGAN");
+        dietaryTags.add("");
+        dietaryTags.add(null);
+
+        Map<String, Object> body = Map.of(
+                "itemName", "Power Bowl",
+                "price", "14.25",
+                "dietaryTags", dietaryTags
+        );
+
+        mockMvc.perform(post("/api/restaurants/{id}/menu", restaurantId)
+                        .header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.dietaryTags").value("Vegan, Gluten-Free"));
+    }
+
+    @Test
+    void ownerCanUpdateMenuItemDietaryTags() throws Exception {
+        Map<String, Object> createBody = Map.of(
+                "itemName", "Taco",
+                "price", "9.99"
+        );
+
+        String response = mockMvc.perform(post("/api/restaurants/{id}/menu", restaurantId)
+                        .header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createBody)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Long menuItemId = objectMapper.readTree(response).get("id").asLong();
+
+        Map<String, Object> updateBody = Map.of(
+                "dietaryTags", java.util.List.of("Halal", "Nut Free", "halal")
+        );
+
+        mockMvc.perform(put("/api/restaurants/{id}/menu/{menuId}", restaurantId, menuItemId)
+                        .header("Authorization", ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateBody)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dietaryTags").value("Halal, Nut-Free"));
     }
 }

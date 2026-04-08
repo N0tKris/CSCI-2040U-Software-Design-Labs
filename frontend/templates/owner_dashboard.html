@@ -566,11 +566,66 @@
         line-height: 1.5;
     }
 
+    .menu-item-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .menu-item-tag {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #f5ebe2;
+        color: #a86542;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
     .menu-item-price {
         font-weight: 800;
         color: var(--accent);
         white-space: nowrap;
         flex-shrink: 0;
+    }
+
+    .tag-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag-picker-option {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 12px;
+        border: 1px solid #d8cec5;
+        border-radius: 999px;
+        background: #fff;
+        color: #5d5248;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .tag-picker-option:hover,
+    .tag-picker-option:has(input:checked) {
+        border-color: var(--accent);
+        background: #fff7f1;
+        color: var(--accent);
+    }
+
+    .tag-picker-option input[type="checkbox"] {
+        margin: 0;
+        accent-color: var(--accent);
+    }
+
+    .tag-picker-hint {
+        font-size: 12px;
+        color: #9b9188;
+        margin-top: 8px;
     }
 
     .empty-menu {
@@ -774,63 +829,175 @@
     .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(33, 26, 21, 0.42);
+        backdrop-filter: blur(3px);
         display: none;
         align-items: center;
         justify-content: center;
         z-index: 200;
+        padding: 18px;
     }
 
     .modal-overlay.active {
         display: flex;
     }
 
-    .modal-content {
+    #menu-edit-modal .modal-content {
         background: #fff;
-        border-radius: 16px;
-        padding: 28px;
-        max-width: 500px;
-        width: 90%;
-        max-height: 90vh;
+        border-radius: 20px;
+        border: 1px solid #efe2d6;
+        padding: 26px;
+        max-width: 680px;
+        width: min(100%, 680px);
+        max-height: min(92vh, 820px);
         overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 24px 70px rgba(55, 39, 27, 0.26);
+        animation: menuModalPop 0.22s ease;
+        scrollbar-width: thin;
+        scrollbar-color: #d8c8ba #f7f1ec;
+    }
+
+    #menu-edit-modal .modal-content::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    #menu-edit-modal .modal-content::-webkit-scrollbar-track {
+        background: #f7f1ec;
+        border-radius: 999px;
+    }
+
+    #menu-edit-modal .modal-content::-webkit-scrollbar-thumb {
+        background: #d8c8ba;
+        border-radius: 999px;
+    }
+
+    #menu-edit-modal .modal-content::-webkit-scrollbar-thumb:hover {
+        background: #c7b4a3;
+    }
+
+    @keyframes menuModalPop {
+        from {
+            opacity: 0;
+            transform: translateY(12px) scale(0.98);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     .modal-header {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--text);
-        margin-bottom: 20px;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .modal-header .menu-detail-title {
+        font-size: clamp(22px, 2.1vw, 30px);
+        font-weight: 900;
+        letter-spacing: 0.2px;
+        color: #2f221a;
+        line-height: 1.15;
+    }
+
+    .menu-modal-subtitle {
+        margin-bottom: 18px;
+        color: #8a786b;
+        font-size: 14px;
+        line-height: 1.45;
     }
 
     .modal-close {
-        width: 32px;
-        height: 32px;
-        border: none;
-        background: #f0ebe5;
-        border-radius: 8px;
-        font-size: 18px;
+        width: 42px;
+        height: 42px;
+        border: 1px solid #e8ddd3;
+        background: #f8f2ed;
+        border-radius: 12px;
+        font-size: 24px;
+        line-height: 1;
         cursor: pointer;
         transition: 0.2s;
-        color: #888;
+        color: #8b786a;
     }
 
     .modal-close:hover {
-        background: #e5ddd5;
-        color: #333;
+        background: #f0e3d8;
+        color: #5f4b3e;
+        transform: translateY(-1px);
     }
 
     .menu-item-image-preview {
         width: 100%;
-        height: 200px;
+        height: 220px;
         object-fit: cover;
-        border: 1px solid #e0d8d0;
+        border: 1px solid #e8ddd3;
+        border-radius: 14px;
+        margin-bottom: 16px;
+        background: linear-gradient(180deg, #f9f3ee 0%, #f2e9e1 100%);
+    }
+
+    .menu-edit-form {
+        display: grid;
+        gap: 16px;
+    }
+
+    #menu-edit-modal .form-grid {
+        gap: 16px;
+        margin-bottom: 0;
+    }
+
+    #menu-edit-modal .form-group label {
+        color: #806f63;
+    }
+
+    #menu-edit-modal .form-group input,
+    #menu-edit-modal .form-group textarea {
+        border: 1px solid #ded1c5;
         border-radius: 12px;
-        margin-bottom: 14px;
-        background: #f5f0eb;
+        background: #fcf9f7;
+    }
+
+    #menu-edit-modal .form-group input:focus,
+    #menu-edit-modal .form-group textarea:focus {
+        border-color: #c47a50;
+        box-shadow: 0 0 0 3px rgba(196, 122, 80, 0.14);
+        background: #fff;
+    }
+
+    .menu-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 4px;
+        padding-top: 12px;
+        border-top: 1px solid #efe4db;
+    }
+
+    .btn-cancel-inline {
+        padding: 11px 16px;
+        border: 1px solid #ddcfc2;
+        border-radius: 10px;
+        background: #fff;
+        color: #6d5f55;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-cancel-inline:hover {
+        border-color: #c8b6a7;
+        background: #fbf6f2;
+    }
+
+    .menu-save-btn {
+        width: auto !important;
+        min-width: 180px;
+        padding-inline: 22px;
+        border-radius: 10px;
+        box-shadow: 0 10px 24px rgba(184, 92, 56, 0.25);
     }
 
     .menu-item-image {
@@ -900,6 +1067,21 @@
         .form-grid,
         .stat-grid {
             grid-template-columns: 1fr;
+        }
+
+        #menu-edit-modal .modal-content {
+            padding: 18px;
+            border-radius: 16px;
+            max-height: 94vh;
+        }
+
+        .menu-modal-actions {
+            flex-direction: column-reverse;
+        }
+
+        .menu-save-btn,
+        .btn-cancel-inline {
+            width: 100% !important;
         }
 
         .overview-banner {
@@ -1128,6 +1310,16 @@
                             {% if item.description %}
                             <div class="menu-item-desc">{{ item.description }}</div>
                             {% endif %}
+                            {% if item.dietaryTags %}
+                            <div class="menu-item-tags">
+                                {% for tag in item.dietaryTags.split(',') %}
+                                {% set trimmed_tag = tag.strip() %}
+                                {% if trimmed_tag %}
+                                <span class="menu-item-tag">{{ trimmed_tag }}</span>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                             <div class="menu-item-price">${{ "%.2f"|format(item.price) }}</div>
@@ -1170,6 +1362,20 @@
                         <div class="form-group full">
                             <label for="item_description">Description</label>
                             <textarea id="item_description" name="description" rows="2" placeholder="Optional item description…"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Dietary Tags</label>
+                            <input type="hidden" id="item_dietary_tags" name="dietary_tags" value="" />
+                            <div class="tag-picker" data-menu-dietary-picker>
+                                <label class="tag-picker-option"><input type="checkbox" value="Vegan" /> Vegan</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Vegetarian" /> Vegetarian</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Gluten-Free" /> Gluten-Free</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Halal" /> Halal</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Kosher" /> Kosher</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Dairy-Free" /> Dairy-Free</label>
+                                <label class="tag-picker-option"><input type="checkbox" value="Nut-Free" /> Nut-Free</label>
+                            </div>
+                            <div class="tag-picker-hint">Select every dietary tag that applies to this item.</div>
                         </div>
                     </div>
                     <button type="submit" class="btn-save">Add Item</button>
@@ -1329,6 +1535,62 @@
         uploadBtn.disabled = false;
     }
 
+    const MENU_DIETARY_TAGS = [
+        'Vegan',
+        'Vegetarian',
+        'Gluten-Free',
+        'Halal',
+        'Kosher',
+        'Dairy-Free',
+        'Nut-Free'
+    ];
+
+    function getMenuDietaryPicker(form) {
+        return form?.querySelector('[data-menu-dietary-picker]') || null;
+    }
+
+    function getSelectedMenuDietaryTags(form) {
+        const picker = getMenuDietaryPicker(form);
+        if (!picker) return [];
+        return Array.from(picker.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value)
+            .filter(Boolean);
+    }
+
+    function syncMenuDietaryTagsField(form) {
+        const picker = getMenuDietaryPicker(form);
+        const hidden = form?.querySelector('input[type="hidden"][name="dietary_tags"]');
+        if (!picker || !hidden) return;
+        hidden.value = getSelectedMenuDietaryTags(form).join(', ');
+    }
+
+    function setMenuDietaryTags(form, rawValue) {
+        const picker = getMenuDietaryPicker(form);
+        if (!picker) return;
+
+        const selected = String(rawValue || '')
+            .split(',')
+            .map(tag => tag.trim().toLowerCase())
+            .filter(Boolean);
+
+        picker.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = selected.includes(checkbox.value.toLowerCase());
+        });
+        syncMenuDietaryTagsField(form);
+    }
+
+    document.querySelectorAll('[data-menu-dietary-picker]').forEach(picker => {
+        picker.addEventListener('change', () => syncMenuDietaryTagsField(picker.closest('form')));
+    });
+
+    const addMenuForm = document.querySelector("form[action='{{ url_for('owner_add_menu_item') }}']");
+    if (addMenuForm) {
+        syncMenuDietaryTagsField(addMenuForm);
+        addMenuForm.addEventListener('reset', () => {
+            window.setTimeout(() => syncMenuDietaryTagsField(addMenuForm), 0);
+        });
+    }
+
     // Menu item edit modal
     function editMenuItem(itemId, itemData) {
         const modal = document.getElementById('menu-edit-modal');
@@ -1340,6 +1602,7 @@
         form.querySelector('[name="itemName"]').value = itemData.itemName || itemData.name || '';
         form.querySelector('[name="price"]').value = itemData.price || '';
         form.querySelector('[name="description"]').value = itemData.description || '';
+        setMenuDietaryTags(form, itemData.dietaryTags || itemData.dietary_tags || '');
 
         const imagePreview = form.querySelector('.menu-item-image-preview');
         if (itemData.imageUrl) {
@@ -1368,6 +1631,7 @@
         const price = form.querySelector('[name="price"]').value;
         const description = form.querySelector('[name="description"]').value.trim();
         const imageInput = form.querySelector('[name="file"]');
+        const dietaryTags = getSelectedMenuDietaryTags(form).join(', ') || null;
 
         if (!itemName || !price) {
             alert('Please fill in item name and price.');
@@ -1378,7 +1642,7 @@
             const updateRes = await fetch(`/api/restaurants/${restaurantId}/menu/${itemId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemName, price: parseFloat(price), description })
+                body: JSON.stringify({ itemName, price: parseFloat(price), description, dietaryTags })
             });
 
             if (!updateRes.ok) {
@@ -1465,6 +1729,7 @@
             <span class="menu-detail-title">Edit Menu Item</span>
             <button class="modal-close" onclick="closeMenuEditModal()">✕</button>
         </div>
+        <div class="menu-modal-subtitle">Update item details, adjust dietary tags, and refresh the image shown to customers.</div>
         <form class="menu-edit-form" onsubmit="event.preventDefault(); saveMenuItemEdit();">
             <img class="menu-item-image-preview" style="display: none;" />
             <div class="form-grid">
@@ -1478,7 +1743,21 @@
                 </div>
                 <div class="form-group full">
                     <label for="edit-description">Description</label>
-                    <textarea name="description" id="edit-description" rows="2" placeholder="Optional item description…"></textarea>
+                    <textarea name="description" id="edit-description" rows="3" placeholder="Optional item description…"></textarea>
+                </div>
+                <div class="form-group full">
+                    <label>Dietary Tags</label>
+                    <input type="hidden" name="dietary_tags" value="" />
+                    <div class="tag-picker" data-menu-dietary-picker>
+                        <label class="tag-picker-option"><input type="checkbox" value="Vegan" /> Vegan</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Vegetarian" /> Vegetarian</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Gluten-Free" /> Gluten-Free</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Halal" /> Halal</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Kosher" /> Kosher</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Dairy-Free" /> Dairy-Free</label>
+                        <label class="tag-picker-option"><input type="checkbox" value="Nut-Free" /> Nut-Free</label>
+                    </div>
+                    <div class="tag-picker-hint">Select every dietary tag that applies to this item.</div>
                 </div>
                 <div class="form-group full">
                     <label for="edit-file">Update Image</label>
@@ -1486,7 +1765,10 @@
                     <div class="upload-hint">Supports JPG, PNG, GIF, WebP (max 5 MB)</div>
                 </div>
             </div>
-            <button type="submit" class="btn-save" style="width: 100%;">Save Changes</button>
+            <div class="menu-modal-actions">
+                <button type="button" class="btn-cancel-inline" onclick="closeMenuEditModal()">Cancel</button>
+                <button type="submit" class="btn-save menu-save-btn">Save Changes</button>
+            </div>
         </form>
     </div>
 </div>

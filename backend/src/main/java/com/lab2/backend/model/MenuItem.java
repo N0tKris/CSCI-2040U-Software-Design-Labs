@@ -33,6 +33,10 @@ public class MenuItem {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /** Comma-separated dietary tags, e.g. "Vegan, Gluten-Free". */
+    @Column(name = "dietary_tags", length = 255)
+    private String dietaryTags;
+
     /** URL path to the menu item's uploaded image, e.g. "/uploads/menu-item-1.jpg". */
     @Column(name = "image_url", length = 512)
     private String imageUrl;
@@ -60,6 +64,9 @@ public class MenuItem {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getDietaryTags() { return dietaryTags; }
+    public void setDietaryTags(String dietaryTags) { this.dietaryTags = dietaryTags; }
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }

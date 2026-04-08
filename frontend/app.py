@@ -3376,6 +3376,7 @@ def owner_add_menu_item():
     item_name = request.form.get("item_name", "").strip()
     price = request.form.get("price", "").strip()
     description = request.form.get("description", "").strip()
+    dietary_tags = request.form.get("dietary_tags", "").strip()
 
     if not restaurant_id or not item_name or not price:
         # Re-fetch restaurant and reviews to re-render the dashboard
@@ -3393,6 +3394,7 @@ def owner_add_menu_item():
         "itemName": item_name,
         "price": price,
         "description": description or None,
+        "dietaryTags": dietary_tags or None,
     }
 
     try:

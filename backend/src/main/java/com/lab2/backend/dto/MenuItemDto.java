@@ -9,6 +9,7 @@ public class MenuItemDto {
     private String itemName;
     private BigDecimal price;
     private String description;
+    private String dietaryTags;
     private String imageUrl;
     private Long restaurantId;
 
@@ -21,6 +22,7 @@ public class MenuItemDto {
         dto.itemName = m.getItemName();
         dto.price = m.getPrice();
         dto.description = m.getDescription();
+        dto.dietaryTags = m.getDietaryTags();
         dto.imageUrl = m.getImageUrl();
         dto.restaurantId = m.getRestaurant() != null ? m.getRestaurant().getId() : null;
         return dto;
@@ -34,6 +36,8 @@ public class MenuItemDto {
     public void setPrice(BigDecimal price) { this.price = price; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getDietaryTags() { return dietaryTags; }
+    public void setDietaryTags(String dietaryTags) { this.dietaryTags = dietaryTags; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public Long getRestaurantId() { return restaurantId; }

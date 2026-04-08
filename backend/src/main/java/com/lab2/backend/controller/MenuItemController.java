@@ -14,10 +14,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -88,8 +93,11 @@ public class MenuItemController {
         }
 
         String description = body.containsKey("description") && body.get("description") != null
-                ? body.get("description").toString()
-                : null;
+            ? body.get("description").toString()
+            : null;
+        String dietaryTags = body.containsKey("dietaryTags") || body.containsKey("dietary_tags")
+            ? buildDietaryTagsValue(body.containsKey("dietaryTags") ? body.get("dietaryTags") : body.get("dietary_tags"))
+            : null;
 
         // Look up the restaurant
         Restaurant restaurant = restaurantRepository.findById(restaurantId).orElse(null);
@@ -112,6 +120,7 @@ public class MenuItemController {
         }
 
         MenuItem menuItem = new MenuItem(restaurant, itemName, price, description);
+        menuItem.setDietaryTags(dietaryTags);
         MenuItem saved = menuItemRepository.save(menuItem);
         return ResponseEntity.status(HttpStatus.CREATED).body(MenuItemDto.fromEntity(saved));
     }
@@ -177,6 +186,10 @@ public class MenuItemController {
         }
         if (body.containsKey("description")) {
             menuItem.setDescription(body.get("description") != null ? body.get("description").toString() : null);
+        }
+        if (body.containsKey("dietaryTags") || body.containsKey("dietary_tags")) {
+            Object dietaryTagsRaw = body.containsKey("dietaryTags") ? body.get("dietaryTags") : body.get("dietary_tags");
+            menuItem.setDietaryTags(buildDietaryTagsValue(dietaryTagsRaw));
         }
 
         MenuItem updated = menuItemRepository.save(menuItem);
@@ -305,5 +318,70 @@ public class MenuItemController {
 
         menuItemRepository.deleteById(menuItemId);
         return ResponseEntity.ok(Map.of("message", "Menu item deleted successfully"));
+    }
+
+    private String buildDietaryTagsValue(Object rawTags) {
+        List<String> normalized = normalizeDietaryTags(rawTags);
+        return normalized.isEmpty() ? null : String.join(", ", normalized);
+    }
+
+    private List<String> normalizeDietaryTags(Object rawTags) {
+        List<String> values = new ArrayList<>();
+        if (rawTags == null) {
+            return values;
+        }
+
+        if (rawTags instanceof Collection<?> collection) {
+            for (Object value : collection) {
+                values.add(value != null ? value.toString() : "");
+            }
+        } else if (rawTags.getClass().isArray()) {
+            int length = Array.getLength(rawTags);
+            for (int index = 0; index < length; index++) {
+                Object value = Array.get(rawTags, index);
+                values.add(value != null ? value.toString() : "");
+            }
+        } else {
+            String text = rawTags.toString();
+            if (!text.contains(",")) {
+                values.add(text);
+            } else {
+                for (String token : text.split(",")) {
+                    values.add(token);
+                }
+            }
+        }
+
+        Map<String, String> uniqueTags = new LinkedHashMap<>();
+        for (String value : values) {
+            String normalized = normalizeDietaryTag(value);
+            if (!normalized.isEmpty()) {
+                uniqueTags.putIfAbsent(normalized.toLowerCase(Locale.ROOT), normalized);
+            }
+        }
+        return new ArrayList<>(uniqueTags.values());
+    }
+
+    private String normalizeDietaryTag(String rawTag) {
+        if (rawTag == null) {
+            return "";
+        }
+
+        String cleaned = rawTag.trim();
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+
+        String key = cleaned.toLowerCase(Locale.ROOT).replace('_', ' ').replaceAll("\\s+", " ");
+        return switch (key) {
+            case "vegan" -> "Vegan";
+            case "vegetarian" -> "Vegetarian";
+            case "gluten free", "glutenfree", "gluten-free" -> "Gluten-Free";
+            case "halal" -> "Halal";
+            case "kosher" -> "Kosher";
+            case "dairy free", "dairyfree", "dairy-free" -> "Dairy-Free";
+            case "nut free", "nutfree", "nut-free" -> "Nut-Free";
+            default -> cleaned;
+        };
     }
 }

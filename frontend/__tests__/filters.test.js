@@ -11,6 +11,10 @@ const mockRestaurants = [
     cuisine: 'Italian',
     location: 'Downtown',
     dietaryTags: 'vegan,gluten-free',
+    menuItems: [
+      { itemName: 'Pasta Primavera', dietaryTags: 'Vegetarian' },
+      { itemName: 'Garden Salad', dietaryTags: 'Vegan, Gluten-Free' }
+    ],
     stars: 4.5
   },
   {
@@ -27,6 +31,9 @@ const mockRestaurants = [
     cuisine: 'American',
     location: 'Downtown',
     dietaryTags: 'vegan',
+    menuItems: [
+      { itemName: 'Impossible Burger', dietaryTags: 'Vegan' }
+    ],
     stars: 3.8
   },
   {
@@ -67,6 +74,32 @@ function extractUniqueDietaryTags(restaurants) {
   return Array.from(tags).sort();
 }
 
+function getCanonicalDietaryTagsForMenuItem(menuItem) {
+  const tagString = menuItem.dietaryTags || menuItem.dietary_tags || '';
+  if (!tagString) return [];
+  return tagString
+    .split(',')
+    .map(tag => tag.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function restaurantMatchesDietaryTags(restaurant, selectedDietaryTags) {
+  if (selectedDietaryTags.length === 0) return true;
+
+  const restaurantTags = (restaurant.dietaryTags || restaurant.dietary_tags || '')
+    .toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+  const restaurantMatches = selectedDietaryTags.every(tag =>
+    restaurantTags.includes(tag.toLowerCase())
+  );
+  if (restaurantMatches) return true;
+
+  const menuItems = restaurant.menuItems || restaurant.menu_items || [];
+  return menuItems.some(item => {
+    const itemTags = getCanonicalDietaryTagsForMenuItem(item);
+    return selectedDietaryTags.every(tag => itemTags.includes(tag.toLowerCase()));
+  });
+}
+
 /**
  * Apply filters to restaurants
  */
@@ -79,12 +112,7 @@ function applyFilters(restaurants, searchQuery, selectedCuisine, selectedDietary
 
     // Filter by dietary tags (all selected tags must be present)
     if (selectedDietaryTags.length > 0) {
-      const restaurantTags = (r.dietaryTags || r.dietary_tags || '')
-        .toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
-      const allTagsPresent = selectedDietaryTags.every(tag =>
-        restaurantTags.includes(tag.toLowerCase())
-      );
-      if (!allTagsPresent) return false;
+      if (!restaurantMatchesDietaryTags(r, selectedDietaryTags)) return false;
     }
 
     // Filter by search query
@@ -184,6 +212,13 @@ describe('Restaurant Filters', () => {
       expect(filtered.length).toBe(3);
       expect(filtered.map(r => r.name)).toEqual(
         expect.arrayContaining(['Italian Bistro', 'Burger King', 'Taco Stand'])
+      );
+    });
+
+    test('should match menu item dietary tags', () => {
+      const filtered = applyFilters(mockRestaurants, '', '', ['gluten-free']);
+      expect(filtered.map(r => r.name)).toEqual(
+        expect.arrayContaining(['Italian Bistro', 'Taco Stand'])
       );
     });
 

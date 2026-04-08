@@ -1506,6 +1506,20 @@
             line-height: 1.55;
             color: #7b6a60;
         }
+        .detail-menu-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .detail-menu-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f6eee6;
+            color: #a86542;
+            font-size: 11px;
+            font-weight: 700;
+        }
         .detail-menu-card .menu-price {
             flex: 0 0 auto;
             align-self: flex-start;
@@ -1663,6 +1677,25 @@
             font-size: 14px;
             line-height: 1.65;
             color: #5f4b3f;
+        }
+        .menu-detail-tags {
+            border: 1px solid #efdfd0;
+            border-radius: 12px;
+            background: #fffbf8;
+            padding: 12px;
+        }
+        .menu-detail-tags .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .menu-detail-tag {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #f4ebe2;
+            color: #a86542;
+            font-size: 11px;
+            font-weight: 700;
         }
         .detail-review-summary {
             display: grid;
@@ -2386,6 +2419,10 @@
                 <div class="label">Description</div>
                 <div class="value" id="menu-item-modal-description">No description available.</div>
             </div>
+            <div class="menu-detail-tags">
+                <div class="label">Dietary Tags</div>
+                <div class="tag-row" id="menu-item-modal-tags"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -2479,13 +2516,53 @@
         return DIETARY_ALIASES[key] || '';
     }
 
-    function getCanonicalDietaryTagsForRestaurant(restaurant) {
-        const tagString = restaurant.dietaryTags || restaurant.dietary_tags || '';
+    function getCanonicalDietaryTagsFromValue(tagValue) {
+        const tagString = Array.isArray(tagValue) ? tagValue.join(',') : (tagValue || '');
         if (!tagString) return [];
-        return tagString
+
+        const unique = new Map();
+        tagString
             .split(',')
             .map(t => normalizeDietaryTag(t))
-            .filter(Boolean);
+            .filter(Boolean)
+            .forEach(tag => {
+                unique.set(tag.toLowerCase(), tag);
+            });
+
+        return Array.from(unique.values());
+    }
+
+    function getCanonicalDietaryTagsForRestaurant(restaurant) {
+        return getCanonicalDietaryTagsFromValue(restaurant.dietaryTags || restaurant.dietary_tags || '');
+    }
+
+    function getCanonicalDietaryTagsForMenuItem(menuItem) {
+        return getCanonicalDietaryTagsFromValue(menuItem.dietaryTags || menuItem.dietary_tags || '');
+    }
+
+    function matchesSelectedDietaryTags(tagList, selectedTags) {
+        if (!selectedTags.length) return true;
+        const available = tagList.map(tag => tag.toLowerCase());
+        return selectedTags.every(tag => available.includes(tag.toLowerCase()));
+    }
+
+    function restaurantMatchesSelectedDietaryTags(restaurant) {
+        if (!selectedDietaryTags.length) return true;
+
+        const restaurantTags = getCanonicalDietaryTagsForRestaurant(restaurant);
+        if (matchesSelectedDietaryTags(restaurantTags, selectedDietaryTags)) {
+            return true;
+        }
+
+        const menuItems = restaurant.menuItems || restaurant.menu_items || [];
+        return Array.isArray(menuItems) && menuItems.some(item =>
+            matchesSelectedDietaryTags(getCanonicalDietaryTagsForMenuItem(item), selectedDietaryTags)
+        );
+    }
+
+    function menuItemMatchesSelectedDietaryTags(menuItem) {
+        if (!selectedDietaryTags.length) return true;
+        return matchesSelectedDietaryTags(getCanonicalDietaryTagsForMenuItem(menuItem), selectedDietaryTags);
     }
 
     function renderFilterPanel() {
@@ -2867,12 +2944,7 @@
 
             // Filter by dietary tags (all selected tags must be present)
             if (selectedDietaryTags.length > 0) {
-                const restaurantTags = getCanonicalDietaryTagsForRestaurant(r)
-                    .map(t => t.toLowerCase());
-                const allTagsPresent = selectedDietaryTags.every(tag =>
-                    restaurantTags.includes(tag.toLowerCase())
-                );
-                if (!allTagsPresent) return false;
+                if (!restaurantMatchesSelectedDietaryTags(r)) return false;
             }
 
             // Filter by search query
@@ -2881,7 +2953,13 @@
                 const matches = (r.name || '').toLowerCase().includes(q) ||
                     (r.cuisine || '').toLowerCase().includes(q) ||
                     (r.location || '').toLowerCase().includes(q) ||
-                    (r.dietaryTags || r.dietary_tags || '').toLowerCase().includes(q);
+                    (r.dietaryTags || r.dietary_tags || '').toLowerCase().includes(q) ||
+                    (r.menuItems || r.menu_items || []).some(item => {
+                        const itemTags = getCanonicalDietaryTagsForMenuItem(item).join(' ').toLowerCase();
+                        return (item.itemName || item.name || '').toLowerCase().includes(q) ||
+                            (item.description || '').toLowerCase().includes(q) ||
+                            itemTags.includes(q);
+                    });
                 if (!matches) return false;
             }
 
@@ -3736,7 +3814,21 @@
             return;
         }
 
-        const cards = menuItems.map(item => {
+        const matchingMenuItems = menuItems.filter(menuItemMatchesSelectedDietaryTags);
+
+        if (!matchingMenuItems.length) {
+            container.innerHTML = `
+                <div class="detail-empty-state">
+                    <div class="empty-icon">🍽</div>
+                    <div class="empty-copy">
+                        <strong>No menu items match your dietary filters</strong>
+                        <span>Clear the dietary filters to see every item on this menu.</span>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        const cards = matchingMenuItems.map(item => {
             const itemName = item.itemName || item.name || 'Unnamed item';
             const rawPrice = item.price;
             const parsedPrice = rawPrice !== null && rawPrice !== undefined && rawPrice !== '' ? Number(rawPrice) : NaN;
@@ -3747,19 +3839,23 @@
             const imageUrl = item.imageUrl || '';
             const normalizedImageUrl = resolveImageUrl(imageUrl);
             const escapedImageUrl = escHtml(normalizedImageUrl);
+            const tags = getCanonicalDietaryTagsForMenuItem(item);
             const encodedName = encodeURIComponent(itemName);
             const encodedPrice = encodeURIComponent(price);
             const encodedDescription = encodeURIComponent(description || 'No description available.');
+            const encodedTags = encodeURIComponent(tags.join(','));
             return `
                 <div class="detail-menu-card" onclick="openMenuItemDetailModal(this)"
                      data-item-name="${encodedName}"
                      data-item-price="${encodedPrice}"
                      data-item-description="${encodedDescription}"
-                     data-item-image-url="${escapedImageUrl}">
+                     data-item-image-url="${escapedImageUrl}"
+                     data-item-tags="${encodedTags}">
                     <div class="menu-main">
                         ${normalizedImageUrl ? `<img class="detail-menu-thumb" src="${escapedImageUrl}" alt="${escHtml(itemName)}" onerror="this.style.display='none';" />` : ''}
                         <div class="menu-name">${escHtml(itemName)}</div>
                         ${description ? `<div class="menu-desc">${escHtml(description)}</div>` : ''}
+                        ${tags.length ? `<div class="detail-menu-tags">${tags.map(tag => `<span class="detail-menu-tag">${escHtml(tag)}</span>`).join('')}</div>` : ''}
                     </div>
                     <div class="menu-price">${escHtml(price)}</div>
                 </div>`;
@@ -3927,16 +4023,20 @@
         const priceEl = document.getElementById('menu-item-modal-price');
         const descriptionEl = document.getElementById('menu-item-modal-description');
         const imageEl = document.getElementById('menu-item-modal-image');
+        const tagsEl = document.getElementById('menu-item-modal-tags');
 
         const itemName = cardEl.dataset.itemName ? decodeURIComponent(cardEl.dataset.itemName) : 'Menu Item';
         const itemPrice = cardEl.dataset.itemPrice ? decodeURIComponent(cardEl.dataset.itemPrice) : '—';
         const itemDescription = cardEl.dataset.itemDescription ? decodeURIComponent(cardEl.dataset.itemDescription) : 'No description available.';
         const rawImageUrl = cardEl.dataset.itemImageUrl || '';
+        const rawTags = cardEl.dataset.itemTags ? decodeURIComponent(cardEl.dataset.itemTags) : '';
+        const tags = rawTags ? rawTags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
 
         titleEl.textContent = itemName;
         itemEl.textContent = itemName;
         priceEl.textContent = itemPrice;
         descriptionEl.textContent = itemDescription;
+        tagsEl.innerHTML = tags.length ? tags.map(tag => `<span class="menu-detail-tag">${escHtml(tag)}</span>`).join('') : '<span style="color:#9a8b80;font-size:13px;">No dietary tags listed.</span>';
 
         const resolvedImage = resolveImageUrl(rawImageUrl);
         if (resolvedImage) {
