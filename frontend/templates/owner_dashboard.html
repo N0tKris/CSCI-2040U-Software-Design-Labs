@@ -138,6 +138,44 @@
         border-color: #a04e2e;
         color: #fff;
     }
+    .mode-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #8a4e2f;
+        background: #fbe9de;
+        border: 1px solid #efcbb8;
+    }
+
+    .admin-owner-banner {
+        background: #fef3ec;
+        border-bottom: 1px solid #efdbce;
+        color: #6e4a36;
+    }
+
+    .admin-owner-banner-inner {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 10px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+    }
+
+    .admin-owner-banner a {
+        color: #b85c38;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .admin-owner-banner a:hover {
+        text-decoration: underline;
+    }
 
     .page-shell {
         max-width: 1440px;
@@ -1090,7 +1128,7 @@
     }
   </style>
 </head>
-<body>
+<body{% if admin_view_as_owner %} class="admin-owner-view"{% endif %}>
 
 <!-- Top bar -->
 <div class="topbar">
@@ -1099,19 +1137,33 @@
         <div class="brand-sub">Restaurant Owner</div>
     </div>
     <div class="topbar-right">
-        {% set display_name = owner_username or 'Owner' %}
+        {% set display_name = owner_username or ('Admin' if admin_view_as_owner else 'Owner') %}
         <div class="topbar-identity">
             <div class="topbar-avatar">{{ display_name[:1] | upper }}</div>
             <div class="topbar-user-meta">
-                <span class="label">Logged in as</span>
+                <span class="label">{{ 'Mode' if admin_view_as_owner else 'Logged in as' }}</span>
                 <strong>{{ display_name }}</strong>
             </div>
         </div>
         <div class="topbar-actions">
+            {% if admin_view_as_owner %}
+            <span class="mode-badge">Owner View Mode</span>
+            <a href="{{ url_for('admin_exit_owner_view') }}" class="nav-btn">Back to Admin</a>
+            {% else %}
             <a href="{{ url_for('owner_logout') }}" class="nav-btn">Sign Out</a>
+            {% endif %}
         </div>
     </div>
 </div>
+
+{% if admin_view_as_owner %}
+<div class="admin-owner-banner">
+    <div class="admin-owner-banner-inner">
+        <div><strong>View as Owner Mode:</strong> You are simulating owner dashboard permissions as an admin.</div>
+        <a href="{{ url_for('admin_exit_owner_view') }}">Return to Admin Dashboard</a>
+    </div>
+</div>
+{% endif %}
 
 <div class="page-shell">
 

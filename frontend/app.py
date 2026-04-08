@@ -784,8 +784,14 @@ ADMIN_DASHBOARD_TEMPLATE = """
             {% if admin_user_view_active %}
             <span class="mode-pill">User View Active</span>
             <a href="{{ url_for('admin_exit_user_view') }}" class="btn-view-user">Resume Admin View</a>
+            <a href="{{ url_for('admin_view_as_owner') }}" class="btn-view-user">Switch to Owner View</a>
+            {% elif admin_owner_view_active %}
+            <span class="mode-pill">Owner View Active</span>
+            <a href="{{ url_for('admin_exit_owner_view') }}" class="btn-view-user">Resume Admin View</a>
+            <a href="{{ url_for('admin_view_as_user') }}" class="btn-view-user">Switch to User View</a>
             {% else %}
             <a href="{{ url_for('admin_view_as_user') }}" class="btn-view-user">View as User</a>
+            <a href="{{ url_for('admin_view_as_owner') }}" class="btn-view-user">View as Owner</a>
             {% endif %}
             <a href="{{ url_for('admin_logout') }}" class="btn-logout">Logout</a>
         </div>
@@ -2731,34 +2737,18 @@ def admin_dashboard():
         pending_reviews=pending_reviews,
         backend_url=BACKEND_BASE_URL,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
+        admin_owner_view_active=bool(session.get("admin_view_as_owner")),
     )
 
 
-@app.get("/admin/view-as-user")
-def admin_view_as_user():
-    """Temporarily switch an admin into user-view mode for review testing."""
-    if not session.get("admin_token"):
-        return redirect(url_for("admin_login"))
-
-    if not session.get("admin_view_as_user"):
-        had_user_session = bool(session.get("user_token"))
-        session["admin_had_user_session"] = had_user_session
-        if had_user_session:
-            session["admin_prev_user_token"] = session.get("user_token", "")
-            session["admin_prev_user_username"] = session.get("user_username", "")
-            session["admin_prev_user_role"] = session.get("user_role", "USER")
-
-    session["admin_view_as_user"] = True
-
-    return redirect(url_for("user_dashboard"))
+def _clear_admin_owner_view_state() -> None:
+    """Clear temporary admin owner-view mode state."""
+    session.pop("admin_view_as_owner", None)
+    session.pop("admin_owner_view_restaurant_id", None)
 
 
-@app.get("/admin/exit-user-view")
-def admin_exit_user_view():
-    """Exit admin user-view mode and return to the admin dashboard."""
-    if not session.get("admin_token"):
-        return redirect(url_for("admin_login"))
-
+def _restore_admin_user_view_state() -> None:
+    """Restore session state after admin user-view mode ends."""
     was_user_view = bool(session.pop("admin_view_as_user", False))
     had_user_session = bool(session.pop("admin_had_user_session", False))
 
@@ -2788,6 +2778,59 @@ def admin_exit_user_view():
         session.pop("user_token", None)
         session.pop("user_username", None)
         session.pop("user_role", None)
+
+
+@app.get("/admin/view-as-user")
+def admin_view_as_user():
+    """Temporarily switch an admin into user-view mode for review testing."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    _clear_admin_owner_view_state()
+
+    if not session.get("admin_view_as_user"):
+        had_user_session = bool(session.get("user_token"))
+        session["admin_had_user_session"] = had_user_session
+        if had_user_session:
+            session["admin_prev_user_token"] = session.get("user_token", "")
+            session["admin_prev_user_username"] = session.get("user_username", "")
+            session["admin_prev_user_role"] = session.get("user_role", "USER")
+
+    session["admin_view_as_user"] = True
+
+    return redirect(url_for("user_dashboard"))
+
+
+@app.get("/admin/exit-user-view")
+def admin_exit_user_view():
+    """Exit admin user-view mode and return to the admin dashboard."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    _restore_admin_user_view_state()
+
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.get("/admin/view-as-owner")
+def admin_view_as_owner():
+    """Temporarily switch an admin into owner-view mode for management testing."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    _restore_admin_user_view_state()
+    session["admin_view_as_owner"] = True
+
+    return redirect(url_for("owner_dashboard"))
+
+
+@app.get("/admin/exit-owner-view")
+def admin_exit_owner_view():
+    """Exit admin owner-view mode and return to the admin dashboard."""
+    if not session.get("admin_token"):
+        return redirect(url_for("admin_login"))
+
+    _clear_admin_owner_view_state()
 
     return redirect(url_for("admin_dashboard"))
 
@@ -2865,6 +2908,7 @@ def admin_add_restaurant():
         error=msg,
         backend_url=BACKEND_BASE_URL,
         admin_user_view_active=bool(session.get("admin_view_as_user")),
+        admin_owner_view_active=bool(session.get("admin_view_as_owner")),
     )
 
 
@@ -2991,11 +3035,44 @@ def admin_logout():
     session.pop("admin_username", None)
     session.pop("admin_role", None)
     session.pop("admin_view_as_user", None)
+    session.pop("admin_view_as_owner", None)
+    session.pop("admin_owner_view_restaurant_id", None)
     session.pop("admin_had_user_session", None)
     session.pop("admin_prev_user_token", None)
     session.pop("admin_prev_user_username", None)
     session.pop("admin_prev_user_role", None)
     return redirect(url_for("admin_login"))
+
+
+def _resolve_owner_auth_token() -> str | None:
+    """Resolve which token should be used for owner-area actions."""
+    owner_token = session.get("owner_token")
+    if owner_token:
+        return owner_token
+
+    if session.get("admin_view_as_owner") and session.get("admin_token"):
+        return session.get("admin_token")
+
+    return None
+
+
+def _render_owner_dashboard(*, restaurant: Any, reviews: list[Any], error: str | None = None, success: str | None = None):
+    """Render owner dashboard with consistent mode context."""
+    in_admin_owner_view_mode = bool(session.get("admin_view_as_owner") and session.get("admin_token"))
+    owner_name = (
+        session.get("admin_username") if in_admin_owner_view_mode else session.get("owner_username")
+    ) or ("Admin" if in_admin_owner_view_mode else "Owner")
+
+    return render_template(
+        "owner_dashboard.html",
+        owner_username=owner_name,
+        restaurant=restaurant,
+        reviews=reviews,
+        error=error,
+        success=success,
+        backend_url=BACKEND_BASE_URL,
+        admin_view_as_owner=in_admin_owner_view_mode,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -3156,6 +3233,10 @@ def owner_login():
 @app.get("/owner/logout")
 def owner_logout():
     """Clear owner session and redirect to owner view."""
+    if session.get("admin_view_as_owner") and session.get("admin_token"):
+        _clear_admin_owner_view_state()
+        return redirect(url_for("admin_dashboard"))
+
     token = session.get("owner_token")
     if token:
         try:
@@ -3175,28 +3256,22 @@ def owner_logout():
 @app.get("/owner/dashboard")
 def owner_dashboard():
     """Owner dashboard - show their restaurant and its reviews."""
-    if not session.get("owner_token"):
+    token = _resolve_owner_auth_token()
+    if not token:
         return redirect(url_for("owner_login"))
 
-    token = session["owner_token"]
     restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
 
-    return render_template(
-        "owner_dashboard.html",
-        owner_username=session.get("owner_username", "Owner"),
-        restaurant=restaurant,
-        reviews=reviews,
-        backend_url=BACKEND_BASE_URL,
-    )
+    return _render_owner_dashboard(restaurant=restaurant, reviews=reviews)
 
 
 @app.post("/owner/restaurant/create")
 def owner_create_restaurant():
     """Handle owner restaurant creation from dashboard form."""
-    if not session.get("owner_token"):
+    token = _resolve_owner_auth_token()
+    if not token:
         return redirect(url_for("owner_login"))
 
-    token = session["owner_token"]
     headers = {"Authorization": token, "Content-Type": "application/json"}
 
     name = request.form.get("name", "").strip()
@@ -3208,13 +3283,10 @@ def owner_create_restaurant():
     longitude_raw = request.form.get("longitude", "").strip()
 
     if not name or not cuisine or not location:
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=None,
             reviews=[],
             error="Name, cuisine, and location are required.",
-            backend_url=BACKEND_BASE_URL,
         )
 
     payload = {
@@ -3243,36 +3315,37 @@ def owner_create_restaurant():
             timeout=5,
         )
         if resp.ok:
+            if session.get("admin_view_as_owner"):
+                try:
+                    created = resp.json() if resp.content else {}
+                except ValueError:
+                    created = {}
+                created_id = created.get("id") if isinstance(created, dict) else None
+                if created_id is not None:
+                    try:
+                        session["admin_owner_view_restaurant_id"] = int(created_id)
+                    except (TypeError, ValueError):
+                        pass
             return redirect(url_for("owner_dashboard"))
         try:
             msg = resp.json().get("error") or resp.json().get("message") or "Failed to create restaurant."
         except ValueError:
             msg = "Failed to create restaurant."
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
-            restaurant=None,
-            reviews=[],
-            error=msg,
-            backend_url=BACKEND_BASE_URL,
-        )
+        return _render_owner_dashboard(restaurant=None, reviews=[], error=msg)
     except requests.RequestException:
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=None,
             reviews=[],
             error="Could not connect to the server. Please try again.",
-            backend_url=BACKEND_BASE_URL,
         )
     
 @app.post("/owner/restaurant/update")
 def owner_update_restaurant():
     """Handle owner restaurant detail updates from dashboard form."""
-    if not session.get("owner_token"):
+    token = _resolve_owner_auth_token()
+    if not token:
         return redirect(url_for("owner_login"))
 
-    token = session["owner_token"]
     headers = {"Authorization": token, "Content-Type": "application/json"}
 
     restaurant_id = request.form.get("restaurant_id", "").strip()
@@ -3351,13 +3424,7 @@ def owner_update_restaurant():
             except (requests.RequestException, ValueError):
                 pass
 
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
-            restaurant=restaurant,
-            reviews=reviews,
-            error=msg,
-        )
+        return _render_owner_dashboard(restaurant=restaurant, reviews=reviews, error=msg)
 
     except requests.RequestException:
         return redirect(url_for("owner_dashboard", edit="true"))
@@ -3366,10 +3433,10 @@ def owner_update_restaurant():
 @app.post("/owner/menu/add")
 def owner_add_menu_item():
     """Handle owner adding a menu item to their restaurant."""
-    if not session.get("owner_token"):
+    token = _resolve_owner_auth_token()
+    if not token:
         return redirect(url_for("owner_login"))
 
-    token = session["owner_token"]
     headers = {"Authorization": token, "Content-Type": "application/json"}
 
     restaurant_id = request.form.get("restaurant_id", "").strip()
@@ -3381,13 +3448,10 @@ def owner_add_menu_item():
     if not restaurant_id or not item_name or not price:
         # Re-fetch restaurant and reviews to re-render the dashboard
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=restaurant,
             reviews=reviews,
             error="Item name and price are required.",
-            backend_url=BACKEND_BASE_URL,
         )
 
     payload = {
@@ -3428,56 +3492,40 @@ def owner_add_menu_item():
         except ValueError:
             msg = "Failed to add menu item."
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
-            restaurant=restaurant,
-            reviews=reviews,
-            error=msg,
-            backend_url=BACKEND_BASE_URL,
-        )
+        return _render_owner_dashboard(restaurant=restaurant, reviews=reviews, error=msg)
     except requests.RequestException:
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=restaurant,
             reviews=reviews,
             error="Could not connect to the server. Please try again.",
-            backend_url=BACKEND_BASE_URL,
         )
 
 
 @app.post("/owner/restaurant/upload-image")
 def owner_upload_image():
     """Handle owner uploading an image for their restaurant."""
-    if not session.get("owner_token"):
+    token = _resolve_owner_auth_token()
+    if not token:
         return redirect(url_for("owner_login"))
 
-    token = session["owner_token"]
     restaurant_id = request.form.get("restaurant_id", "").strip()
 
     if not restaurant_id:
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=restaurant,
             reviews=reviews,
             error="Restaurant ID is missing.",
-            backend_url=BACKEND_BASE_URL,
         )
 
     uploaded_file = request.files.get("file")
     if not uploaded_file or not uploaded_file.filename:
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=restaurant,
             reviews=reviews,
             error="No image file selected.",
-            backend_url=BACKEND_BASE_URL,
         )
 
     try:
@@ -3495,23 +3543,13 @@ def owner_upload_image():
         except ValueError:
             msg = "Failed to upload image."
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
-            restaurant=restaurant,
-            reviews=reviews,
-            error=msg,
-            backend_url=BACKEND_BASE_URL,
-        )
+        return _render_owner_dashboard(restaurant=restaurant, reviews=reviews, error=msg)
     except requests.RequestException:
         restaurant, reviews = _fetch_owner_restaurant_and_reviews(token)
-        return render_template(
-            "owner_dashboard.html",
-            owner_username=session.get("owner_username", "Owner"),
+        return _render_owner_dashboard(
             restaurant=restaurant,
             reviews=reviews,
             error="Could not connect to the server. Please try again.",
-            backend_url=BACKEND_BASE_URL,
         )
 
 
@@ -3520,18 +3558,44 @@ def _fetch_owner_restaurant_and_reviews(token: str):
     headers = {"Authorization": token}
     restaurant = None
     reviews: list[Any] = []
+    in_admin_owner_view_mode = bool(session.get("admin_view_as_owner") and session.get("admin_token"))
 
-    try:
-        resp = requests.get(
-            f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
-            headers=headers,
-            timeout=5,
-        )
-        if resp.ok:
-            data = resp.json()
-            restaurant = data.get("restaurant") if isinstance(data, dict) else None
-    except (requests.RequestException, ValueError):
-        pass
+    if in_admin_owner_view_mode:
+        selected_id = session.get("admin_owner_view_restaurant_id")
+        if selected_id is not None:
+            try:
+                rid = int(selected_id)
+                resp = requests.get(
+                    f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/{rid}",
+                    headers=headers,
+                    timeout=5,
+                )
+                if resp.ok:
+                    data = resp.json()
+                    restaurant = data if isinstance(data, dict) else None
+                elif resp.status_code == 404:
+                    # Selected restaurant was removed; clear stale simulation state.
+                    session.pop("admin_owner_view_restaurant_id", None)
+            except (requests.RequestException, ValueError, TypeError):
+                pass
+
+    if restaurant is None:
+        try:
+            resp = requests.get(
+                f"{BACKEND_BASE_URL.rstrip('/')}/api/restaurants/my",
+                headers=headers,
+                timeout=5,
+            )
+            if resp.ok:
+                data = resp.json()
+                restaurant = data.get("restaurant") if isinstance(data, dict) else None
+                if in_admin_owner_view_mode and restaurant and restaurant.get("id") is not None:
+                    try:
+                        session["admin_owner_view_restaurant_id"] = int(restaurant.get("id"))
+                    except (TypeError, ValueError):
+                        pass
+        except (requests.RequestException, ValueError):
+            pass
 
     if restaurant and restaurant.get("id"):
         rid = restaurant["id"]
